@@ -26,6 +26,7 @@ import {
 } from 'app/domain/entities/combat/combat-snipe-utils';
 import { getRandomFloat } from 'app/runtime/random';
 import { coerceLogService } from 'app/runtime/log-service-fallback';
+import { resolveEventToy } from './toy-event-source';
 
 interface ToyJsonEntry {
   Name: string;
@@ -304,20 +305,17 @@ export class ToyService {
 
   /** Opens the toy's trigger banner around one activation, checklist 0. */
   private runLocalToyEvent(event: AbilityEvent, run: () => void): void {
-    const toy = event.player?.toy ?? null;
+    const toy = resolveEventToy(event);
     if (!toy?.name) {
       run();
       return;
     }
-    this.logService.animation.beginAbility({
-      toy: { name: toy.name, level: toy.level ?? 1 },
+    this.logService.animation.beginToyAbility({
+      toy,
       board: event.player,
-      abilitySource: 'toy',
       trigger: 'StartBattle',
-      triggers: ['StartBattle'],
-      abilityName: toy.name,
-      level: toy.level ?? 1,
       triggeredBy: event.triggerPet ?? null,
+      level: toy.level ?? 1,
     });
     try {
       run();

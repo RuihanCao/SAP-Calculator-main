@@ -257,13 +257,12 @@ export abstract class PetRuntimeFacade extends PetTargetingRuntimeFacade {
     const oldAttack = this.attack;
     this.attack = Math.min(Math.max(this.attack + amt, 1), max);
     const delta = this.attack - oldAttack;
-    if (!this.suppressStatAnimation) {
-      this.logService.animation.recordStatChange({
-        kind: 'attack',
-        target: this.asPet(),
-        amount: delta,
-      });
-    }
+    this.logService.animation.recordStatChange({
+      kind: 'attack',
+      target: this.asPet(),
+      amount: delta,
+      silent: this.suppressStatAnimation,
+    });
     return delta;
   }
 
@@ -281,13 +280,12 @@ export abstract class PetRuntimeFacade extends PetTargetingRuntimeFacade {
     const oldHealth = this.health;
     this.health = Math.min(Math.max(this.health + amt, 1), max);
     const delta = this.health - oldHealth;
-    if (!this.suppressStatAnimation) {
-      this.logService.animation.recordStatChange({
-        kind: 'health',
-        target: this.asPet(),
-        amount: delta,
-      });
-    }
+    this.logService.animation.recordStatChange({
+      kind: 'health',
+      target: this.asPet(),
+      amount: delta,
+      silent: this.suppressStatAnimation,
+    });
     this.abilityService.triggerFriendGainsHealthEvents(this as unknown as Pet);
     return delta;
   }
@@ -379,8 +377,10 @@ export abstract class PetRuntimeFacade extends PetTargetingRuntimeFacade {
   increaseExp(amt: number) {
     const startingLevel = this.level;
     // Experience is drawn as a level-up burst, not as two stat pills
-    // (checklist 14), so the stats it carries are not their own events.
-    this.suppressStatAnimation = true;
+    // (checklist 14), so the stats it carries are not their own events. A
+    // target already at maximum experience gains no burst to hide them in, so
+    // there the stats are drawn as themselves.
+    this.suppressStatAnimation = Math.min(this.exp + amt, 5) > this.exp;
     try {
       this.increaseAttack(amt);
       this.increaseHealth(amt);

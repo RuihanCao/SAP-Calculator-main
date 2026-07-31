@@ -3,6 +3,7 @@
 ## Current
 
 W1 done on feature/anim01-w1-event-stream: the engine now emits a structured `AnimationEvent[]` alongside the logs, with golden streams for all 16 fixtures.
+The codex review of that stream reported nine findings, all nine reproduced and all nine fixed on the same branch.
 
 W0c done on feature/anim01-w0-ground-truth: the last three COVERAGE.md gaps are closed.
 Trumpet spend and a pet-driven reposition are now recorded as f15 and f16, the `equipment` log type is marked covered by equivalence from the f08 and f10 footage, and CHECKLIST.md gained section 19.
@@ -10,6 +11,10 @@ Awaiting Ruihan approval of clips plus checklist plus W1/W2 fine specs.
 
 ## History
 
+2026-07-31 W1 review: nine codex findings, each reproduced with a headless `--dump-events` probe before it was touched, each fixed with a regression case in `tests/specs/animation/animation-event-review-fixes.test.ts`.
+2026-07-31 W1 review: the two structural ones were a projectile that was flushed before the effect it delivers, so f09 buffed the Worm before moving it, and a clash merge that gave up whenever a perk landed damage inside the same window.
+2026-07-31 W1 review: the deepest one is that hundreds of abilities write `pet.health` or `pet.attack` straight rather than through the increase helpers, so the recorder now settles pet stats against what the stream already said, at activation and clash boundaries, and draws whatever is left over.
+2026-07-31 W1 review: only f09, f10 and f15 goldens moved, all three by staging order plus Gorilla's perk note, and `check_fixtures.sh` parity is unchanged.
 2026-07-31 W1: 16 event classes emitted from the engine, not parsed from prose, with the banner opened once in `Ability.execute` so no catalog class was touched.
 2026-07-31 W1: goldens under `harness/expected/events/`, compared order-insensitively inside simultaneous groups, which exposed one more order-only ambiguity than the logs did (f04's two summon reactions, hidden by log collapse).
 2026-07-31 W1: behaviour unchanged, `check_fixtures.sh` reproduces all 16 committed expected logs byte for byte apart from f07's documented faint order.

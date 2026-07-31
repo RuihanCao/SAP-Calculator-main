@@ -189,6 +189,8 @@ export abstract class PetAbilityFacade {
 
       const originalFunction = copiedAbility.abilityFunction;
       const sourcePetName = sourcePet.name;
+      // The banner over the copier prints the copied pet's rules text.
+      copiedAbility.sourcePetName = sourcePetName;
       copiedAbility.abilityFunction = (context) => {
         const originalName = this.name;
         const baseName = this.baseName ?? originalName;

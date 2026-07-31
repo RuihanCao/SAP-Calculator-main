@@ -4,6 +4,7 @@ import {
 } from 'app/domain/entities/ability.class';
 import { Pet } from 'app/domain/entities/pet.class';
 import { Player } from 'app/domain/entities/player.class';
+import { Toy } from 'app/domain/entities/toy.class';
 
 export type AbilityEventCallback = {
   bivarianceHack(...args: unknown[]): void | boolean;
@@ -19,5 +20,11 @@ export interface AbilityEvent {
   abilityType?: AbilityTrigger; // Track which ability type this event belongs to
   tieBreaker?: number; // Random number for tie breaking
   customParams?: AbilityCustomParams; // Custom parameters to pass through context
+  /**
+   * Toy this event runs for, when a toy queued it. Animation only: it is what
+   * the trigger banner names, and a Puma repeat of a hard toy has no other way
+   * to say which of the two toy slots it is repeating.
+   */
+  sourceToy?: Toy | null;
 }
 

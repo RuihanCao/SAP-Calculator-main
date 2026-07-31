@@ -234,7 +234,21 @@ export class EventProcessor {
       return false;
     }
     for (const toy of activeToys) {
-      toy?.allEnemiesFainted?.(this.ctx.gameService.gameApi);
+      if (!toy) {
+        continue;
+      }
+      // This is the one toy trigger the toy event queues never see, so its
+      // banner is opened here rather than in the queue wrapper.
+      this.ctx.logService.animation.beginToyAbility({
+        toy,
+        board: winner,
+        trigger: 'AllEnemiesFainted',
+      });
+      try {
+        toy.allEnemiesFainted?.(this.ctx.gameService.gameApi);
+      } finally {
+        this.ctx.logService.animation.endAbility();
+      }
     }
     return loser.alive();
   }

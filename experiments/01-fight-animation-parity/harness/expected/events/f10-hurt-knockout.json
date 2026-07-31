@@ -484,6 +484,26 @@
     "seq": 18
   },
   {
+    "type": "statChange",
+    "group": 3,
+    "kind": "attack",
+    "target": {
+      "id": 11,
+      "name": "Hippo",
+      "side": "opponent",
+      "index": 0,
+      "level": 1,
+      "attack": 9,
+      "health": 1
+    },
+    "side": "opponent",
+    "amount": 3,
+    "total": null,
+    "levelFrom": null,
+    "levelTo": null,
+    "seq": 19
+  },
+  {
     "type": "projectile",
     "group": 3,
     "source": {
@@ -510,26 +530,6 @@
         "health": 4
       }
     ],
-    "seq": 19
-  },
-  {
-    "type": "statChange",
-    "group": 3,
-    "kind": "attack",
-    "target": {
-      "id": 11,
-      "name": "Hippo",
-      "side": "opponent",
-      "index": 0,
-      "level": 1,
-      "attack": 9,
-      "health": 1
-    },
-    "side": "opponent",
-    "amount": 3,
-    "total": null,
-    "levelFrom": null,
-    "levelTo": null,
     "seq": 20
   },
   {
@@ -670,7 +670,7 @@
     ],
     "abilityName": "GorillaAbility",
     "level": 1,
-    "text": "Hurt: Gain Coconut perk. Works 1 time per turn.",
+    "text": "Hurt: Gain Coconut perk. Works 1 time per turn.\nBlock damage, once.",
     "triggeredBy": {
       "id": 2,
       "name": "Gorilla",

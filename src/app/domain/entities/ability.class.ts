@@ -175,6 +175,12 @@ export class Ability {
   public native: boolean;
   public ignoreRepeats: boolean;
   public alwaysIgnorePetLevel: boolean;
+  /**
+   * Pet this ability was copied from, when it is not the owner's own. The
+   * banner prints the copied pet's rules text, not the copier's (animation
+   * only, see `execute`).
+   */
+  public sourcePetName: string | null = null;
 
   constructor(config: {
     name?: string;
@@ -275,7 +281,7 @@ export class Ability {
         textName:
           this.abilityType === 'Equipment'
             ? (this.owner.equipment?.name ?? null)
-            : null,
+            : this.sourcePetName,
         level: this.level,
         triggeredBy: triggerPet ?? null,
       });

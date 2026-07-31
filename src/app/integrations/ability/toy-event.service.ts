@@ -12,6 +12,7 @@ import { GameService } from 'app/runtime/state/game.service';
 import { LogService } from '../log.service';
 import { getRandomFloat } from 'app/runtime/random';
 import { coerceLogService } from 'app/runtime/log-service-fallback';
+import { resolveEventToy } from '../toy/toy-event-source';
 
 @Injectable({
   providedIn: 'root',
@@ -45,6 +46,7 @@ export class ToyEventService {
       level: toy.level,
       triggerPet,
       player,
+      sourceToy: toy,
       customParams: {
         toyName: toy.name,
         suppressFriendFaintLog: toy.suppressFriendFaintLog,
@@ -59,6 +61,7 @@ export class ToyEventService {
         level: puma.level,
         triggerPet,
         player,
+        sourceToy: toy,
       });
     }
   }
@@ -177,26 +180,18 @@ export class ToyEventService {
 
   /** Opens the toy's trigger banner around one toy activation, checklist 0. */
   private runToyEvent(event: AbilityEvent, run: () => void): void {
-    const toyName =
-      (event.customParams?.toyName as string | undefined) ??
-      event.player?.toy?.name;
-    const toy =
-      [event.player?.toy, event.player?.hardToy].find(
-        (candidate) => candidate?.name === toyName,
-      ) ?? null;
-    if (!toyName) {
+    const toy = resolveEventToy(event);
+    if (!toy) {
       run();
       return;
     }
-    this.logService.animation.beginAbility({
-      toy: { name: toyName, level: toy?.level ?? 1 },
+    this.logService.animation.beginToyAbility({
+      toy,
       board: event.player,
-      abilitySource: 'toy',
-      trigger: event.abilityType ?? null,
-      triggers: event.abilityType ? [event.abilityType] : [],
-      abilityName: toyName,
-      level: toy?.level ?? 1,
+      trigger: event.abilityType ?? 'None',
       triggeredBy: event.triggerPet ?? null,
+      // A Puma repeat runs the toy at the Puma's level, checklist 11.
+      level: event.level ?? toy.level ?? 1,
     });
     try {
       run();

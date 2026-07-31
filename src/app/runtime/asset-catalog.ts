@@ -337,7 +337,7 @@ const petAbilityByLevel = buildAbilityLevelMap(petAbilityEntries);
 const toyAbilityByLevel = buildAbilityLevelMap(toyAbilityEntries);
 
 function buildAbilityLevelMap(
-  entries: Array<NameIdEntry & { Abilities?: AbilityEntry[] }>,
+  entries: Array<NameIdEntry & { Abilities?: AbilityEntry[]; PerkNote?: string }>,
 ): Map<string, Map<number, string>> {
   const map = new Map<string, Map<number, string>>();
   for (const entry of entries) {
@@ -349,7 +349,12 @@ function buildAbilityLevelMap(
       if (!ability?.About || ability.Level == null) {
         continue;
       }
-      byLevel.set(ability.Level, ability.About);
+      // The perk note is the banner's grey second line, e.g. Gorilla's
+      // "Block damage, once." (checklist 15), so it belongs to every level.
+      byLevel.set(
+        ability.Level,
+        entry.PerkNote ? `${ability.About}\n${entry.PerkNote}` : ability.About,
+      );
     }
     if (byLevel.size > 0) {
       map.set(entry.Name, byLevel);
