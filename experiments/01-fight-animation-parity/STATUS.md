@@ -48,3 +48,4 @@ Awaiting Ruihan approval of clips plus checklist plus W1/W2 fine specs.
 2026-07-31 W0b: victory and defeat screens reached by clearing WatchedOn on the payload; the replay path has no end screen at all.
 2026-07-31 W0 ground truth recorded: real client animating injected battles via page.route on /api/battle/get, 10 fixtures, no divergence from the fork sim found.
 2026-07-31 plan approved by Ruihan, experiment created.
+2026-07-31 W3 final: 16/16 PASS confirmed; RESULTS.md created; decision gate with Ruihan (merge order, style polish, shop line next).
