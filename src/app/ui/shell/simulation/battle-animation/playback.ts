@@ -16,6 +16,11 @@ export interface PlaybackState {
   speed: number;
   /** SKIP plays out the beat in flight, then lands on the end screen. */
   skip: { fromMs: number; toMs: number; elapsedMs: number; durationMs: number } | null;
+  /**
+   * With AUTOPLAY off the battle advances one beat per press, so playing stops
+   * here rather than running on (checklist 17).
+   */
+  stopAtMs: number | null;
   finished: boolean;
 }
 
@@ -27,6 +32,7 @@ export const initialPlayback = (speed = 1): PlaybackState => ({
   playing: false,
   speed,
   skip: null,
+  stopAtMs: null,
   finished: false,
 });
 
@@ -57,18 +63,31 @@ export const advancePlayback = (
   }
 
   const timeMs = state.timeMs + deltaMs * state.speed;
+  if (state.stopAtMs != null && timeMs >= state.stopAtMs) {
+    return { ...state, timeMs: state.stopAtMs, playing: false, stopAtMs: null };
+  }
   if (timeMs >= timeline.durationMs) {
     return { ...state, timeMs: timeline.durationMs, playing: false, finished: true };
   }
   return { ...state, timeMs, finished: false };
 };
 
-export const play = (state: PlaybackState, timeline: AnimationTimeline): PlaybackState => {
+/**
+ * PLAY. With AUTOPLAY off the press buys one beat, which is the next board
+ * state, and the clock stops there (checklist 17).
+ */
+export const play = (
+  state: PlaybackState,
+  timeline: AnimationTimeline,
+  autoplay = true,
+): PlaybackState => {
   const atEnd = state.timeMs >= timeline.durationMs;
+  const timeMs = atEnd ? 0 : state.timeMs;
   return {
     ...state,
-    timeMs: atEnd ? 0 : state.timeMs,
+    timeMs,
     playing: true,
+    stopAtMs: autoplay ? null : nextCheckpointMs(timeline, timeMs),
     finished: false,
   };
 };
@@ -77,6 +96,7 @@ export const pause = (state: PlaybackState): PlaybackState => ({
   ...state,
   playing: false,
   skip: null,
+  stopAtMs: null,
 });
 
 export const seek = (
@@ -87,6 +107,7 @@ export const seek = (
   ...state,
   timeMs: Math.min(Math.max(0, timeMs), timeline.durationMs),
   skip: null,
+  stopAtMs: null,
   finished: false,
 });
 
@@ -100,11 +121,12 @@ export const skip = (
   timeline: AnimationTimeline,
 ): PlaybackState => {
   if (state.timeMs >= timeline.battleEndMs) {
-    return { ...state, timeMs: timeline.battleEndMs, playing: true };
+    return { ...state, timeMs: timeline.battleEndMs, playing: true, stopAtMs: null };
   }
   return {
     ...state,
     playing: true,
+    stopAtMs: null,
     skip: {
       fromMs: state.timeMs,
       toMs: timeline.battleEndMs,
@@ -125,6 +147,7 @@ export const rewind = (
   ...state,
   timeMs: previousCheckpointMs(timeline, state.timeMs),
   skip: null,
+  stopAtMs: null,
   finished: false,
 });
 
