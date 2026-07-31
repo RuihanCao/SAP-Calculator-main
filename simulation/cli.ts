@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import fs from 'fs';
-import { runHeadlessSimulation } from './simulate';
+import { runAnimationEventDump, runHeadlessSimulation } from './simulate';
 import { SimulationConfig } from '../src/app/domain/interfaces/simulation-config.interface';
 import {
   evaluateCandidateBatch,
@@ -16,6 +16,7 @@ type CliOptions = {
   includeBattles?: boolean;
   enableLogs?: boolean;
   pretty?: boolean;
+  dumpEvents?: boolean;
 };
 
 function parseArgs(argv: string[]): CliOptions {
@@ -32,6 +33,10 @@ function parseArgs(argv: string[]): CliOptions {
     }
     if (arg === '--logs') {
       options.enableLogs = true;
+      continue;
+    }
+    if (arg === '--dump-events') {
+      options.dumpEvents = true;
       continue;
     }
     if (arg === '--pretty') {
@@ -101,6 +106,7 @@ function printHelp() {
     '  --stdin, -             Read JSON config from stdin',
     '  --include-battles      Include battles array in output',
     '  --logs                 Enable log generation',
+    '  --dump-events          Output only the animation event stream per battle',
     '  --pretty               Pretty-print JSON output',
     '  --limit <n>            (preset-pool) limit output rows',
     '  -h, --help             Show help',
@@ -159,6 +165,10 @@ function runSimulate(argv: string[]): void {
   const options = parseArgs(argv);
   const input = readInput(options);
   const config = JSON.parse(input) as SimulationConfig;
+  if (options.dumpEvents) {
+    printJson(runAnimationEventDump(config), options.pretty);
+    return;
+  }
   const result = runHeadlessSimulation(config, {
     includeBattles: options.includeBattles,
     enableLogs: options.enableLogs,
