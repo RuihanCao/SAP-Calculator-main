@@ -1,0 +1,42 @@
+{
+ "id": "f11-jump-african-wild-dog",
+ "title": "African Wild Dog jump-attacks the enemy second slot at start of battle",
+ "covers": [
+  "jump attack",
+  "start of battle trigger",
+  "attack over an intervening pet"
+ ],
+ "turn": 11,
+ "playerPack": "Danger",
+ "opponentPack": "Turtle",
+ "player": [
+  {
+   "pet": "African Wild Dog",
+   "attack": 3,
+   "health": 9
+  },
+  {
+   "pet": "Pig",
+   "attack": 3,
+   "health": 14
+  }
+ ],
+ "opponent": [
+  {
+   "pet": "Cow",
+   "attack": 3,
+   "health": 10
+  },
+  {
+   "pet": "Otter",
+   "attack": 2,
+   "health": 6
+  },
+  {
+   "pet": "Worm",
+   "attack": 1,
+   "health": 9
+  }
+ ],
+ "notes": "The only fixture that produces a jump-attack log. The dog leaps over the front enemy and hits the second one, which survives, so the jump and the return are both visible."
+}

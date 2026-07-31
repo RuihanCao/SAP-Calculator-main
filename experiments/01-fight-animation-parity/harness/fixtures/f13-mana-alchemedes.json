@@ -1,0 +1,37 @@
+{
+ "id": "f13-mana-alchemedes",
+ "title": "Alchemedes gives the friend ahead 3 mana at start of battle",
+ "covers": [
+  "mana change",
+  "stat change popup that is not attack or health"
+ ],
+ "turn": 11,
+ "playerPack": "Unicorn",
+ "opponentPack": "Turtle",
+ "player": [
+  {
+   "pet": "Pig",
+   "attack": 4,
+   "health": 14
+  },
+  {
+   "pet": "Alchemedes",
+   "attack": 2,
+   "health": 9,
+   "level": 3
+  }
+ ],
+ "opponent": [
+  {
+   "pet": "Cow",
+   "attack": 3,
+   "health": 9
+  },
+  {
+   "pet": "Otter",
+   "attack": 2,
+   "health": 8
+  }
+ ],
+ "notes": "The only fixture that produces a mana log. Level 3 so the gift is 3 mana rather than 1, which is easier to read on screen."
+}

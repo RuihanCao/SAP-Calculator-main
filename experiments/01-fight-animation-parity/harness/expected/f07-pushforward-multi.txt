@@ -20,8 +20,8 @@ randomDecisions: Faint ability order (O1 Cow, O2 Otter, O3 Worm) | Faint ability
 014 attack	Hedgehog sniped Duck for 2.
 015 attack	Hedgehog sniped Swan for 2.
 016 death	Cow fainted.
-017 death	Otter fainted.
-018 death	Worm fainted.
+017 death	Worm fainted.
+018 death	Otter fainted.
 019 board	___ (-/-) ___ (-/-) ___ (-/-) P2 <img src="assets/art/Public/Public/Pets/Duck.png" class="log-pet-icon" alt="Duck">(3/10/0xp) P1 <img src="assets/art/Public/Public/Pets/Pig.png" class="log-pet-icon" alt="Pig">(5/10/0xp) | O1 <img src="assets/art/Public/Public/Pets/Duck.png" class="log-pet-icon" alt="Duck">(1/7/0xp) O2 <img src="assets/art/Public/Public/Pets/Swan.png" class="log-pet-icon" alt="Swan">(1/7/0xp) ___ (-/-) ___ (-/-) ___ (-/-) 
 020 attack	Pig attacks Duck for 5.
 021 attack	Duck attacks Pig for 1.

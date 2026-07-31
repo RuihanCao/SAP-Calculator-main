@@ -182,14 +182,28 @@ def fill_board(board, pets, toy, toy_level, maps, board_id, turn, uni_base, fron
     return board
 
 
-def build(fixture, maps, template, front_is_4=True, battle_id=None):
+def build(fixture, maps, template, front_is_4=True, battle_id=None,
+          outcome=1, unwatched=False, swap_boards=False):
+    """Fixture spec to battle payload.
+
+    `outcome` is the client's own result enum: 1 win, 2 loss, 3 draw. It is
+    what the end-of-battle screen reads, and it is independent of who actually
+    survives in the boards, so a losing board with outcome 1 is possible and is
+    exactly the kind of thing that should not be recorded as ground truth. Pair
+    it with `swap_boards`, which mirrors the fixture so the player side is the
+    one that dies.
+
+    `unwatched` clears WatchedOn. A payload with WatchedOn set is treated by the
+    client as an already-seen battle, which is the "Replaying..." path used for
+    all the coverage fixtures; clearing it is how the end screens are reached.
+    """
     b = copy.deepcopy(template)
     b["Id"] = battle_id or str(uuid.uuid4())
     b["Seed"] = int(fixture.get("seed", 0))
-    b["Outcome"] = 1
+    b["Outcome"] = int(outcome)
     b["EndResult"] = 0
     b["ResolvedOn"] = "2026-07-31T00:00:00.000000+00:00"
-    b["WatchedOn"] = "2026-07-31T00:00:01.000000+00:00"
+    b["WatchedOn"] = None if unwatched else "2026-07-31T00:00:01.000000+00:00"
     b["User"] = {"Id": USER_ID, "DisplayName": "Fixture P1"}
     b["Opponent"] = {"Id": OPP_ID, "DisplayName": "Fixture P2"}
 
@@ -198,6 +212,9 @@ def build(fixture, maps, template, front_is_4=True, battle_id=None):
                fixture.get("playerToyLevel", 1), maps, USER_BOARD_ID, turn, 100, front_is_4)
     fill_board(b["OpponentBoard"], fixture.get("opponent", []), fixture.get("opponentToy"),
                fixture.get("opponentToyLevel", 1), maps, OPP_BOARD_ID, turn, 200, front_is_4)
+    if swap_boards:
+        b["UserBoard"], b["OpponentBoard"] = b["OpponentBoard"], b["UserBoard"]
+        b["UserBoard"]["Id"], b["OpponentBoard"]["Id"] = USER_BOARD_ID, OPP_BOARD_ID
     return b
 
 
@@ -210,6 +227,12 @@ def main():
     ap.add_argument("--orientation", choices=["front-is-4", "back-is-4"], default="front-is-4")
     ap.add_argument("--wrap", action="store_true",
                     help="emit the extension's {enabled, battle} wrapper instead of a bare battle")
+    ap.add_argument("--outcome", type=int, default=1,
+                    help="client result enum written into the payload: 1 win, 2 loss, 3 draw")
+    ap.add_argument("--unwatched", action="store_true",
+                    help="clear WatchedOn, so the client plays the battle as new instead of as a replay")
+    ap.add_argument("--swap-boards", action="store_true",
+                    help="mirror the fixture so the player side is the losing side")
     args = ap.parse_args()
 
     maps = load_maps()
@@ -232,7 +255,9 @@ def main():
     for p in paths:
         with open(p) as f:
             fixture = json.load(f)
-        battle = build(fixture, maps, template, front_is_4)
+        battle = build(fixture, maps, template, front_is_4,
+                       outcome=args.outcome, unwatched=args.unwatched,
+                       swap_boards=args.swap_boards)
         payload = {"enabled": True, "battle": battle} if args.wrap else battle
         out = args.out if (args.out and len(paths) == 1) else \
             os.path.join(outdir, os.path.basename(p))
