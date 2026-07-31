@@ -2,12 +2,17 @@
 
 ## Current
 
+W1 done on feature/anim01-w1-event-stream: the engine now emits a structured `AnimationEvent[]` alongside the logs, with golden streams for all 16 fixtures.
+
 W0c done on feature/anim01-w0-ground-truth: the last three COVERAGE.md gaps are closed.
 Trumpet spend and a pet-driven reposition are now recorded as f15 and f16, the `equipment` log type is marked covered by equivalence from the f08 and f10 footage, and CHECKLIST.md gained section 19.
 Awaiting Ruihan approval of clips plus checklist plus W1/W2 fine specs.
 
 ## History
 
+2026-07-31 W1: 16 event classes emitted from the engine, not parsed from prose, with the banner opened once in `Ability.execute` so no catalog class was touched.
+2026-07-31 W1: goldens under `harness/expected/events/`, compared order-insensitively inside simultaneous groups, which exposed one more order-only ambiguity than the logs did (f04's two summon reactions, hidden by log collapse).
+2026-07-31 W1: behaviour unchanged, `check_fixtures.sh` reproduces all 16 committed expected logs byte for byte apart from f07's documented faint order.
 2026-07-31 W0c: f15 banks trumpets with a Nyala faint and spends them with a Nurse Shark faint in the same battle, which is how the spend was reached without a starting trumpet count.
 2026-07-31 W0c: the spend is the gain mirrored, counter to pet instead of banner to counter, with a yellow flash instead of green, and the effect it pays for is an ordinary snipe.
 2026-07-31 W0c: f16 confirms the reposition arc-over grammar is the same for a pet source as for f09 toy source, with a one space push reading as an exchange rather than a segment rotation.
