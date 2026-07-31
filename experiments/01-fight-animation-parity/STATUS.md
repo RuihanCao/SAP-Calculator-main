@@ -2,6 +2,8 @@
 
 ## Current
 
+W3 round 2 applied on feature/anim01-w2-director: the parity critic scored round 1 at 2/16, and the seventeen fixes it asked for are in, headed by an outcome driven clash cadence that makes the per-hit popup merge actually fire.
+
 W2 done on feature/anim01-w2-director, based on the W1 branch: the fight animation is rebuilt as a consumer of `Battle.events`.
 A director walks the stream once and writes a cue timeline with the checklist's own beats and overlaps, a pure sampler turns that timeline plus one millisecond into the frame on screen, and the stage component only places what the frame says.
 The prose parsing renderer stays reachable behind `?legacyAnimation=1` and a Legacy view button until W3 signs the new one off.
@@ -15,6 +17,8 @@ Trumpet spend and a pet-driven reposition are now recorded as f15 and f16, the `
 Awaiting Ruihan approval of clips plus checklist plus W1/W2 fine specs.
 
 ## History
+
+2026-07-31 W3 round 2: the clash cadence became outcome driven, 0.62 s from trade to trade and about 1.32 s when a pet died, which is what puts the second hit inside the first popup's life and makes the merge visible (f01 reads 6/4 then 12/8), plus sixteen further fixes from the critic's list.
 
 2026-07-31 W2: one timeline, no delay table. Cue durations are the beats, the clash cadence is a floor the next clash may not contact before, so a faint plus its slide fits inside it instead of adding to it, and the x2 fudge is gone.
 2026-07-31 W2: the board is rebuilt from the stream by applying each event's own delta rather than by trusting a pet ref's stats, because the two halves of one clash disagree about the pet being hit twice in that beat.
