@@ -2,6 +2,8 @@
 
 ## Current
 
+W3 round 3 applied on feature/anim01-w2-director: the critic scored round 2 at 13/16, and all sixteen fixes it asked for are in, headed by the level-up reaching the pet's own stat pills, damage numerals riding with the pet rather than with its slot, and REWIND becoming a real step back.
+
 W3 round 2 applied on feature/anim01-w2-director: the parity critic scored round 1 at 2/16, and the seventeen fixes it asked for are in, headed by an outcome driven clash cadence that makes the per-hit popup merge actually fire.
 
 W2 done on feature/anim01-w2-director, based on the W1 branch: the fight animation is rebuilt as a consumer of `Battle.events`.
@@ -17,6 +19,10 @@ Trumpet spend and a pet-driven reposition are now recorded as f15 and f16, the `
 Awaiting Ruihan approval of clips plus checklist plus W1/W2 fine specs.
 
 ## History
+
+2026-07-31 W3 round 3: the three verdict fixes are the level-up carrying its own stats onto the board (`levelAttack`/`levelHealth` on the exp event, f14's Pig reads Lvl2 6/16 in the gold burst), a popup anchored to the pet's on-screen place rather than to its slot (f11's jump lands `3` and `2` side by side at the Otter's slot), and a popup lifetime that no longer follows the speed factor plus a shattered perk that no longer gates the next clash (f10's last pair merges to `2` and `14`, normal and FAST).
+2026-07-31 W3 round 3: REWIND now steps back exactly one board state per press and stops there, PLAY resumes; SKIP plays out only the beat in flight and then jumps to the final board instead of fast forwarding through the clashes it is abandoning.
+2026-07-31 W3 round 3: `harness/record_calc_controls.py` is the calculator side mirror of `controls_probe.py`, so a control press is recorded as frames plus an in-page clock trace.
 
 2026-07-31 W3 round 2: the clash cadence became outcome driven, 0.62 s from trade to trade and about 1.32 s when a pet died, which is what puts the second hit inside the first popup's life and makes the merge visible (f01 reads 6/4 then 12/8), plus sixteen further fixes from the critic's list.
 
