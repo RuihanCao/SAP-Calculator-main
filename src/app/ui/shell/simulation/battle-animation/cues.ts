@@ -11,6 +11,7 @@ export type AnimationCueKind =
   | 'fastIcon'
   | 'sourceOutline'
   | 'hurtOutline'
+  | 'windupOutline'
   | 'projectile'
   | 'clash'
   | 'damagePopup'
@@ -63,7 +64,7 @@ export interface FastIconCue extends CueBase {
 }
 
 export interface OutlineCue extends CueBase {
-  kind: 'sourceOutline' | 'hurtOutline';
+  kind: 'sourceOutline' | 'hurtOutline' | 'windupOutline';
   petId: number;
 }
 
@@ -93,20 +94,42 @@ export interface ClashCue extends CueBase {
   jump: boolean;
   /** The single contact frame, checklist 1. */
   contactMs: number;
+  /**
+   * A jump attacker holds at the target's slot after contact and starts back
+   * here (checklist 14). Equal to `contactMs` for an ordinary clash.
+   */
+  returnStartMs: number;
+  /** The pet that travels in a jump; the target never leaves its slot. */
+  jumperId: number | null;
+  jumpTargetId: number | null;
   hits: ClashHitCue[];
   attackerIds: number[];
 }
 
+/** One hit's contribution to a popup, and what the numeral reads from then on. */
+export interface DamagePopupStep {
+  atMs: number;
+  /** Running total the popup shows from `atMs` until the next step. */
+  value: number;
+}
+
 /**
  * Per hit, and merged in place while it is still alive (checklist 19).
- * `value` and `endMs` are rewritten by a merge, `merges` counts them.
+ *
+ * A merge does not rewrite what the popup already showed: `steps` keeps the
+ * numeral each hit put on screen, so the first hit still reads its own damage
+ * in its own frames and only becomes the running total from the merge onward.
  */
 export interface DamagePopupCue extends CueBase {
   kind: 'damagePopup';
   petId: number;
   side: AnimationSide;
+  /** Running total after the last merge. */
   value: number;
   merges: number;
+  steps: DamagePopupStep[];
+  /** Lifetime of one hit's numeral, which is also the merge window. */
+  lifeMs: number;
 }
 
 export interface StatPillCue extends CueBase {
@@ -125,9 +148,14 @@ export interface StatCopyLabelCue extends CueBase {
   health: number;
 }
 
+/**
+ * A white puff on a pet: a ranged arrival, a jump attacker landing back in its
+ * own slot, or the flash a mana delivery lands with (checklist 5, 14 and 15).
+ */
 export interface ImpactPuffCue extends CueBase {
   kind: 'impactPuff';
   petId: number;
+  variant: 'impact' | 'landing' | 'mana';
 }
 
 /** Dead in place. Ends when the corpse group launches. */

@@ -4,6 +4,7 @@ import {
   AnimationStatKind,
 } from 'app/domain/interfaces/animation-event.interface';
 import { AnimationBoardPet, AnimationBoardState } from './board-state';
+import { BannerText, parseBannerText } from './banner-text';
 import {
   AnimationCue,
   AnimationTimeline,
@@ -28,7 +29,7 @@ export interface PetView {
   lift: number;
   /** 0..1 of the way to the midline, for the clash lean and contact. */
   lean: number;
-  outline: 'none' | 'source' | 'hurt';
+  outline: 'none' | 'source' | 'hurt' | 'windup';
   /** 0..1 while the pet resolves out of a summon or transform puff. */
   reveal: number;
   /** Small icon over the acting pet, FAST only. */
@@ -75,7 +76,7 @@ export interface ProjectileView {
 
 export interface PopupView {
   id: string;
-  kind: 'damage' | 'stat' | 'copy';
+  kind: 'damage' | 'stat' | 'copy' | 'mana';
   petId: number | null;
   side: AnimationSide;
   slot: number;
@@ -83,6 +84,11 @@ export interface PopupView {
   statKind: AnimationStatKind | null;
   progress: number;
   merged: boolean;
+  /**
+   * Sideways place among the popups sharing this pet in this frame, centred on
+   * zero, so a two part buff reads as two pills side by side (checklist 15).
+   */
+  offset: number;
 }
 
 export interface FlashView {
@@ -96,10 +102,12 @@ export interface FlashView {
 
 export interface PuffView {
   id: string;
-  kind: 'summon' | 'transform' | 'impact';
+  kind: 'summon' | 'transform' | 'impact' | 'landing' | 'mana';
   side: AnimationSide;
   slot: number;
   progress: number;
+  /** Held opaque while the sprite swaps inside it, so nothing crossfades. */
+  opacity: number;
 }
 
 export interface BannerView {
@@ -107,6 +115,8 @@ export interface BannerView {
   name: string;
   level: number;
   text: string | null;
+  /** The card's own layout, checklist 11 and 15. */
+  parsed: BannerText;
   side: AnimationSide;
   toy: boolean;
   payloads: AnimationPayloadKind[];
@@ -165,6 +175,12 @@ export interface FrameView {
   trumpetTokens: TrumpetTokenView[];
   intro: IntroView | null;
   outro: OutroView | null;
+  /**
+   * 0..1 opacity of the replay control bar. It fades in near the end of the
+   * entrance and goes when the battle ends, exactly as the real one does
+   * (checklist 17 and 18).
+   */
+  controls: number;
 }
 
 const clamp01 = (value: number): number =>
@@ -189,6 +205,34 @@ const arc = (p: number): number => 4 * p * (1 - p);
 
 const rampAt = (timeMs: number, startMs: number, spanMs: number): number =>
   clamp01((timeMs - startMs) / Math.max(1, spanMs));
+
+/**
+ * A summon or transform cloud is opaque while the sprite is being swapped
+ * inside it and only fades once the new pet has started to resolve, which is
+ * what makes the swap a puff rather than a crossfade (checklist 7 and 8).
+ */
+const cloudOpacity = (progress: number): number =>
+  progress < 0.18 ? progress / 0.18 : 1 - clamp01((progress - 0.6) / 0.4);
+
+/** What a damage popup reads at one instant, which is not its running total. */
+export const popupValueAt = (
+  cue: DamagePopupCue,
+  timeMs: number,
+): { value: number; merged: boolean; progress: number } => {
+  let index = 0;
+  for (let at = cue.steps.length - 1; at >= 0; at -= 1) {
+    if (timeMs >= cue.steps[at].atMs) {
+      index = at;
+      break;
+    }
+  }
+  const step = cue.steps[index] ?? { atMs: cue.startMs, value: cue.value };
+  return {
+    value: step.value,
+    merged: index > 0,
+    progress: clamp01((timeMs - step.atMs) / Math.max(1, cue.lifeMs)),
+  };
+};
 
 const statPillText = (cue: StatPillCue): string => {
   const sign = cue.amount >= 0 ? '+' : '-';
@@ -254,10 +298,11 @@ export class TimelineSampler {
     const leanByPet = new Map<number, number>();
     const jumpByPet = new Map<
       number,
-      { lean: number; targetSlot: number; targetSide: AnimationSide }
+      { travel: number; lift: number; targetSlot: number; targetSide: AnimationSide }
     >();
     const sourceOutlines = new Set<number>();
     const hurtOutlines = new Set<number>();
+    const windupOutlines = new Set<number>();
     const revealByPet = new Map<number, number>();
     const fastIconByPet = new Map<number, AnimationPayloadKind | null>();
     const equipmentBreaking = new Set<number>();
@@ -315,6 +360,7 @@ export class TimelineSampler {
             name: view.name,
             level: view.level,
             text: view.text,
+            parsed: parseBannerText(view.text, view.trigger),
             side: view.side,
             toy: view.actorKind === 'toy',
             payloads: [...view.payloads],
@@ -334,6 +380,9 @@ export class TimelineSampler {
         case 'hurtOutline':
           hurtOutlines.add(cue.petId);
           break;
+        case 'windupOutline':
+          windupOutlines.add(cue.petId);
+          break;
         case 'slide':
           slideByPet.set(cue.petId, cue);
           break;
@@ -350,6 +399,7 @@ export class TimelineSampler {
             side: cue.side,
             slot: slotOf(cue.petId),
             progress,
+            opacity: cloudOpacity(progress),
           });
           revealByPet.set(
             cue.petId,
@@ -364,6 +414,7 @@ export class TimelineSampler {
             side: cue.side,
             slot: slotOf(cue.toPetId),
             progress,
+            opacity: cloudOpacity(progress),
           });
           revealByPet.set(
             cue.toPetId,
@@ -374,10 +425,11 @@ export class TimelineSampler {
         case 'impactPuff': {
           puffs.push({
             id: cue.id,
-            kind: 'impact',
+            kind: cue.variant,
             side: sideOf(cue.petId),
             slot: slotOf(cue.petId),
             progress,
+            opacity: 1 - progress,
           });
           break;
         }
@@ -420,16 +472,18 @@ export class TimelineSampler {
         }
         case 'damagePopup': {
           const view = cue as DamagePopupCue;
+          const shown = popupValueAt(view, timeMs);
           popups.push({
             id: view.id,
             kind: 'damage',
             petId: view.petId,
             side: view.side,
             slot: slotOf(view.petId),
-            text: `${view.value}`,
+            text: `${shown.value}`,
             statKind: null,
-            progress,
-            merged: view.merges > 0,
+            progress: shown.progress,
+            merged: shown.merged,
+            offset: 0,
           });
           break;
         }
@@ -437,7 +491,7 @@ export class TimelineSampler {
           const view = cue as StatPillCue;
           popups.push({
             id: view.id,
-            kind: 'stat',
+            kind: view.statKind === 'mana' ? 'mana' : 'stat',
             petId: view.petId,
             side: view.side,
             slot: view.petId != null ? slotOf(view.petId) : 0,
@@ -445,6 +499,7 @@ export class TimelineSampler {
             statKind: view.statKind,
             progress,
             merged: false,
+            offset: 0,
           });
           break;
         }
@@ -459,6 +514,7 @@ export class TimelineSampler {
             statKind: null,
             progress,
             merged: false,
+            offset: 0,
           });
           break;
         }
@@ -501,34 +557,66 @@ export class TimelineSampler {
 
     if (clash) {
       const contact = clash.contactMs;
-      const lean =
-        timeMs <= contact
-          ? easeInOut(rampAt(timeMs, clash.startMs, contact - clash.startMs))
-          : 1 - easeOut(rampAt(timeMs, contact, Math.max(1, clash.endMs - contact)));
       const [first, second] = clash.hits;
-      if (first && second) {
+      if (clash.jump && clash.jumperId != null && clash.jumpTargetId != null) {
+        // Only the attacker travels (checklist 14): out to the target's slot,
+        // a beat of contact there, then a second arc home. The target holds
+        // its slot throughout, so it gets no lean and no lift.
+        const targetSlot = slotOf(clash.jumpTargetId);
+        const targetSide = sideOf(clash.jumpTargetId);
+        let travel: number;
+        let lift: number;
+        if (timeMs < contact) {
+          const p = rampAt(timeMs, clash.startMs, contact - clash.startMs);
+          travel = easeInOut(p);
+          lift = arc(p);
+        } else if (timeMs < clash.returnStartMs) {
+          travel = 1;
+          lift = 0;
+        } else {
+          const p = rampAt(
+            timeMs,
+            clash.returnStartMs,
+            clash.endMs - clash.returnStartMs,
+          );
+          travel = 1 - easeInOut(p);
+          lift = arc(p);
+        }
+        jumpByPet.set(clash.jumperId, { travel, lift, targetSlot, targetSide });
         const flashProgress = rampAt(timeMs, contact, 220);
         if (timeMs >= contact && flashProgress < 1) {
+          // The contact frame is at the target's slot, not at the midline.
           flash = {
             id: clash.id,
-            aSide: sideOf(first.sourceId),
-            aSlot: slotOf(first.sourceId),
-            bSide: sideOf(second.sourceId),
-            bSlot: slotOf(second.sourceId),
+            aSide: targetSide,
+            aSlot: targetSlot,
+            bSide: targetSide,
+            bSlot: targetSlot,
             progress: flashProgress,
           };
         }
-      }
-      for (const hit of clash.hits) {
-        const attacker = hit.sourceId;
-        const existing = leanByPet.get(attacker) ?? 0;
-        leanByPet.set(attacker, Math.max(existing, lean));
-        if (clash.jump) {
-          jumpByPet.set(attacker, {
-            lean,
-            targetSlot: slotOf(hit.targetId),
-            targetSide: sideOf(hit.targetId),
-          });
+      } else {
+        const lean =
+          timeMs <= contact
+            ? easeInOut(rampAt(timeMs, clash.startMs, contact - clash.startMs))
+            : 1 - easeOut(rampAt(timeMs, contact, Math.max(1, clash.endMs - contact)));
+        if (first && second) {
+          const flashProgress = rampAt(timeMs, contact, 220);
+          if (timeMs >= contact && flashProgress < 1) {
+            flash = {
+              id: clash.id,
+              aSide: sideOf(first.sourceId),
+              aSlot: slotOf(first.sourceId),
+              bSide: sideOf(second.sourceId),
+              bSlot: slotOf(second.sourceId),
+              progress: flashProgress,
+            };
+          }
+        }
+        for (const hit of clash.hits) {
+          const attacker = hit.sourceId;
+          const existing = leanByPet.get(attacker) ?? 0;
+          leanByPet.set(attacker, Math.max(existing, lean));
         }
       }
     }
@@ -548,10 +636,10 @@ export class TimelineSampler {
         slot = move.fromIndex + (move.toIndex - move.fromIndex) * easeInOut(p);
         lift = arc(p);
       }
-      const lean = leanByPet.get(pet.id) ?? 0;
       const jump = jumpByPet.get(pet.id);
+      const lean = jump ? jump.travel : (leanByPet.get(pet.id) ?? 0);
       if (jump) {
-        lift = arc(jump.lean);
+        lift = jump.lift;
       }
       pets.push({
         pet,
@@ -562,7 +650,9 @@ export class TimelineSampler {
           ? 'source'
           : hurtOutlines.has(pet.id)
             ? 'hurt'
-            : 'none',
+            : windupOutlines.has(pet.id)
+              ? 'windup'
+              : 'none',
         reveal: revealByPet.get(pet.id) ?? 1,
         fastIcon: fastIconByPet.get(pet.id) ?? null,
         jumpTargetSide: jump ? jump.targetSide : null,
@@ -572,6 +662,24 @@ export class TimelineSampler {
         xpBurst: xpBurstByPet.get(pet.id) ?? 0,
         leveledUp: leveledUp.has(pet.id),
         fainted: pet.fainted,
+      });
+    }
+
+    // A multi part effect lands one pill per part in the same beat, and the
+    // parts sit side by side rather than on top of each other (checklist 15).
+    const byPet = new Map<number, PopupView[]>();
+    for (const popup of popups) {
+      if (popup.petId == null || popup.kind === 'damage') {
+        continue;
+      }
+      byPet.set(popup.petId, [...(byPet.get(popup.petId) ?? []), popup]);
+    }
+    for (const group of byPet.values()) {
+      if (group.length < 2) {
+        continue;
+      }
+      group.forEach((popup, index) => {
+        popup.offset = index - (group.length - 1) / 2;
       });
     }
 
@@ -595,6 +703,12 @@ export class TimelineSampler {
         phase === 'outro'
           ? sampleOutro(timeMs - timeline.battleEndMs, timeline.winner)
           : null,
+      controls:
+        phase === 'intro'
+          ? rampAt(timeMs, INTRO_BEATS.controlsMs, 400)
+          : phase === 'outro'
+            ? 0
+            : 1,
     };
   }
 }

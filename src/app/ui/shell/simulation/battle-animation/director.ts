@@ -68,9 +68,14 @@ const actorSide = (event: AnimationAbilityTriggerEvent): AnimationSide =>
  *
  * The walk keeps one cursor. Beats that the real game overlaps are written as
  * overlaps here rather than as sequential waits: the push forward starts inside
- * the corpse flight, the next banner comes up over the fading popups, and the
- * clash cadence is a floor the following clash may not start before, so a faint
- * and its slide fit inside it instead of adding to it (checklist 12).
+ * the corpse flight and the next banner comes up over the fading popups.
+ *
+ * The clash cadence is outcome driven (checklist 12 and 19). Two trades with
+ * nothing dying between them are one short beat apart, about 0.62 s, which is
+ * inside the 0.7 s popup lifetime and is what makes the merge rule visible. A
+ * faint stretches the beat to about 1.3 s, and it does so by what the death
+ * costs -- the corpse holds in place, launches, and the survivors slide -- not
+ * by a longer floor.
  */
 export const buildBattleTimeline = (
   events: ReadonlyArray<AnimationEvent>,
@@ -87,8 +92,8 @@ export const buildBattleTimeline = (
   const board = cloneBoard(options.initialBoard);
 
   let cursor = introEndMs;
-  /** No clash may contact before this, which is the cadence of checklist 12. */
-  let clashFloorMs = introEndMs;
+  /** Contact frame of the last clash, which the next one keeps its distance from. */
+  let lastClashContactMs: number | null = null;
   let winner: AnimationTimeline['winner'] = null;
 
   const livePopups = new Map<number, DamagePopupCue>();
@@ -148,9 +153,12 @@ export const buildBattleTimeline = (
   /**
    * Where a delivery lands: on its projectile's arrival, so an area effect puts
    * every popup in one frame (checklist 6). The window stays open across the
-   * whole run of deliveries and is closed by anything that is not one.
+   * whole run of deliveries and is closed by anything that is not one. The
+   * group's own floor holds it back when the group owes a gap first, which is
+   * the beat a move's buff waits out and the beat a trumpet spend pays for.
    */
-  const deliveryAt = (): number => pendingDeliveryMs ?? cursor;
+  const deliveryAt = (): number =>
+    Math.max(pendingDeliveryMs ?? cursor, groupBeatFloorMs);
 
   /** Per hit, merged in place while the popup is still alive (checklist 19). */
   const damagePopup = (
@@ -165,6 +173,7 @@ export const buildBattleTimeline = (
     if (live && live.endMs > atMs) {
       live.value += value;
       live.merges += 1;
+      live.steps.push({ atMs, value: live.value });
       live.endMs = atMs + beats.damagePopupMs;
       return live;
     }
@@ -178,6 +187,8 @@ export const buildBattleTimeline = (
       side,
       value,
       merges: 0,
+      steps: [{ atMs, value }],
+      lifeMs: beats.damagePopupMs,
     });
     livePopups.set(petId, cue);
     return cue;
@@ -203,6 +214,24 @@ export const buildBattleTimeline = (
       petId,
     });
     liveHurtOutlines.set(petId, cue);
+  };
+
+  /** Both front pets take the red outline before contact, checklist 1. */
+  const windupOutline = (
+    petId: number,
+    startMs: number,
+    endMs: number,
+    seq: number,
+    group: number | null,
+  ): void => {
+    push<OutlineCue>({
+      kind: 'windupOutline',
+      startMs,
+      endMs,
+      seq,
+      group,
+      petId,
+    });
   };
 
   const addPayloadToBanner = (payload: AnimationPayloadKind): void => {
@@ -323,9 +352,19 @@ export const buildBattleTimeline = (
           groupBeatFloorMs,
         );
         groupProjectileStartMs = startMs;
-        const arrivalMs = startMs + beats.projectileFlightMs;
+        // A trumpet's motion belongs to the counter widget, not to the board:
+        // a gain flies banner to counter and a spend flies counter to pet, both
+        // drawn by the stat change's own token (checklist 14 and 19). The
+        // projectile step is therefore a marker with no flight and no icon,
+        // which is what keeps a spend to exactly one token.
+        const trumpetPayload = projectile.payload === 'trumpet';
+        const arrivalMs = trumpetPayload
+          ? startMs
+          : startMs + beats.projectileFlightMs;
         addPayloadToBanner(projectile.payload);
-        if (mode === 'normal' && projectile.targets.length > 0) {
+        if (trumpetPayload) {
+          // nothing is drawn here.
+        } else if (mode === 'normal' && projectile.targets.length > 0) {
           push({
             kind: 'projectile',
             startMs,
@@ -344,7 +383,7 @@ export const buildBattleTimeline = (
               side: target.side,
             })),
           });
-        } else if (projectile.source.kind === 'pet') {
+        } else if (mode === 'fast' && projectile.source.kind === 'pet') {
           // FAST has no travel: the icon appears at the source instead.
           push({
             kind: 'fastIcon',
@@ -373,21 +412,37 @@ export const buildBattleTimeline = (
         closeBanner(cursor);
         pendingDeliveryMs = null;
         const clash = event as AnimationClashEvent;
-        const windupStart = Math.max(cursor, clashFloorMs);
-        const flightMs = clash.jump ? beats.jumpFlightMs : 0;
-        const contactMs =
-          windupStart + beats.clashWindupMs + Math.round(flightMs * 0.45);
+        // The recorder opens a clash window on the pet that strikes, so the
+        // first hit is the jumper's and the second is the counter attack.
+        const jumperId = clash.jump ? clash.hits[0].source.id : null;
+        const jumpTargetId = clash.jump ? clash.hits[0].target.id : null;
+        const cadenceFloorMs =
+          lastClashContactMs != null
+            ? lastClashContactMs + beats.clashCadenceMs
+            : introEndMs;
+        const contactMs = clash.jump
+          ? Math.max(cursor + beats.jumpOutMs, cadenceFloorMs)
+          : Math.max(cursor + beats.clashLeadMs, cadenceFloorMs);
+        const startMs = clash.jump
+          ? contactMs - beats.jumpOutMs
+          : Math.max(introEndMs, contactMs - beats.clashWindupMs);
+        const returnStartMs = clash.jump
+          ? contactMs + beats.jumpHoldMs
+          : contactMs;
         const endMs = clash.jump
-          ? contactMs + Math.round(flightMs * 0.55)
+          ? returnStartMs + beats.jumpReturnMs
           : contactMs + beats.clashRecoilMs;
         push({
           kind: 'clash',
-          startMs: windupStart,
+          startMs,
           endMs,
           seq: event.seq,
           group: event.group,
           jump: clash.jump,
           contactMs,
+          returnStartMs,
+          jumperId,
+          jumpTargetId,
           hits: clash.hits.map((hit) => ({
             sourceId: hit.source.id,
             targetId: hit.target.id,
@@ -396,6 +451,22 @@ export const buildBattleTimeline = (
           })),
           attackerIds: clash.hits.map((hit) => hit.source.id),
         });
+        if (clash.jump) {
+          // The attacker lands back in its own slot in a white puff.
+          push({
+            kind: 'impactPuff',
+            startMs: endMs,
+            endMs: endMs + beats.landingPuffMs,
+            seq: event.seq,
+            group: event.group,
+            petId: clash.hits[0].source.id,
+            variant: 'landing',
+          });
+        } else {
+          for (const hit of clash.hits) {
+            windupOutline(hit.source.id, startMs, contactMs, event.seq, event.group);
+          }
+        }
         // Both damage numbers are in the contact frame, checklist 1.
         for (const hit of clash.hits) {
           damagePopup(
@@ -409,9 +480,9 @@ export const buildBattleTimeline = (
           hurtOutline(hit.target.id, contactMs, event.seq, event.group);
         }
         lastDamageMs = contactMs;
-        clashFloorMs = contactMs + beats.clashSettleMs;
-        cursor = contactMs + beats.clashRecoilMs;
-        commitStep(event, windupStart, endMs, contactMs, stepCuesFrom());
+        lastClashContactMs = contactMs;
+        cursor = clash.jump ? endMs : contactMs + beats.clashRecoilMs;
+        commitStep(event, startMs, endMs, contactMs, stepCuesFrom());
         break;
       }
 
@@ -426,6 +497,7 @@ export const buildBattleTimeline = (
           seq: event.seq,
           group: event.group,
           petId: hit.target.id,
+          variant: 'impact',
         });
         damagePopup(
           hit.target.id,
@@ -503,6 +575,18 @@ export const buildBattleTimeline = (
             levelTo: statChange.levelTo,
           });
         } else {
+          if (statChange.kind === 'mana' && targetId != null) {
+            // Mana lands in a white flash, checklist 14.
+            push({
+              kind: 'impactPuff',
+              startMs: atMs,
+              endMs: atMs + beats.impactPuffMs,
+              seq: event.seq,
+              group: event.group,
+              petId: targetId,
+              variant: 'mana',
+            });
+          }
           push({
             kind: 'statPill',
             startMs: atMs,
@@ -572,7 +656,15 @@ export const buildBattleTimeline = (
       case 'corpseLaunchGroup': {
         pendingDeliveryMs = null;
         const groupId = `launch-${event.seq}`;
-        const launchAt = cursor;
+        // Dead in place first, even when only one pet died: the corpse holds
+        // its slot for a beat and only then leaves (checklist 3).
+        const holdUntilMs = event.pets.reduce((latest, ref) => {
+          const corpse = openCorpses.get(ref.id);
+          return corpse
+            ? Math.max(latest, corpse.startMs + beats.corpseHoldMs)
+            : latest;
+        }, 0);
+        const launchAt = Math.max(cursor, holdUntilMs);
         const endMs = launchAt + beats.corpseLaunchMs;
         for (const ref of event.pets) {
           const corpse = openCorpses.get(ref.id);
@@ -632,7 +724,7 @@ export const buildBattleTimeline = (
             toIndex: move.to,
           });
         }
-        cursor = startMs + Math.round(beats.pushForwardMs * 0.5);
+        cursor = endMs;
         commitStep(event, startMs, endMs, startMs, stepCuesFrom());
         break;
       }
@@ -668,6 +760,10 @@ export const buildBattleTimeline = (
         if (liveBanner) {
           liveBanner.endMs = Math.max(liveBanner.endMs, endMs);
         }
+        // The buff that came with the move is its own cue, a beat after the
+        // moved pet has landed, never during the flight (checklist 9).
+        pendingDeliveryMs = null;
+        groupBeatFloorMs = Math.max(groupBeatFloorMs, endMs + beats.moveBuffGapMs);
         cursor = Math.max(cursor, endMs);
         commitStep(event, startMs, endMs, startMs, stepCuesFrom());
         break;
@@ -712,6 +808,8 @@ export const buildBattleTimeline = (
         enterGroup(event.group, cursor);
         pendingDeliveryMs = null;
         const startMs = cursor;
+        // The same cloud the summon uses, in place, with the swap hidden
+        // inside it rather than crossfaded (checklist 8).
         const endMs = startMs + beats.transformPuffMs;
         push({
           kind: 'transformPuff',

@@ -31,10 +31,21 @@ export interface AnimationBeats {
   clashFlashMs: number;
   /** Contact to both pets back in their slots. */
   clashRecoilMs: number;
-  /** Contact to the next beat, so clash to clash is windup + this. */
-  clashSettleMs: number;
-  /** The pet is the projectile: out, contact, back (checklist 14). */
-  jumpFlightMs: number;
+  /**
+   * Contact to contact when nothing died in between, which is the cadence of a
+   * plain trade (checklist 12 and 19). A faint stretches the beat because the
+   * corpse hold, the launch and the slide push the cursor past this floor, not
+   * because the floor itself changes.
+   */
+  clashCadenceMs: number;
+  /** Least time from whatever came before a clash to its contact frame. */
+  clashLeadMs: number;
+  /** The pet is the projectile: out, hold at the target, back (checklist 14). */
+  jumpOutMs: number;
+  jumpHoldMs: number;
+  jumpReturnMs: number;
+  /** White puff where a jump attacker lands back in its own slot. */
+  landingPuffMs: number;
 
   /** Popup lifetime, and therefore the merge window (checklist 19). */
   damagePopupMs: number;
@@ -48,6 +59,8 @@ export interface AnimationBeats {
   corpseBurstMs: number;
   /** Launch start to the stream continuing; the flight overlaps what follows. */
   corpseAdvanceMs: number;
+  /** Dead in place before the corpse leaves, even for a single death. */
+  corpseHoldMs: number;
 
   pushForwardMs: number;
 
@@ -60,6 +73,8 @@ export interface AnimationBeats {
   transformRevealMs: number;
 
   moveArcMs: number;
+  /** A move's own buff is a separate cue, this long after the landing. */
+  moveBuffGapMs: number;
 
   xpBurstMs: number;
 
@@ -91,11 +106,15 @@ const NORMAL_BEATS: AnimationBeats = {
   projectileFlightMs: 320,
   projectileStaggerMs: 190,
 
-  clashWindupMs: 600,
+  clashWindupMs: 500,
   clashFlashMs: 220,
   clashRecoilMs: 170,
-  clashSettleMs: 700,
-  jumpFlightMs: 950,
+  clashCadenceMs: 620,
+  clashLeadMs: 450,
+  jumpOutMs: 520,
+  jumpHoldMs: 330,
+  jumpReturnMs: 380,
+  landingPuffMs: 260,
 
   damagePopupMs: 700,
   statPillMs: 700,
@@ -104,18 +123,22 @@ const NORMAL_BEATS: AnimationBeats = {
 
   corpseLaunchMs: 550,
   corpseBurstMs: 250,
-  corpseAdvanceMs: 320,
+  corpseAdvanceMs: 350,
+  corpseHoldMs: 170,
 
   pushForwardMs: 350,
 
-  summonPuffMs: 300,
+  summonPuffMs: 380,
   summonRevealMs: 220,
   summonStaggerMs: 300,
 
-  transformPuffMs: 300,
+  // Checklist 8: a transform is the summon puff in place, so it is the same
+  // cloud for the same length of time and the sprite is swapped inside it.
+  transformPuffMs: 380,
   transformRevealMs: 220,
 
   moveArcMs: 400,
+  moveBuffGapMs: 1000,
 
   xpBurstMs: 450,
 
@@ -177,6 +200,10 @@ export const getBeats = (mode: AnimationMode): AnimationBeats => {
 /**
  * The entrance, checklist 18. Offsets are milliseconds from the shutter
  * starting to close, and they are the clip's own timings rebased to zero.
+ *
+ * `totalMs` is where the battle's own beats begin, so the control bar fading in
+ * at `controlsMs` is on screen 1.5 s before the first wind-up and not a moment
+ * of the entrance before that.
  */
 export const INTRO_BEATS = {
   shutterCloseMs: 0,
@@ -190,8 +217,11 @@ export const INTRO_BEATS = {
   opponentBoardSettledMs: 6030,
   cardsClearMs: 6830,
   controlsMs: 7530,
-  totalMs: 8220,
+  totalMs: 9030,
 } as const;
+
+/** Checklist 18: the bar is up this long before the first wind-up. */
+export const CONTROLS_LEAD_MS = INTRO_BEATS.totalMs - INTRO_BEATS.controlsMs;
 
 /** The end screens, checklist 18. Offsets from the battle's last beat. */
 export const OUTRO_BEATS = {
