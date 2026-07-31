@@ -129,13 +129,14 @@ describe('battle animation director', () => {
       expect(cow?.health).toBe(0);
     });
 
-    it('keeps the clash cadence at about 1.5 s even when a pet dies between', () => {
+    it('keeps the clash cadence at about 1.3 s even when a pet dies between', () => {
       const timeline = timelineFor('f01-plain-trades');
       const clashes = cuesOfKind<ClashCue>(timeline, 'clash');
       for (let index = 1; index < clashes.length; index += 1) {
         const gap = clashes[index].contactMs - clashes[index - 1].contactMs;
-        expect(gap).toBeGreaterThanOrEqual(1400);
-        expect(gap).toBeLessThanOrEqual(1700);
+        // f01 t=29.84 to t=31.16 on the reference clip, faint and slide inside.
+        expect(gap).toBeGreaterThanOrEqual(1200);
+        expect(gap).toBeLessThanOrEqual(1450);
       }
     });
 

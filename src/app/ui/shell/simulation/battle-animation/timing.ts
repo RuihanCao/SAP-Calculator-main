@@ -94,7 +94,7 @@ const NORMAL_BEATS: AnimationBeats = {
   clashWindupMs: 600,
   clashFlashMs: 220,
   clashRecoilMs: 170,
-  clashSettleMs: 1000,
+  clashSettleMs: 700,
   jumpFlightMs: 950,
 
   damagePopupMs: 700,
