@@ -31,6 +31,7 @@ import { buildBattleTimeline } from './director';
 import {
   CorpseView,
   FrameView,
+  PetAnchor,
   PetView,
   PopupView,
   ProjectileView,
@@ -54,12 +55,40 @@ interface Point {
   y: number;
 }
 
+/**
+ * Drawn glyphs, for the two payloads the extracted text-map sheet does not
+ * carry in a form that survives being shrunk to a projectile (checklist 15).
+ *
+ * The sheet's attack icon is a fist whose silhouette collapses into a dark
+ * blob at 1.5 em, and its experience icon is a gold star where the real game
+ * throws a red book, so both are drawn here instead of mis-cropped from it.
+ */
+const drawnIcon = (body: string): string =>
+  'data:image/svg+xml;charset=utf-8,' +
+  encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">${body}</svg>`,
+  );
+
+const ATTACK_GLYPH = drawnIcon(
+  '<path d="M6 18c0-3 1.6-4.6 3.6-4.6.7 0 1.3.2 1.8.5V10c0-2 1.4-3.4 3.2-3.4S18 8 18 10v2.2' +
+    'c.5-.4 1.1-.6 1.8-.6 1.9 0 3.2 1.5 3.2 3.5v1c.5-.4 1-.6 1.7-.6 1.8 0 3.1 1.5 3.1 3.6v3.4' +
+    'c0 4.4-3.4 7.5-8 7.5h-3.3C11.5 30 6 26.5 6 21.5z" fill="#9aa1a9" stroke="#141a21" ' +
+    'stroke-width="2.4" stroke-linejoin="round"/>' +
+    '<path d="M11.4 20.5h11.4" fill="none" stroke="#141a21" stroke-width="1.8" stroke-linecap="round"/>',
+);
+
+const XP_BOOK = drawnIcon(
+  '<rect x="4.5" y="4.5" width="23" height="23" rx="3.2" fill="#d92d24" stroke="#141a21" stroke-width="2.6"/>' +
+    '<rect x="19" y="7.4" width="5.6" height="17.2" rx="1.6" fill="#fff6e2" stroke="#141a21" stroke-width="1.8"/>' +
+    '<path d="M9 11.6h7M9 16h7M9 20.4h4.4" fill="none" stroke="#ffd7d3" stroke-width="2" stroke-linecap="round"/>',
+);
+
 const PAYLOAD_ICONS: Record<AnimationPayloadKind, string> = {
-  'attack-glyph': '/assets/art/Public/Public/Icons/fist-from-textmap.png',
+  'attack-glyph': ATTACK_GLYPH,
   heart: '/assets/art/Public/Public/Icons/heart-from-textmap.png',
   'mana-potion':
     '/assets/art/Public/Public/Icons/TextMap-resources.assets-31-split/mana.png',
-  'xp-book': '/assets/art/Public/Public/Icons/TextMap-resources.assets-31-split/xp.png',
+  'xp-book': XP_BOOK,
   'perk-icon':
     '/assets/art/Public/Public/Icons/TextMap-resources.assets-31-split/snipe.png',
   trumpet:
@@ -75,15 +104,25 @@ const TRUMPET_ICON = PAYLOAD_ICONS.trumpet;
 /** Field geometry, in percent of the stage box. */
 const MIDLINE_X = 50;
 const SLOT_GAP_X = 8.6;
-const FRONT_OFFSET_X = 4.6;
+/**
+ * Where each side's front pet stands. The real game draws two groups of five
+ * with an empty midline between them, so the front pair is about 16% of the
+ * field apart and the boards read as two teams rather than one row.
+ */
+const FRONT_OFFSET_X = 8;
 /**
  * How close to the midline a clashing pet gets. The two sprites meet with the
  * flash between them and do not overlap, checklist 1.
  */
-const CLASH_GAP_X = 3.4;
+const CLASH_GAP_X = 6;
 const GROUND_Y = 66;
 const LIFT_Y = 26;
-const BANNER_ANCHOR: Point = { x: 34, y: 16 };
+/**
+ * The banner hangs below the control bar, which sits at 9.6% of the field.
+ * It may never cover the bar or the trumpet counters beside it (checklist 17),
+ * so it is anchored with a clear gap under them.
+ */
+const BANNER_ANCHOR: Point = { x: 34, y: 32 };
 /** Where a corpse flies to before it bursts, in percent of the stage. */
 const CORPSE_EXIT_DX = 22;
 const CORPSE_EXIT_DY = 56;
@@ -309,17 +348,28 @@ export class BattleAnimationStageComponent
     return side === 'player' ? MIDLINE_X - offset : MIDLINE_X + offset;
   }
 
-  petStyle(view: PetView): Record<string, string> {
-    let x = this.slotX(view.pet.side, view.slot);
+  /**
+   * Where a pet actually is this frame, which is what everything drawn on it
+   * reads. A popup takes the same point, so a numeral rides with a jumping pet
+   * instead of hanging over the slot it left.
+   */
+  anchorPoint(view: PetAnchor): Point {
+    let x = this.slotX(view.side, view.slot);
     if (view.jumpTargetSlot != null && view.jumpTargetSide) {
       const target = this.slotX(view.jumpTargetSide, view.jumpTargetSlot);
       x += (target - x) * view.lean;
     } else if (view.lean > 0) {
       const meeting =
-        view.pet.side === 'player' ? MIDLINE_X - CLASH_GAP_X : MIDLINE_X + CLASH_GAP_X;
+        view.side === 'player' ? MIDLINE_X - CLASH_GAP_X : MIDLINE_X + CLASH_GAP_X;
       x += (meeting - x) * view.lean;
     }
-    let y = GROUND_Y - view.lift * LIFT_Y;
+    return { x, y: GROUND_Y - view.lift * LIFT_Y };
+  }
+
+  petStyle(view: PetView): Record<string, string> {
+    const point = this.anchorPoint(view);
+    let x = point.x;
+    let y = point.y;
     let entrance = 1;
     const intro = this.frame?.intro;
     if (intro) {
@@ -337,6 +387,10 @@ export class BattleAnimationStageComponent
     return {
       left: `${x}%`,
       top: `${y}%`,
+      // A pet that has left its slot paints over the ones it is passing or
+      // landing on, or a jump attacker disappears behind its target at the
+      // contact frame (checklist 14).
+      'z-index': `${view.lean > 0 || view.lift > 0 ? 14 : 10}`,
       opacity: `${(0.25 + 0.75 * view.reveal) * (entrance > 0 ? 1 : 0)}`,
       transform: `translate(-50%, -100%) scale(${0.7 + 0.3 * view.reveal})`,
     };
@@ -368,9 +422,10 @@ export class BattleAnimationStageComponent
   }
 
   popupStyle(view: PopupView): Record<string, string> {
-    const x = this.slotX(view.side, view.slot);
+    const point = this.anchorPoint(view.anchor);
+    const x = point.x;
     const rise = view.progress * 6;
-    const y = GROUND_Y - 16 - rise;
+    const y = point.y - 16 - rise;
     return {
       left: `${x}%`,
       top: `${y}%`,
@@ -381,6 +436,11 @@ export class BattleAnimationStageComponent
 
   pointStyle(x: number, y: number): Record<string, string> {
     return { left: `${x}%`, top: `${y}%` };
+  }
+
+  /** Below the bar and the counters, never over them (checklist 17). */
+  bannerStyle(): Record<string, string> {
+    return this.pointStyle(BANNER_ANCHOR.x, BANNER_ANCHOR.y);
   }
 
   slotPointStyle(side: AnimationSide, slot: number, dy = 0): Record<string, string> {
@@ -601,7 +661,11 @@ export class BattleAnimationStageComponent
           this.rafHandle = null;
           return;
         }
-        const deltaMs = Math.min(120, now - this.lastTickMs);
+        // Wall clock, not frame count: a slow frame still advances the clock by
+        // what it cost, so a battle takes the time its timeline says it does
+        // even while a screen recorder is stealing frames. The cap is only
+        // there so a backgrounded tab does not resume with one huge jump.
+        const deltaMs = Math.min(1000, now - this.lastTickMs);
         this.lastTickMs = now;
         this.playback = advancePlayback(this.playback, timeline, deltaMs);
         this.render();

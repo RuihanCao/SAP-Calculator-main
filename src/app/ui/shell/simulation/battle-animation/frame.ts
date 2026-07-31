@@ -21,22 +21,33 @@ import { INTRO_BEATS, OUTRO_BEATS } from './timing';
 
 export type AnimationPhaseName = 'intro' | 'battle' | 'outro';
 
-export interface PetView {
-  pet: AnimationBoardPet;
+/**
+ * Where a pet is on screen this frame, as opposed to which slot it owns.
+ *
+ * Anything drawn on a pet reads its place from here, so a numeral over a pet
+ * that is mid jump lands on the pet rather than on the slot it left
+ * (checklist 14).
+ */
+export interface PetAnchor {
+  side: AnimationSide;
   /** Fractional slot, front to back, so a slide is a FLIP on identity. */
   slot: number;
   /** 0..1 height of an arc the pet is currently flying along. */
   lift: number;
   /** 0..1 of the way to the midline, for the clash lean and contact. */
   lean: number;
+  /** Where a jump attacker is flying to, so it crosses the intervening pets. */
+  jumpTargetSide: AnimationSide | null;
+  jumpTargetSlot: number | null;
+}
+
+export interface PetView extends PetAnchor {
+  pet: AnimationBoardPet;
   outline: 'none' | 'source' | 'hurt' | 'windup';
   /** 0..1 while the pet resolves out of a summon or transform puff. */
   reveal: number;
   /** Small icon over the acting pet, FAST only. */
   fastIcon: AnimationPayloadKind | null;
-  /** Where a jump attacker is flying to, so it crosses the intervening pets. */
-  jumpTargetSide: AnimationSide | null;
-  jumpTargetSlot: number | null;
   equipmentBreaking: boolean;
   equipmentGaining: boolean;
   /** 0..1 gold level-up burst. */
@@ -80,6 +91,8 @@ export interface PopupView {
   petId: number | null;
   side: AnimationSide;
   slot: number;
+  /** Where the pet this belongs to actually is, so the numeral rides with it. */
+  anchor: PetAnchor;
   text: string;
   statKind: AnimationStatKind | null;
   progress: number;
@@ -234,7 +247,22 @@ export const popupValueAt = (
   };
 };
 
+/**
+ * Where a popup lands, as a key: a pet past the halfway point of a jump is
+ * over its target's slot, so its numeral shares that point rather than the
+ * slot it left.
+ */
+const anchorKey = (anchor: PetAnchor): string =>
+  anchor.jumpTargetSlot != null && anchor.jumpTargetSide && anchor.lean >= 0.5
+    ? `${anchor.jumpTargetSide}:${anchor.jumpTargetSlot}`
+    : `${anchor.side}:${anchor.slot}`;
+
 const statPillText = (cue: StatPillCue): string => {
+  // Mana is not a pill: it lands as a large bare blue numeral in a white
+  // flash, so it carries neither a sign nor a chip (checklist 14).
+  if (cue.statKind === 'mana') {
+    return `${Math.abs(cue.amount)}`;
+  }
   const sign = cue.amount >= 0 ? '+' : '-';
   return `${sign}${Math.abs(cue.amount)}`;
 };
@@ -349,6 +377,16 @@ export class TimelineSampler {
 
     const sideOf = (petId: number): AnimationSide =>
       board.opponent.some((pet) => pet.id === petId) ? 'opponent' : 'player';
+
+    /** A pet standing in its slot, which is what anything off the board gets. */
+    const slotAnchor = (side: AnimationSide, slot: number): PetAnchor => ({
+      side,
+      slot,
+      lift: 0,
+      lean: 0,
+      jumpTargetSide: null,
+      jumpTargetSlot: null,
+    });
 
     for (const cue of active) {
       const progress = progressOf(cue, timeMs);
@@ -479,6 +517,7 @@ export class TimelineSampler {
             petId: view.petId,
             side: view.side,
             slot: slotOf(view.petId),
+            anchor: slotAnchor(view.side, slotOf(view.petId)),
             text: `${shown.value}`,
             statKind: null,
             progress: shown.progress,
@@ -495,6 +534,7 @@ export class TimelineSampler {
             petId: view.petId,
             side: view.side,
             slot: view.petId != null ? slotOf(view.petId) : 0,
+            anchor: slotAnchor(view.side, view.petId != null ? slotOf(view.petId) : 0),
             text: statPillText(view),
             statKind: view.statKind,
             progress,
@@ -510,6 +550,7 @@ export class TimelineSampler {
             petId: cue.petId,
             side: sideOf(cue.petId),
             slot: slotOf(cue.petId),
+            anchor: slotAnchor(sideOf(cue.petId), slotOf(cue.petId)),
             text: `${cue.attack} ${cue.health}`,
             statKind: null,
             progress,
@@ -643,6 +684,7 @@ export class TimelineSampler {
       }
       pets.push({
         pet,
+        side: pet.side,
         slot,
         lift,
         lean,
@@ -665,16 +707,31 @@ export class TimelineSampler {
       });
     }
 
-    // A multi part effect lands one pill per part in the same beat, and the
-    // parts sit side by side rather than on top of each other (checklist 15).
-    const byPet = new Map<number, PopupView[]>();
-    for (const popup of popups) {
-      if (popup.petId == null || popup.kind === 'damage') {
-        continue;
-      }
-      byPet.set(popup.petId, [...(byPet.get(popup.petId) ?? []), popup]);
+    // A numeral belongs to a pet, not to a slot: a jump attacker takes its own
+    // damage popup with it, so the number lands inside the contact flash at
+    // the target's slot instead of hanging over the slot it left.
+    const anchorByPet = new Map<number, PetAnchor>();
+    for (const view of pets) {
+      anchorByPet.set(view.pet.id, view);
     }
-    for (const group of byPet.values()) {
+    for (const popup of popups) {
+      const anchor = popup.petId != null ? anchorByPet.get(popup.petId) : null;
+      if (anchor) {
+        popup.anchor = anchor;
+        popup.slot = anchor.slot;
+      }
+    }
+
+    // Two numerals that land on the same point sit side by side rather than on
+    // top of each other: a multi part buff is one pill per part (checklist 15),
+    // and a jump attack puts the attacker's damage and its target's counter on
+    // the same slot in the same frame (checklist 14).
+    const byPoint = new Map<string, PopupView[]>();
+    for (const popup of popups) {
+      const key = anchorKey(popup.anchor);
+      byPoint.set(key, [...(byPoint.get(key) ?? []), popup]);
+    }
+    for (const group of byPoint.values()) {
       if (group.length < 2) {
         continue;
       }

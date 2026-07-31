@@ -11,25 +11,28 @@
       [class.anim-controls-gone]="view.controls === 0">
       <button type="button" class="anim-ctl" data-anim-control="rewind" (click)="onRewind()">
         <span class="anim-ctl-label">REWIND</span>
-        <span class="anim-ctl-glyph" aria-hidden="true">&#9198;</span>
+        <span class="anim-ctl-glyph" aria-hidden="true">&#9198;&#65038;</span>
       </button>
       <button type="button" class="anim-ctl" data-anim-control="play" (click)="togglePlay()">
         <span class="anim-ctl-label">{{ playing ? 'PAUSE' : 'PLAY' }}</span>
-        <span class="anim-ctl-glyph" aria-hidden="true">{{ playing ? '&#9208;' : '&#9654;' }}</span>
+        <span class="anim-ctl-glyph" aria-hidden="true">
+          <ng-container *ngIf="playing; else playGlyph">&#9208;&#65038;</ng-container>
+          <ng-template #playGlyph>&#9654;&#65038;</ng-template>
+        </span>
       </button>
       <button type="button" class="anim-ctl" data-anim-control="autoplay"
         [class.anim-ctl-engaged]="autoplay" (click)="toggleAutoplay()">
         <span class="anim-ctl-label">AUTOPLAY</span>
-        <span class="anim-ctl-glyph" aria-hidden="true">&#8646;</span>
+        <span class="anim-ctl-glyph" aria-hidden="true">&#8646;&#65038;</span>
       </button>
       <button type="button" class="anim-ctl" data-anim-control="fast" [class.anim-ctl-engaged]="fast"
         (click)="toggleFast()">
         <span class="anim-ctl-label">FAST</span>
-        <span class="anim-ctl-glyph" aria-hidden="true">&#9193;</span>
+        <span class="anim-ctl-glyph" aria-hidden="true">&#9193;&#65038;</span>
       </button>
       <button type="button" class="anim-ctl" data-anim-control="skip" (click)="onSkip()">
         <span class="anim-ctl-label">SKIP</span>
-        <span class="anim-ctl-glyph" aria-hidden="true">&#9197;</span>
+        <span class="anim-ctl-glyph" aria-hidden="true">&#9197;&#65038;</span>
       </button>
     </div>
 
@@ -55,7 +58,7 @@
     </ng-container>
 
     <!-- trigger banner, checklist 0, 11 and 15 -->
-    <div class="anim-banner" *ngIf="view.banner as banner" [ngStyle]="pointStyle(34, 16)"
+    <div class="anim-banner" *ngIf="view.banner as banner" [ngStyle]="bannerStyle()"
       [class.anim-banner-toy]="banner.toy" [style.opacity]="banner.progress < 0.15 ? banner.progress / 0.15 : 1">
       <div class="anim-banner-head">
         <img class="anim-banner-portrait" *ngIf="petIcon(banner.name) as icon" [src]="icon" [alt]="banner.name" />
@@ -141,8 +144,19 @@
     <!-- corpses in flight and their star bursts, checklist 3 -->
     <div class="anim-corpse" *ngFor="let corpse of view.corpses; trackBy: trackByCorpse"
       [ngStyle]="corpseStyle(corpse)">
-      <img class="anim-pet-icon" *ngIf="petIcon(corpse.name) as icon" [src]="icon" [alt]="corpse.name" />
-      <span class="anim-corpse-smoke"></span>
+      <div class="anim-pet-level">Lv{{ corpse.level }}</div>
+      <div class="anim-corpse-art">
+        <img class="anim-pet-icon" *ngIf="petIcon(corpse.name) as icon" [src]="icon" [alt]="corpse.name" />
+        <span class="anim-corpse-smoke"></span>
+      </div>
+      <div class="anim-pet-stats">
+        <span class="anim-pet-stat anim-pet-attack">
+          <img [src]="attackIcon" alt="" aria-hidden="true" />{{ corpse.attack }}
+        </span>
+        <span class="anim-pet-stat anim-pet-health">
+          <img [src]="healthIcon" alt="" aria-hidden="true" />{{ corpse.health }}
+        </span>
+      </div>
     </div>
     <div class="anim-burst" *ngFor="let burst of view.bursts; trackBy: trackById"
       [ngStyle]="burstStyle(burst.side, burst.slot)"
@@ -174,8 +188,7 @@
       [class.anim-popup-mana]="popup.kind === 'mana'"
       [class.anim-popup-copy]="popup.kind === 'copy'"
       [class.anim-popup-merged]="popup.merged">
-      <img *ngIf="popup.kind === 'stat' || popup.kind === 'mana'" [src]="statIcon(popup.statKind)" alt=""
-        aria-hidden="true" />
+      <img *ngIf="popup.kind === 'stat'" [src]="statIcon(popup.statKind)" alt="" aria-hidden="true" />
       <span>{{ popup.text }}</span>
     </div>
 

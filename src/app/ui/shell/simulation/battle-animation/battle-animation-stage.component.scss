@@ -455,7 +455,20 @@
 .anim-corpse {
   position: absolute;
   z-index: 12;
+  width: 5.6em;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   filter: grayscale(0.85);
+}
+
+.anim-corpse-art {
+  position: relative;
+  width: 4em;
+  height: 4em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .anim-corpse-smoke {
@@ -473,8 +486,11 @@
   z-index: 13;
   transform-origin: center;
   color: #ffd83f;
-  font-size: 2.6em;
-  text-shadow: 0 0 6px #fff08a;
+  font-size: 5.2em;
+  line-height: 1;
+  text-shadow:
+    0 0 0.18em #fff08a,
+    0 0 0.42em #ffcf3f;
 }
 
 /* -------------------------------------------------- projectiles, puffs -- */
@@ -486,8 +502,9 @@
 }
 
 .anim-projectile img {
-  width: 1.3em;
-  height: 1.3em;
+  width: 1.7em;
+  height: 1.7em;
+  filter: drop-shadow(0 0 0.12em rgb(255 255 255 / 90%));
 }
 
 .anim-puff {
@@ -531,10 +548,17 @@
 .anim-flash {
   position: absolute;
   z-index: 18;
-  width: 4.6em;
-  height: 4.6em;
+  width: 9em;
+  height: 9em;
   border-radius: 50%;
-  background: radial-gradient(circle, #fff 0%, rgb(255 255 255 / 0%) 70%);
+  background: radial-gradient(
+    circle,
+    #fff 0%,
+    #fff 22%,
+    rgb(255 255 255 / 70%) 40%,
+    rgb(255 250 220 / 35%) 56%,
+    rgb(255 255 255 / 0%) 72%
+  );
 }
 
 /* -------------------------------------------------------------- popups -- */
@@ -580,7 +604,7 @@
 /* Checklist 14: mana lands as a large blue numeral, not as a grey chip. */
 .anim-popup-mana {
   color: #2f6fd0;
-  font-size: 1.7em;
+  font-size: 2.1em;
   text-shadow:
     -1px 0 #fff,
     1px 0 #fff,
@@ -615,8 +639,10 @@
 }
 
 .anim-outro-row {
+  flex: 0 0 auto;
   display: flex;
   gap: 0.25rem;
+  font-size: 1.5em;
 }
 
 .anim-outro-trophy,
@@ -641,18 +667,23 @@
 }
 
 .anim-outro-face {
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
+  gap: 0.2em;
 }
 
 .anim-outro-emoji {
-  font-size: 3.4em;
+  font-size: 8em;
+  line-height: 1;
 }
 
 .anim-outro-caption {
+  font-size: 1.6em;
   font-weight: 800;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.16em;
 }
 
 /* ------------------------------------------------------------ controls -- */
@@ -701,6 +732,14 @@
 .anim-ctl-glyph {
   font-size: 1.1em;
   line-height: 1;
+  /*
+   * Checklist 16 and 17: every tile is the same blue and only the engaged
+   * state dims. The transport glyphs default to colour emoji presentation in
+   * Chrome, which drew FAST orange while its neighbours stayed white, so the
+   * bar is pinned to a text font and the markup carries U+FE0E as well.
+   */
+  font-family: 'Segoe UI Symbol', 'DejaVu Sans', 'Noto Sans Symbols 2', sans-serif;
+  font-variant-emoji: text;
 }
 
 /* Engaged is a dimmed glyph, the treatment the real bar uses (checklist 16). */
@@ -733,9 +772,46 @@
   color: inherit;
 }
 
+/*
+ * The scrubber is ours, not the game's, so it stays available but stops
+ * competing with the bar above it: a thin dark rail in the field's own palette.
+ */
 .anim-scrub {
   flex: 1 1 auto;
-  height: 0.6rem;
+  height: 0.55rem;
+  padding: 0;
+  background: transparent;
+  appearance: none;
+}
+
+.anim-scrub::-webkit-slider-runnable-track {
+  height: 0.22rem;
+  border-radius: 0.11rem;
+  background: rgb(43 50 64 / 45%);
+}
+
+.anim-scrub::-moz-range-track {
+  height: 0.22rem;
+  border-radius: 0.11rem;
+  background: rgb(43 50 64 / 45%);
+}
+
+.anim-scrub::-webkit-slider-thumb {
+  appearance: none;
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-top: -0.14rem;
+  border: none;
+  border-radius: 50%;
+  background: #38688a;
+}
+
+.anim-scrub::-moz-range-thumb {
+  width: 0.5rem;
+  height: 0.5rem;
+  border: none;
+  border-radius: 50%;
+  background: #38688a;
 }
 
 .anim-clock {
