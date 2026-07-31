@@ -50,3 +50,14 @@ Sounds (stretch only).
 Draft PRs against master, one per wave, no stacking bases.
 Node deps on the box via corepack yarn1 + /dev/shm staging (npm hangs).
 ng serve on box :4200, tunneled to the VPS for calculator-side recording.
+
+## Amendment 2026-07-31 (Ruihan review of W0)
+
+Coverage axis is the event-class vocabulary of the current implementation (the applyLogMutation switch), not per-pet mechanisms.
+W0b closes footage gaps per event class (jump attack, trumpets, mana change, xp change), records the speed-up mode grammar as its own section, records the battle intro and victory/defeat screens, and documents the replay controls: stop, skip, rewind, speed.
+Replay navigation for the harness: bottom goto to pick a turn, then the double-swords button enters the battle animation.
+Tutorial popups from guest onboarding are excluded from parity.
+W2 additionally implements the full control set (play, stop, skip, rewind, speed with its own grammar) and wraps the battle with the intro and end screens behind the animation button.
+Prose-parsing replacement rationale (checked on a question from Ruihan): the text parsing exists because the worker boundary strips class instances, not because of gh-pages deployment; plain-data events cross the same boundary fine.
+The old text-parsing path stays behind a fallback flag until W3 parity passes, then gets deleted.
+Scope split confirmed: this repo does battle animation only; shop animation is a separate play-web (SAP-PPO) line.
