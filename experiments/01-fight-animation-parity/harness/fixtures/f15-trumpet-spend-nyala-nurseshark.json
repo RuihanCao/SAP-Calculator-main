@@ -1,0 +1,22 @@
+{
+ "id": "f15-trumpet-spend-nyala-nurseshark",
+ "title": "Nyala banks trumpets in battle, Nurse Shark spends them",
+ "covers": [
+  "trumpets spent",
+  "trumpets gained",
+  "snipe paid for by trumpets"
+ ],
+ "turn": 11,
+ "playerPack": "Golden",
+ "opponentPack": "Turtle",
+ "player": [
+  {"pet": "Nyala", "attack": 3, "health": 4},
+  {"pet": "Nurse Shark", "attack": 5, "health": 7},
+  {"pet": "Duck", "attack": 4, "health": 20},
+  {"pet": "Pig", "attack": 4, "health": 16}
+ ],
+ "opponent": [
+  {"pet": "Cow", "attack": 8, "health": 30}
+ ],
+ "notes": "The one fixture that reaches spendTrumpets. Nyala faints on the first clash and banks 8 trumpets, Nurse Shark faints on the second and spends 6 of them on an 18 damage snipe, leaving 2 on the counter. The opponent is a single pet so the snipe target is forced and the battle stays deterministic. Two friends are kept alive so the Golden pack last stand Golden Retriever, which spawns as soon as the player is down to one pet with trumpets in hand, never appears."
+}

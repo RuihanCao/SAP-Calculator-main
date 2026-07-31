@@ -131,6 +131,7 @@ Only f09 produces a pure reposition, and the calculator emits no move event at a
 - The buff lands after the move, as its own popup. f09 t=31.20 shows a red heart icon over the moved pet.
 
 Parity requirement: repositioning is an animated arc of the moved pet with the rest of the segment closing up, and it is a distinct event from the buff that accompanies it.
+W0c added f16, the same reposition driven by a pet ability and pushing one space instead of pushing to the front, and it uses this same grammar. See section 19.
 
 ## 10. Equipment
 
@@ -176,7 +177,7 @@ Parity requirement: kill the hard-coded setTimeout table and the x2 fudge, and d
 
 Useful negatives, because the current calculator does some of these.
 
-- It never merges N hits into one popup. Every hit gets its own number.
+- It never merges two different events into one popup. Corrected in W0c for the one case where it does merge: repeated clashes between the same two pets share one running damage numeral, see section 19.
 - It never shows two sequential frames for one mutual attack.
 - It never removes a dead pet before the damage step is finished.
 - It does not scale the projectile arc obviously with distance.
@@ -207,6 +208,7 @@ Parity requirement: a jump attack is one event that moves the attacker over the 
 - This is the one event class with no pet target, so there is no source to target motion at all: the motion is banner to counter.
 
 Parity requirement: trumpets need a persistent per-side counter widget on the play area, not a popup over a pet.
+The spend half of this class is in section 19.
 
 **Mana.** f13, `z_f13_mana.jpg`.
 
@@ -397,6 +399,62 @@ Every coverage fixture is served with `WatchedOn` set, which is the replay path,
 The two end-screen clips were served with `WatchedOn` cleared, which makes the client accept the battle as real, show the end screen, and consume the turn.
 `Outcome` in the payload, 1 win and 2 loss, is what the end screen reads, so it has to be set to agree with the boards.
 
+## 19. Grammar first recorded in W0c
+
+Two fixtures were added to close the last gaps in COVERAGE.md, and reading them turned up one correction to a W0 claim.
+
+**Trumpets spent.** f15, `z_f15_spend.jpg`, `z_f15_counter_spend.jpg`, `z_f15_spend_path.jpg`.
+
+The spend is the gain run backwards, followed by an ordinary snipe.
+
+- The gain half is exactly section 14's, just with a bigger number. f15 t=30.13 the `NYALA / Faint -> Gain +8 trumpets` banner, t=30.62 a trumpet icon detaches from the banner's own rules text, t=31.18 the counter pill lands with a green flash reading 8, t=31.44 it settles white. See `z_f15_counter_gain.jpg`.
+- The spender gets its own banner, over its corpse, because the trigger is a faint. f15 t=33.61 `NURSE SHARK / Faint -> Spend up to 6 trumpets and deal triple as attack damage to one random enemy`.
+- The counter flashes pale yellow instead of green, and the number drops in one step rather than counting down. f15 t=34.14, 8 to 2, for a payment of 6.
+- One trumpet icon leaves the counter and travels down into the acting pet, landing on it with a small flash, whatever the size of the payment. f15 t=34.14 launch, t=34.36 mid flight, t=34.58 arrival. Six trumpets are one token, not six.
+- So the motion is the mirror image of the gain: banner to counter on a gain, counter to pet on a spend.
+- The effect the trumpets paid for is then a completely ordinary snipe, section 5, with the grey attack rock and no trumpet decoration at all. f15 t=35.09 launch from the spender, t=35.48 impact on the Cow with a white puff and a red `18`.
+- The gap between the counter changing and the rock launching is about 0.95 s, and the spend log and the snipe log are two separate beats on screen, exactly as they are two separate lines in the fork sim.
+- The counter widget is anchored at a fixed point at the top of the play area and does not move when a banner is up. The banner is drawn over it, so while a banner is on screen only the counter's left trumpet and its number are readable. Compare f15 t=32.02 with fast-f15 t=30.01, where the pill is in the same place with no banner over it.
+
+Parity requirement: a spend is a counter countdown with its own colour, plus a token that travels from the counter to the source pet, plus a separate ordinary effect for whatever was bought.
+
+**Reposition driven by a pet ability.** f16, `z_f16_move.jpg`, `z_f16_move_close.jpg`, `z_f16_launch.jpg`.
+
+Section 9 was written from f09, where the reposition comes from a toy and pushes the last enemy all the way to the front.
+f16 is the same event from a pet, pushing one space, and the grammar is the same one.
+
+- Pet banner, with portrait and level pill. f16 t=29.14 `CHIHUAHUA / Start of battle -> Push the most healthy enemy one space forward`, source outlined green in its slot even though it is at the back of its own board.
+- A grey rock leaves the source pet, not the banner, rises over the banner, and descends onto the target. f16 t=29.65 launch at the Chihuahua's head, t=29.77 apex, t=30.05 impact, so about 0.40 s of flight, the same arc as a snipe.
+- The target then lifts off the ground and arcs over the pet it is passing, carrying its level plaque and its stat pills with it. f16 t=30.13 shows the Cow airborne above the Worm.
+- The passed pet slides backwards into the slot the moved pet just left, in the same beat, so a one space push reads as an exchange. f16 t=30.30 lands on Otter, Cow, Worm.
+- That is the only difference from f09, where the push went to the front and the whole passed segment rotated up behind the moved pet. The arc-over is the same in both, so the arc is not a special case of pushing to the front.
+
+Parity requirement: repositioning is one grammar regardless of source and distance, a rock to the target then an arc-over by the target, with the passed pets closing up in the same beat.
+
+**Equipment effects, covered by equivalence.** f08, f10.
+
+No fixture emits a log with `type: 'equipment'`, and none was recorded for W0c.
+An equipment effect is drawn with the same grammar as a pet ability effect: the same banner card, the same projectile rule, the same popups.
+f10 t=36.85 is the banner for a granted perk, with the same layout as any ability banner plus the grey italic second line that explains the perk, and t=37.32 is the coconut icon leaving that banner's rules text on the ordinary arc.
+What is specific to equipment is the persistent icon on the pet and its break animation, and both are already recorded in f08 at t=28.61 and t=30.14.
+
+Parity requirement: the `equipment` branch of the animation switch draws what the `ability` branch draws, and the only equipment-specific drawing is the worn icon and its break.
+
+**Correction to section 13: damage popups accumulate within an engagement.**
+
+W0 claimed the game never merges N hits into one popup and that every hit gets its own number.
+That is wrong for the commonest case in the game, two front pets trading repeatedly, and it was found while reading the ordinary clashes in f16.
+
+- The red numeral over a pet is the total damage that pet has taken from its current opponent, not the damage of the clash that just happened.
+- f01 Pig against Otter: t=31.59 shows `6` on the Pig and `4` on the Otter, then the second clash at t=32.19 shows `12` and `8`, while the stat pills move by 6 and 4 both times. See `z_popup_accumulate.jpg`.
+- It resets as soon as either pet is replaced. f01 t=33.06, the Duck takes over from the dead Pig and the numerals restart at `6` and `3`.
+- Same in f12, Duck against Cow: t=33.62 shows `5` and `4`, t=34.12 shows `10` and `8`, then the Otter arrives and t=35.21 restarts at `2` and `4`.
+- Same in f16, Pig against Cow: t=32.83 shows `3` and `9`, t=33.13 shows `6` and `18`.
+- The popup still fades between clashes, so this is not one long-lived object. The number that comes back is the running total.
+
+Parity requirement: a clash popup shows the accumulated damage for that pairing, so the animation cannot just print the current log line's damage value.
+The counter resets when either side of the pairing changes, which the event stream has to carry.
+
 ## Fixture coverage and status
 
 | fixture | covers | fork sim determinism | boards verified on screen | divergence |
@@ -415,12 +473,14 @@ The two end-screen clips were served with `WatchedOn` cleared, which makes the c
 | f12-trumpets-groundhog | trumpets, faint trigger with no pet target | deterministic | yes | none |
 | f13-mana-alchemedes | mana change, persistent mana pill | deterministic | yes | none |
 | f14-xp-pug | xp change, level up during battle | deterministic | yes | none |
+| f15-trumpet-spend-nyala-nurseshark | trumpets banked and spent in one battle, snipe paid for with trumpets | deterministic | yes | none |
+| f16-move-chihuahua | reposition driven by a pet ability, one space push | deterministic | yes | none |
 
 Determinism was measured three ways per fixture, by `harness/sim_notes.js`.
 `randomDecisions` is the engine's own capture of every point where it consulted the RNG.
 `randomEventLogs` is the engine's own tagging of logs as random.
 `stableOver25Runs` reruns the battle 25 times unseeded and requires the winner and the whole log text to be identical.
-Thirteen fixtures are clean on all three.
+Fifteen fixtures are clean on all three.
 
 f07 is marked order-only: its winner and the multiset of log lines never change over 25 runs, and the only thing that varies is which of three simultaneous faints the engine writes first.
 That is inherent to the fixture, whose whole point is three pets dying in one step, and the real game shows them as one simultaneous step anyway.
