@@ -74,8 +74,8 @@ const actorSide = (event: AnimationAbilityTriggerEvent): AnimationSide =>
  * nothing dying between them are one short beat apart, about 0.62 s, which is
  * inside the 0.7 s popup lifetime and is what makes the merge rule visible. A
  * faint stretches the beat to about 1.3 s, and it does so by what the death
- * costs -- the corpse holds in place, launches, and the survivors slide -- not
- * by a longer floor.
+ * costs, the corpse holding in place, launching, and the survivors sliding,
+ * rather than by a longer floor.
  */
 export const buildBattleTimeline = (
   events: ReadonlyArray<AnimationEvent>,
