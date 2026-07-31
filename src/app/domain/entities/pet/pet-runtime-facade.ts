@@ -380,10 +380,13 @@ export abstract class PetRuntimeFacade extends PetTargetingRuntimeFacade {
     // (checklist 14), so the stats it carries are not their own events. A
     // target already at maximum experience gains no burst to hide them in, so
     // there the stats are drawn as themselves.
-    this.suppressStatAnimation = Math.min(this.exp + amt, 5) > this.exp;
+    const carriedByTheBurst = Math.min(this.exp + amt, 5) > this.exp;
+    this.suppressStatAnimation = carriedByTheBurst;
+    let attackDelta = 0;
+    let healthDelta = 0;
     try {
-      this.increaseAttack(amt);
-      this.increaseHealth(amt);
+      attackDelta = this.increaseAttack(amt);
+      healthDelta = this.increaseHealth(amt);
     } finally {
       this.suppressStatAnimation = false;
     }
@@ -396,6 +399,10 @@ export abstract class PetRuntimeFacade extends PetTargetingRuntimeFacade {
       amount: this.exp - expBefore,
       levelFrom: startingLevel,
       levelTo: this.level,
+      // The stats the burst swallowed, so the animation's board can still
+      // apply them; zero when they were drawn as their own pills instead.
+      levelAttack: carriedByTheBurst ? attackDelta : 0,
+      levelHealth: carriedByTheBurst ? healthDelta : 0,
     });
     if (timesLevelled > 0) {
       this.baseSellValue += timesLevelled;

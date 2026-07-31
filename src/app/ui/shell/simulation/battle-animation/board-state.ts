@@ -176,6 +176,12 @@ export const applyEventToBoard = (
       } else if (event.kind === 'exp') {
         board.xpInPlay = true;
         target.exp = (target.exp ?? 0) + event.amount;
+        // A level-up is one gold burst rather than two stat pills, so the
+        // stats it carried arrive on this event and nowhere else: without them
+        // the pet's pills stay on its old numbers while its damage numeral is
+        // already using the new attack (checklist 14).
+        target.attack += event.levelAttack ?? 0;
+        target.health += event.levelHealth ?? 0;
         if (event.levelTo != null) {
           target.level = event.levelTo;
         }

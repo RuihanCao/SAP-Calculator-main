@@ -147,6 +147,19 @@ export interface AnimationStatChangeEvent extends AnimationEventCommon {
   total: number | null;
   levelFrom: number | null;
   levelTo: number | null;
+  /**
+   * Attack and health the experience carried, `exp` only and only when the
+   * burst is hiding them.
+   *
+   * A level-up is drawn as one gold burst rather than as two stat pills
+   * (checklist 14), so the engine emits no `attack` or `health` change for it.
+   * The numbers still have to reach the board the animation rebuilds, or the
+   * pet's pills stay on its old stats while its damage numeral already uses
+   * the new attack. Absent when the change was drawn as its own pills, which
+   * is what a pet already at maximum experience gets.
+   */
+  levelAttack?: number;
+  levelHealth?: number;
 }
 
 /** Copied stats render as one white `attack health` label, not two pills. */

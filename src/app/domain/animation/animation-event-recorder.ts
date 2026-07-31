@@ -726,6 +726,9 @@ export class AnimationEventRecorder {
     total?: number | null;
     levelFrom?: number | null;
     levelTo?: number | null;
+    /** Stats the level-up carried, when the burst drew them, see `increaseExp`. */
+    levelAttack?: number;
+    levelHealth?: number;
     /** Books the change against the pet without drawing it, see `increaseExp`. */
     silent?: boolean;
   }): void {
@@ -754,6 +757,10 @@ export class AnimationEventRecorder {
       total: options.total ?? null,
       levelFrom: options.levelFrom ?? null,
       levelTo: options.levelTo ?? null,
+      // Only carried when there is something to carry, so the field appears on
+      // the one event class that owns it rather than on every stat change.
+      ...(options.levelAttack ? { levelAttack: options.levelAttack } : {}),
+      ...(options.levelHealth ? { levelHealth: options.levelHealth } : {}),
     });
   }
 

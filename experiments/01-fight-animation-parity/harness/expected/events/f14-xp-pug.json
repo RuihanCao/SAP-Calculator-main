@@ -86,6 +86,8 @@
     "total": null,
     "levelFrom": 1,
     "levelTo": 2,
+    "levelAttack": 2,
+    "levelHealth": 2,
     "seq": 4
   },
   {
