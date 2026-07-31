@@ -14,6 +14,7 @@ filmstrip without changes.
 Usage:
   record_calc.py --all
   record_calc.py f01-plain-trades [--fast] [--seconds 30] [--url http://127.0.0.1:4200]
+  record_calc.py f01-plain-trades --swap        # the same battle lost, for the defeat screen
 """
 import argparse
 import asyncio
@@ -82,13 +83,38 @@ def fixture_url(fixture, base_url):
     return f"{base_url}/?c={payload}"
 
 
-async def record_one(fid, base_url, seconds, fast, quality):
+def swap_boards(fixture):
+    """The same battle from the losing side, which is how the defeat screen is reached.
+
+    Nothing about the fixture set changes: the file on disk is untouched and the
+    swap happens on the way into the share-state parameter.
+    """
+    swapped = dict(fixture)
+    swapped["player"], swapped["opponent"] = fixture.get("opponent"), fixture.get("player")
+    swapped["playerPack"], swapped["opponentPack"] = (
+        fixture.get("opponentPack", "Turtle"),
+        fixture.get("playerPack", "Turtle"),
+    )
+    swapped["playerToy"], swapped["opponentToy"] = (
+        fixture.get("opponentToy"),
+        fixture.get("playerToy"),
+    )
+    swapped["playerToyLevel"], swapped["opponentToyLevel"] = (
+        fixture.get("opponentToyLevel", 1),
+        fixture.get("playerToyLevel", 1),
+    )
+    return swapped
+
+
+async def record_one(fid, base_url, seconds, fast, quality, swap=False):
     from playwright.async_api import async_playwright
 
     with open(os.path.join(FIXTURES, f"{fid}.json")) as handle:
         fixture = json.load(handle)
+    if swap:
+        fixture = swap_boards(fixture)
 
-    suffix = "-fast" if fast else ""
+    suffix = "-fast" if fast else ("-defeat" if swap else "")
     outdir = os.path.join(OUT_ROOT, f"{fid}{suffix}")
     os.makedirs(outdir, exist_ok=True)
     for name in os.listdir(outdir):
@@ -127,8 +153,15 @@ async def record_one(fid, base_url, seconds, fast, quality):
         )
         await page.wait_for_timeout(400)
 
+        # The bar's buttons carry stable data attributes, because the labels
+        # are not unique any more: AUTOPLAY contains PLAY. The presses are
+        # dispatched rather than clicked because the bar is deliberately inert
+        # until it has faded in, which is a second into the entrance
+        # (checklist 17), and the recording starts before that.
         if fast:
-            await page.click("app-battle-animation-stage button:text('FAST')")
+            await page.dispatch_event(
+                "app-battle-animation-stage [data-anim-control='fast']", "click"
+            )
             await page.wait_for_timeout(150)
 
         shot = await page.locator("app-battle-animation-stage .anim-field").screenshot()
@@ -167,7 +200,9 @@ async def record_one(fid, base_url, seconds, fast, quality):
             },
         )
 
-        await page.click("app-battle-animation-stage button:text('PLAY')")
+        await page.dispatch_event(
+            "app-battle-animation-stage [data-anim-control='play']", "click"
+        )
         deadline = time.time() + seconds
         while time.time() < deadline:
             await page.wait_for_timeout(250)
@@ -186,6 +221,7 @@ async def record_one(fid, base_url, seconds, fast, quality):
                 {
                     "fixture": fid,
                     "fast": fast,
+                    "swapped": swap,
                     "battle_start_ms": 0,
                     "frames": state["n"],
                     "seconds": round(time.time() - state["t0"], 2),
@@ -203,6 +239,11 @@ def main():
     parser.add_argument("fixture", nargs="?")
     parser.add_argument("--all", action="store_true")
     parser.add_argument("--fast", action="store_true")
+    parser.add_argument(
+        "--swap",
+        action="store_true",
+        help="swap the boards, so the recording ends on the defeat screen",
+    )
     parser.add_argument("--seconds", type=float, default=45)
     parser.add_argument("--quality", type=int, default=70)
     parser.add_argument("--url", default=APP_URL)
@@ -218,7 +259,7 @@ def main():
 
     for fid in ids:
         asyncio.run(
-            record_one(fid, args.url, args.seconds, args.fast, args.quality)
+            record_one(fid, args.url, args.seconds, args.fast, args.quality, args.swap)
         )
 
 

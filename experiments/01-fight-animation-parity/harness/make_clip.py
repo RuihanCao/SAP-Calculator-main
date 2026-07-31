@@ -24,12 +24,17 @@ FFMPEG = os.environ.get(
 )
 
 
-def frames(clipdir, start_ms=None):
-    """Frames as (path, ms-since-record-start), optionally trimmed at the front.
+def frames(clipdir, start_ms=None, end_ms=None):
+    """Frames as (path, ms-since-record-start), optionally trimmed at both ends.
 
     run_fixture.py writes meta.json with battle_start_ms, the offset at which
     the /api/battle/get interception was seen. Everything before that is menu
     navigation and does not belong in the reference clip.
+
+    end_ms trims the tail. The motion filmstrip picks the frames that changed
+    most, and a long even ramp (the opening shutter, the end screen dimming)
+    produces hundreds of middling changes that crowd out the battle's own
+    beats, so a strip meant to read the beats is cut to the beats.
     """
     if start_ms is None:
         try:
@@ -44,7 +49,7 @@ def frames(clipdir, start_ms=None):
             ms = int(n.rsplit("_", 1)[1].split(".")[0])
         except Exception:
             ms = 0
-        if ms >= start_ms:
+        if ms >= start_ms and (end_ms is None or ms <= end_ms):
             out.append((os.path.join(clipdir, n), ms))
     return out
 
@@ -129,15 +134,30 @@ def main():
     ap.add_argument("--mode", choices=["even", "motion"], default="motion")
     ap.add_argument("--fps", type=int, default=25)
     ap.add_argument("--start-ms", type=int, default=None)
+    ap.add_argument("--end-ms", type=int, default=None)
+    ap.add_argument(
+        "--strip-start-ms",
+        type=int,
+        default=None,
+        help="trim the filmstrip only, so the clip still carries the whole recording",
+    )
+    ap.add_argument("--strip-end-ms", type=int, default=None)
     a = ap.parse_args()
 
     name = os.path.basename(a.clipdir.rstrip("/"))
     outdir = a.out_dir or os.path.dirname(a.clipdir.rstrip("/"))
     os.makedirs(outdir, exist_ok=True)
-    fs = frames(a.clipdir, a.start_ms)
+    fs = frames(a.clipdir, a.start_ms, a.end_ms)
     n = len(fs)
     webm = encode_webm(fs, os.path.join(outdir, f"{name}.webm"), a.fps)
-    strip = filmstrip(fs, os.path.join(outdir, f"{name}_filmstrip.jpg"), a.tiles, a.mode)
+    strip_fs = (
+        frames(a.clipdir, a.strip_start_ms or a.start_ms, a.strip_end_ms or a.end_ms)
+        if (a.strip_start_ms or a.strip_end_ms)
+        else fs
+    )
+    strip = filmstrip(
+        strip_fs, os.path.join(outdir, f"{name}_filmstrip.jpg"), a.tiles, a.mode
+    )
     print(f"{name}: frames={n} webm={webm} filmstrip={strip}")
 
 
