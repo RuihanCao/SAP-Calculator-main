@@ -9,6 +9,7 @@ import { makeRoomForSlot as makeRoomForSlotImpl, onionCheck as onionCheckImpl, p
 import { summonPet as summonPetImpl, transformPet as transformPetImpl } from './player/player-summon';
 import { PlayerSummonFacade } from './player/player-summon-facade';
 import { installLogServiceFallback } from 'app/runtime/log-service-fallback';
+import type { AnimationEventRecorder } from 'app/domain/animation/animation-event-recorder';
 
 
 export class Player extends PlayerSummonFacade {
@@ -60,6 +61,11 @@ export class Player extends PlayerSummonFacade {
   ) {
     super();
     installLogServiceFallback(this);
+  }
+
+  /** Structured animation event sink. Instrumentation only, no gameplay use. */
+  get animation(): AnimationEventRecorder {
+    return this.logService.animation;
   }
 
   alive(): boolean {

@@ -1,4 +1,8 @@
 import type { LogService } from 'app/integrations/log.service';
+import { AnimationEventRecorder } from 'app/domain/animation/animation-event-recorder';
+
+/** Never enters capture, so every record call on it is a no-op. */
+const FALLBACK_ANIMATION_RECORDER = new AnimationEventRecorder();
 
 const FALLBACK_LOG_SERVICE = {
   setEnabled: () => {},
@@ -14,6 +18,10 @@ const FALLBACK_LOG_SERVICE = {
   getLogs: (): unknown[] => [],
   reset: () => {},
   printState: () => {},
+  animation: FALLBACK_ANIMATION_RECORDER,
+  getAnimationEvents: (): unknown[] => [],
+  beginAnimationCapture: () => {},
+  endAnimationCapture: () => {},
 } as unknown as LogService;
 
 export function coerceLogService(

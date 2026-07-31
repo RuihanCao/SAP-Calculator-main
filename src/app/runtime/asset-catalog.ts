@@ -333,6 +333,88 @@ export function getAllEquipmentNames(): string[] {
   return [...equipmentNames];
 }
 
+const petAbilityByLevel = buildAbilityLevelMap(petAbilityEntries);
+const toyAbilityByLevel = buildAbilityLevelMap(toyAbilityEntries);
+
+function buildAbilityLevelMap(
+  entries: Array<NameIdEntry & { Abilities?: AbilityEntry[] }>,
+): Map<string, Map<number, string>> {
+  const map = new Map<string, Map<number, string>>();
+  for (const entry of entries) {
+    if (!entry?.Name || !Array.isArray(entry.Abilities)) {
+      continue;
+    }
+    const byLevel = new Map<number, string>();
+    for (const ability of entry.Abilities) {
+      if (!ability?.About || ability.Level == null) {
+        continue;
+      }
+      byLevel.set(ability.Level, ability.About);
+    }
+    if (byLevel.size > 0) {
+      map.set(entry.Name, byLevel);
+    }
+  }
+  return map;
+}
+
+const pickLevelText = (
+  byLevel: Map<number, string> | undefined,
+  level: number,
+): string | null => {
+  if (!byLevel) {
+    return null;
+  }
+  const wanted = Number.isFinite(level) ? Math.max(1, Math.trunc(level)) : 1;
+  for (let candidate = wanted; candidate >= 1; candidate--) {
+    const text = byLevel.get(candidate);
+    if (text) {
+      return text;
+    }
+  }
+  const first = byLevel.values().next();
+  return first.done ? null : first.value;
+};
+
+export function getPetAbilityTextForLevel(
+  petName: string | undefined,
+  level: number,
+): string | null {
+  if (!petName) {
+    return null;
+  }
+  return pickLevelText(petAbilityByLevel.get(petName), level);
+}
+
+export function getToyAbilityTextForLevel(
+  toyName: string | undefined,
+  level: number,
+): string | null {
+  if (!toyName) {
+    return null;
+  }
+  return pickLevelText(toyAbilityByLevel.get(toyName), level);
+}
+
+/**
+ * Rules text as a trigger banner prints it, for one acting entity at one level.
+ * Injected into the animation event recorder so the domain layer keeps no
+ * dependency on the content JSON.
+ */
+export function getAbilityBannerText(
+  source: 'pet' | 'equipment' | 'toy',
+  name: string,
+  level: number,
+): string | null {
+  if (source === 'toy') {
+    return getToyAbilityTextForLevel(name, level);
+  }
+  if (source === 'equipment') {
+    return getEquipmentAbilityText(name);
+  }
+  return getPetAbilityTextForLevel(name, level);
+}
+
 const packNameToPetMap: Record<string, string> = {
   Turtle: 'Turtle',
   Golden: 'Golden Retriever',
