@@ -440,20 +440,20 @@ What is specific to equipment is the persistent icon on the pet and its break an
 
 Parity requirement: the `equipment` branch of the animation switch draws what the `ability` branch draws, and the only equipment-specific drawing is the worn icon and its break.
 
-**Correction to section 13: damage popups accumulate within an engagement.**
+**Correction to the correction (Ruihan caught it, f10 is the decisive sample): popups are per hit, and only merge while a popup is still alive.**
 
-W0 claimed the game never merges N hits into one popup and that every hit gets its own number.
-That is wrong for the commonest case in the game, two front pets trading repeatedly, and it was found while reading the ordinary clashes in f16.
+W0c claimed the red numeral is the running total of damage taken from the current opponent.
+That over-generalised from three samples whose clashes were only ~0.6 s apart.
+f10 disproves the pairing-total rule: Peacock vs Hippo clash at t=29.76 pops `6`/`2`, a ~2 s Peacock banner interlude lets the popups fade, and the SAME pairing's next clash at t=31.84 pops `6`/`5` (the new per-hit values after the +3 attack buff), not `12`/`7`.
+See `z_f10_hurt.jpg`.
 
-- The red numeral over a pet is the total damage that pet has taken from its current opponent, not the damage of the clash that just happened.
-- f01 Pig against Otter: t=31.59 shows `6` on the Pig and `4` on the Otter, then the second clash at t=32.19 shows `12` and `8`, while the stat pills move by 6 and 4 both times. See `z_popup_accumulate.jpg`.
-- It resets as soon as either pet is replaced. f01 t=33.06, the Duck takes over from the dead Pig and the numerals restart at `6` and `3`.
-- Same in f12, Duck against Cow: t=33.62 shows `5` and `4`, t=34.12 shows `10` and `8`, then the Otter arrives and t=35.21 restarts at `2` and `4`.
-- Same in f16, Pig against Cow: t=32.83 shows `3` and `9`, t=33.13 shows `6` and `18`.
-- The popup still fades between clashes, so this is not one long-lived object. The number that comes back is the running total.
+The actual rule:
+- A damage popup shows THIS hit's damage.
+- If another hit lands on the same pet while its popup is still visible (lifetime ~0.7 s), the visible number increments in place: f01 clashes 0.59 s apart show `6` then `12`; f12 shows `5` then `10`; f16 shows `3` then `6`.
+- Once the popup has faded, the next hit starts fresh, even for the same pairing (f10 above).
 
-Parity requirement: a clash popup shows the accumulated damage for that pairing, so the animation cannot just print the current log line's damage value.
-The counter resets when either side of the pairing changes, which the event stream has to carry.
+Parity requirement: the popup component carries the current log line's damage value, and adds into an existing live popup on the same pet instead of spawning a second one.
+No pairing state is needed in the event stream for this.
 
 ## Fixture coverage and status
 
