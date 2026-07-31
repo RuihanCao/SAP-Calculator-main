@@ -12,14 +12,20 @@ import {
   CorpseLaunchCue,
   DamagePopupCue,
   MoveArcCue,
+  OutlineCue,
   ProjectileCue,
   SlideCue,
   StatPillCue,
+  INTRO_BEATS,
   TimelineSampler,
+  TrumpetCounterFlashCue,
+  TrumpetTokenCue,
   buildBattleTimeline,
   buildSeedBoard,
   advancePlayback,
   initialPlayback,
+  nextCheckpointMs,
+  parseBannerText,
   pause,
   play,
   rewind,
@@ -129,25 +135,95 @@ describe('battle animation director', () => {
       expect(cow?.health).toBe(0);
     });
 
-    it('keeps the clash cadence at about 1.3 s even when a pet dies between', () => {
+    it('paces the cadence by what happened, 0.6 s on a trade and 1.3 s on a faint', () => {
       const timeline = timelineFor('f01-plain-trades');
+      const events = readGolden('f01-plain-trades');
       const clashes = cuesOfKind<ClashCue>(timeline, 'clash');
+      const clashSeqs = events
+        .filter((event) => event.type === 'clash')
+        .map((event) => event.seq);
+      /** Did anything die between this clash and the next one? */
+      const deadly = clashSeqs.map((seq, index) => {
+        const next = clashSeqs[index + 1] ?? Number.MAX_SAFE_INTEGER;
+        return events.some(
+          (event) => event.type === 'faint' && event.seq > seq && event.seq < next,
+        );
+      });
+      expect(deadly.filter(Boolean).length).toBeGreaterThan(0);
+      expect(deadly.filter((died) => !died).length).toBeGreaterThan(0);
+
       for (let index = 1; index < clashes.length; index += 1) {
         const gap = clashes[index].contactMs - clashes[index - 1].contactMs;
-        // f01 t=29.84 to t=31.16 on the reference clip, faint and slide inside.
-        expect(gap).toBeGreaterThanOrEqual(1200);
-        expect(gap).toBeLessThanOrEqual(1450);
+        if (deadly[index - 1]) {
+          // f01 t=29.84 to t=31.16, the faint and the slide inside the beat.
+          expect({ index, gap: gap >= 1250 && gap <= 1500 }).toEqual({
+            index,
+            gap: true,
+          });
+        } else {
+          // f01's back to back trades, 0.59 s apart on the reference clip.
+          expect({ index, gap: gap >= 590 && gap <= 700 }).toEqual({
+            index,
+            gap: true,
+          });
+        }
       }
     });
 
-    it('makes a jump attack one longer event with a two sided contact', () => {
-      const timeline = timelineFor('f11-jump-african-wild-dog');
-      const jumps = cuesOfKind<ClashCue>(timeline, 'clash').filter((cue) => cue.jump);
-      expect(jumps.length).toBeGreaterThan(0);
-      for (const jump of jumps) {
-        expect(jump.hits).toHaveLength(2);
-        expect(jump.endMs - jump.startMs).toBeGreaterThan(1200);
+    it('outlines both front pets red half a second before the contact frame', () => {
+      const timeline = timelineFor('f01-plain-trades');
+      const clash = cuesOfKind<ClashCue>(timeline, 'clash')[1];
+      const windups = timeline.cues.filter(
+        (cue): cue is OutlineCue =>
+          cue.kind === 'windupOutline' && cue.seq === clash.seq,
+      );
+      expect(windups).toHaveLength(2);
+      for (const cue of windups) {
+        expect(clash.contactMs - cue.startMs).toBeGreaterThanOrEqual(400);
+        expect(cue.endMs).toBe(clash.contactMs);
       }
+      const frame = new TimelineSampler(timeline).frameAt(clash.contactMs - 300);
+      expect(frame.pets.filter((pet) => pet.outline === 'windup')).toHaveLength(2);
+    });
+
+    it('sends only the attacker on a jump, to the target slot and back', () => {
+      const timeline = timelineFor('f11-jump-african-wild-dog');
+      const jump = cuesOfKind<ClashCue>(timeline, 'clash').find((cue) => cue.jump);
+      expect(jump).toBeTruthy();
+      const cue = jump as ClashCue;
+      expect(cue.hits).toHaveLength(2);
+      expect(cue.endMs - cue.startMs).toBeGreaterThan(1200);
+      const sampler = new TimelineSampler(timeline);
+
+      const apex = sampler.frameAt((cue.startMs + cue.contactMs) / 2);
+      const flyer = apex.pets.find((pet) => pet.pet.id === cue.jumperId);
+      const target = apex.pets.find((pet) => pet.pet.id === cue.jumpTargetId);
+      expect(flyer?.lift).toBeGreaterThan(0.8);
+      // The target never leaves its slot, checklist 14.
+      expect(target?.lift).toBe(0);
+      expect(target?.lean).toBe(0);
+
+      const contact = sampler.frameAt(cue.contactMs + 1);
+      const landed = contact.pets.find((pet) => pet.pet.id === cue.jumperId);
+      expect(landed?.lean).toBe(1);
+      expect(landed?.lift).toBe(0);
+      expect(landed?.jumpTargetSlot).toBe(
+        contact.pets.find((pet) => pet.pet.id === cue.jumpTargetId)?.slot,
+      );
+      // The flash is at the target's slot and both numbers are in that frame.
+      expect(contact.flash?.aSlot).toBe(contact.flash?.bSlot);
+      expect(contact.flash?.aSlot).toBe(landed?.jumpTargetSlot);
+      expect(contact.popups.filter((popup) => popup.kind === 'damage')).toHaveLength(2);
+
+      const back = sampler.frameAt((cue.returnStartMs + cue.endMs) / 2);
+      expect(back.pets.find((pet) => pet.pet.id === cue.jumperId)?.lift).toBeGreaterThan(
+        0.8,
+      );
+      const home = sampler.frameAt(cue.endMs + 10);
+      const settled = home.pets.find((pet) => pet.pet.id === cue.jumperId);
+      expect(settled?.jumpTargetSlot).toBeNull();
+      expect(settled?.lift).toBe(0);
+      expect(home.puffs.some((puff) => puff.kind === 'landing')).toBe(true);
     });
   });
 
@@ -234,6 +310,49 @@ describe('battle animation director', () => {
       expect(popups[0].merges).toBe(1);
     });
 
+    it('fires the merge on the real f01 cadence, 6/4 then 12/8', () => {
+      const timeline = timelineFor('f01-plain-trades');
+      const clashes = cuesOfKind<ClashCue>(timeline, 'clash');
+      // The second and third clashes of f01 are the pair with nothing dying
+      // between them, which is what puts the second hit inside the first
+      // popup's 0.7 s life.
+      const first = clashes[1];
+      const second = clashes[2];
+      expect(second.contactMs - first.contactMs).toBeLessThan(700);
+
+      const sampler = new TimelineSampler(timeline);
+      const read = (atMs: number) =>
+        sampler
+          .frameAt(atMs)
+          .popups.filter((popup) => popup.kind === 'damage')
+          .map((popup) => popup.text)
+          .sort();
+      expect(read(first.contactMs + 1)).toEqual(['4', '6']);
+      expect(read(second.contactMs + 1)).toEqual(['12', '8']);
+
+      // Two popups, incremented in place, not four spawned.
+      const spawned = cuesOfKind<DamagePopupCue>(timeline, 'damagePopup').filter(
+        (popup) =>
+          popup.startMs >= first.contactMs && popup.startMs <= second.contactMs,
+      );
+      expect(spawned).toHaveLength(2);
+      expect(spawned.map((popup) => popup.merges)).toEqual([1, 1]);
+      // A merge does not rewrite the frames the first hit already played.
+      expect(spawned.map((popup) => popup.value).sort()).toEqual([12, 8]);
+      expect(
+        sampler
+          .frameAt(second.contactMs - 1)
+          .popups.filter((popup) => popup.kind === 'damage')
+          .map((popup) => popup.text)
+          .sort(),
+      ).toEqual(['4', '6']);
+      expect(read(second.contactMs + 1).every((text) => text.length > 0)).toBe(true);
+      const merged = sampler
+        .frameAt(second.contactMs + 1)
+        .popups.filter((popup) => popup.kind === 'damage');
+      expect(merged.every((popup) => popup.merged)).toBe(true);
+    });
+
     it('starts a fresh popup once the previous one has faded', () => {
       const timeline = timelineFor('f10-hurt-knockout');
       const popups = cuesOfKind<DamagePopupCue>(timeline, 'damagePopup');
@@ -281,6 +400,32 @@ describe('battle animation director', () => {
       const corpsePets = frame.pets.filter((view) => view.fainted);
       expect(corpsePets.length).toBeGreaterThanOrEqual(3);
       expect(frame.corpses).toHaveLength(0);
+    });
+
+    it('holds a lone corpse in its slot for a beat before it launches', () => {
+      const timeline = timelineFor('f01-plain-trades');
+      const launches = cuesOfKind<CorpseLaunchCue>(timeline, 'corpseLaunch');
+      const clashes = cuesOfKind<ClashCue>(timeline, 'clash');
+      const alone = launches.filter(
+        (launch) =>
+          launches.filter((other) => other.groupId === launch.groupId).length === 1,
+      );
+      expect(alone.length).toBeGreaterThan(0);
+      const sampler = new TimelineSampler(timeline);
+      for (const launch of alone) {
+        const killer = [...clashes]
+          .reverse()
+          .find((clash) => clash.contactMs <= launch.startMs);
+        expect(killer).toBeTruthy();
+        // Checklist 3: dead in place first, f01 t=29.84 to t=30.01.
+        const hold = launch.startMs - (killer?.contactMs ?? 0);
+        expect({ hold: hold >= 150 && hold <= 260 }).toEqual({ hold: true });
+        const before = sampler.frameAt(launch.startMs - 10);
+        expect(before.pets.some((pet) => pet.pet.id === launch.petId && pet.fainted)).toBe(
+          true,
+        );
+        expect(before.corpses).toHaveLength(0);
+      }
     });
 
     it('slides the survivors while the corpses are still in the air', () => {
@@ -390,6 +535,22 @@ describe('battle animation director', () => {
       expect(timeline.cues.some((cue) => cue.kind === 'statCopyLabel')).toBe(true);
     });
 
+    it('holds a move buff until a beat after the moved pet has landed', () => {
+      const timeline = timelineFor('f09-toy-pogo-stick');
+      const move = cuesOfKind<MoveArcCue>(timeline, 'moveArc')[0];
+      const pills = cuesOfKind<StatPillCue>(timeline, 'statPill').filter(
+        (pill) => pill.petId === move.petId,
+      );
+      // f09 t=30.08 airborne, t=31.20 the buff, so about 1 s after the landing.
+      expect(pills).toHaveLength(2);
+      for (const pill of pills) {
+        expect(pill.startMs - move.endMs).toBeGreaterThanOrEqual(1000);
+      }
+      const sampler = new TimelineSampler(timeline);
+      const midFlight = sampler.frameAt((move.startMs + move.endMs) / 2);
+      expect(midFlight.popups).toHaveLength(0);
+    });
+
     it('arcs a repositioned pet over its neighbours and closes them up', () => {
       const timeline = timelineFor('f16-move-chihuahua');
       const move = cuesOfKind<MoveArcCue>(timeline, 'moveArc')[0];
@@ -435,6 +596,47 @@ describe('battle animation director', () => {
       expect(banner.actorKind).toBe('toy');
       expect(banner.petId).toBeNull();
     });
+
+    it('lays the card out as trigger, inline glyphs, uses tab and perk note', () => {
+      const knockOut = parseBannerText(
+        'Knock out: Gain +3 attack and +3 health. Works 3 times per battle.',
+      );
+      expect(knockOut.trigger).toBe('Knock out');
+      expect(knockOut.uses).toBe('3 / battle');
+      expect(knockOut.note).toBeNull();
+      expect(knockOut.body.map((segment) => segment.icon)).toEqual([
+        'attack-glyph',
+        'heart',
+      ]);
+      expect(knockOut.body.map((segment) => segment.text).join('')).toBe(
+        'Gain +3 attack and +3 health.',
+      );
+
+      const perk = parseBannerText(
+        'Hurt: Gain Coconut perk. Works 1 time per turn.\nBlock damage, once.',
+      );
+      expect(perk.uses).toBe('1 / turn');
+      expect(perk.note).toBe('Block damage, once.');
+      expect(perk.body.map((segment) => segment.text).join('')).toBe(
+        'Gain Coconut perk.',
+      );
+    });
+
+    it('parses every banner the fixtures actually raise', () => {
+      for (const id of fixtureIds) {
+        for (const banner of cuesOfKind<BannerCue>(timelineFor(id), 'banner')) {
+          const parsed = parseBannerText(banner.text, banner.trigger);
+          expect({ id, name: banner.name, trigger: parsed.trigger != null }).toEqual({
+            id,
+            name: banner.name,
+            trigger: true,
+          });
+          expect(parsed.body.some((segment) => segment.text.includes('Works'))).toBe(
+            false,
+          );
+        }
+      }
+    });
   });
 
   describe('trumpets, mana and xp, checklist 14 and 19', () => {
@@ -451,16 +653,33 @@ describe('battle animation director', () => {
         .toBeGreaterThan(0);
     });
 
-    it('drops the counter and flies a token to the spender on a spend', () => {
+    it('spends with exactly one token, at the instant the counter drops', () => {
       const timeline = timelineFor('f15-trumpet-spend-nyala-nurseshark');
       const tokens = timeline.cues.filter(
-        (cue) => cue.kind === 'trumpetToken' && cue.direction === 'to-pet',
+        (cue): cue is TrumpetTokenCue =>
+          cue.kind === 'trumpetToken' && cue.direction === 'to-pet',
       );
+      // Six trumpets are one token, checklist 19.
       expect(tokens).toHaveLength(1);
       const spendFlash = timeline.cues.find(
-        (cue) => cue.kind === 'trumpetCounterFlash' && cue.tone === 'spend',
+        (cue): cue is TrumpetCounterFlashCue =>
+          cue.kind === 'trumpetCounterFlash' && cue.tone === 'spend',
       );
       expect(spendFlash).toBeTruthy();
+      // The token leaves as the counter flashes and drops 8 to 2, in one step.
+      expect(tokens[0].startMs).toBe(spendFlash?.startMs);
+      expect(spendFlash?.total).toBe(2);
+      // Nothing else is thrown for the trumpets: the counter owns their motion.
+      expect(
+        cuesOfKind<ProjectileCue>(timeline, 'projectile').some(
+          (cue) => cue.payload === 'trumpet',
+        ),
+      ).toBe(false);
+      const frame = new TimelineSampler(timeline).frameAt(
+        (spendFlash?.startMs ?? 0) + 10,
+      );
+      expect(frame.trumpetTokens).toHaveLength(1);
+      expect(frame.trumpets.player.total).toBe(2);
       // The effect the trumpets paid for is an ordinary snipe, one beat later.
       const snipe = cuesOfKind<ProjectileCue>(timeline, 'projectile').find(
         (cue) => cue.startMs > (spendFlash?.startMs ?? 0),
@@ -469,16 +688,40 @@ describe('battle animation director', () => {
       expect((snipe?.startMs ?? 0) - (spendFlash?.startMs ?? 0)).toBeGreaterThan(700);
     });
 
-    it('carries mana as a pill and as a stat on the pet', () => {
+    it('carries mana as a blue numeral with a flash and as a stat on the pet', () => {
       const timeline = timelineFor('f13-mana-alchemedes');
       const manaPills = cuesOfKind<StatPillCue>(timeline, 'statPill').filter(
         (cue) => cue.statKind === 'mana',
       );
       expect(manaPills.length).toBeGreaterThan(0);
+      const frame = new TimelineSampler(timeline).frameAt(manaPills[0].startMs + 10);
+      expect(frame.popups.some((popup) => popup.kind === 'mana')).toBe(true);
+      expect(frame.puffs.some((puff) => puff.kind === 'mana')).toBe(true);
       expect(
         timeline.finalBoard.player.some((pet) => (pet.mana ?? 0) > 0) ||
           timeline.finalBoard.opponent.some((pet) => (pet.mana ?? 0) > 0),
       ).toBe(true);
+    });
+
+    it('lays a two part buff out side by side rather than stacked', () => {
+      const timeline = timelineFor('f10-hurt-knockout');
+      const pills = cuesOfKind<StatPillCue>(timeline, 'statPill');
+      const pair = pills
+        .map((pill, index) => [
+          pill,
+          pills
+            .slice(index + 1)
+            .find((other) => other.petId === pill.petId && other.startMs < pill.endMs),
+        ])
+        .find((entry) => entry[1]) as [StatPillCue, StatPillCue] | undefined;
+      expect(pair).toBeTruthy();
+      const [attack, health] = pair as [StatPillCue, StatPillCue];
+      expect(attack.statKind).toBe('attack');
+      expect(health.statKind).toBe('health');
+      const frame = new TimelineSampler(timeline).frameAt(health.startMs + 10);
+      const together = frame.popups.filter((popup) => popup.petId === attack.petId);
+      expect(together).toHaveLength(2);
+      expect(together.map((popup) => popup.offset).sort()).toEqual([-0.5, 0.5]);
     });
 
     it('draws xp as a level-up burst rather than a stat pill', () => {
@@ -619,7 +862,7 @@ describe('battle animation director', () => {
       const timeline = buildBattleTimeline(readGolden('f01-plain-trades'), {
         initialBoard: seedFor('f01-plain-trades'),
       });
-      expect(timeline.introEndMs).toBe(8220);
+      expect(timeline.introEndMs).toBe(9030);
       for (const cue of timeline.cues) {
         expect(cue.startMs).toBeGreaterThanOrEqual(timeline.introEndMs);
       }
@@ -630,6 +873,23 @@ describe('battle animation director', () => {
       expect(outro.phase).toBe('outro');
       expect(outro.outro?.winner).toBe('player');
       expect(outro.outro?.face).toBeGreaterThan(0);
+    });
+
+    it('brings the control bar in 1.5 s before the first wind-up and takes it away at the end', () => {
+      const timeline = buildBattleTimeline(readGolden('f01-plain-trades'), {
+        initialBoard: seedFor('f01-plain-trades'),
+      });
+      const sampler = new TimelineSampler(timeline);
+      // Checklist 17: the bar is not on screen from the first frame.
+      expect(sampler.frameAt(0).controls).toBe(0);
+      expect(sampler.frameAt(INTRO_BEATS.controlsMs - 10).controls).toBe(0);
+      expect(sampler.frameAt(INTRO_BEATS.controlsMs + 400).controls).toBe(1);
+      const windup = cuesOfKind<ClashCue>(timeline, 'clash')[0].startMs;
+      expect(windup - INTRO_BEATS.controlsMs).toBeGreaterThanOrEqual(1400);
+      expect(windup - INTRO_BEATS.controlsMs).toBeLessThanOrEqual(1700);
+      expect(sampler.frameAt(timeline.battleEndMs - 10).controls).toBe(1);
+      // And it goes the moment the battle ends.
+      expect(sampler.frameAt(timeline.battleEndMs + 10).controls).toBe(0);
     });
   });
 
@@ -666,6 +926,23 @@ describe('battle animation director', () => {
       expect(state.playing).toBe(true);
       const moved = advancePlayback(state, timeline, 200);
       expect(moved.timeMs).toBe(state.timeMs + 200);
+    });
+
+    it('advances one beat per press with AUTOPLAY off, and runs on with it on', () => {
+      let stepwise = play(initialPlayback(), timeline, false);
+      expect(stepwise.stopAtMs).toBe(nextCheckpointMs(timeline, 0));
+      stepwise = advancePlayback(stepwise, timeline, 100000);
+      expect(stepwise.playing).toBe(false);
+      expect(stepwise.timeMs).toBe(nextCheckpointMs(timeline, 0));
+      const firstBeat = stepwise.timeMs;
+      stepwise = advancePlayback(play(stepwise, timeline, false), timeline, 100000);
+      expect(stepwise.playing).toBe(false);
+      expect(stepwise.timeMs).toBeGreaterThan(firstBeat);
+
+      let continuous = play(initialPlayback(), timeline, true);
+      expect(continuous.stopAtMs).toBeNull();
+      continuous = advancePlayback(continuous, timeline, 100000);
+      expect(continuous.timeMs).toBe(timeline.durationMs);
     });
 
     it('applies the speed multiplier on top of the grammar', () => {
