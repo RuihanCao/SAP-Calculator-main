@@ -138,6 +138,15 @@
           [style.--fight-motion-scale]="app.fightAnimationMotionScale">
           <div class="animation-top-pane" [style.flex-basis.px]="animationTopHeightPx" [style.max-height.px]="animationTopHeightPx"
             [style.height.px]="animationTopHeightPx">
+            <app-battle-animation-stage *ngIf="!app.useLegacyFightAnimation"
+              [events]="app.viewBattleEvents"
+              [logs]="app.viewBattleLogs"
+              [speed]="app.fightAnimationSpeed"
+              [speedOptions]="app.fightAnimationSpeedOptions"
+              (speedChange)="app.setFightAnimationSpeed($event)"
+              (legacyRequested)="app.setLegacyFightAnimation(true)">
+            </app-battle-animation-stage>
+            <ng-container *ngIf="app.useLegacyFightAnimation">
             <ng-container *ngIf="app.currentFightAnimationRenderFrame as frameVm; else noAnimationFrames">
                 <div
                   class="fight-stage"
@@ -414,6 +423,11 @@
                   <input class="form-range" type="range" [min]="0" [max]="app.fightAnimationFrames.length - 1"
                     [value]="app.fightAnimationFrameIndex" (input)="app.onFightAnimationScrub($any($event.target).value)" />
                 </div>
+                <div class="fight-legacy-switch">
+                  <button type="button" class="btn btn-sm btn-link"
+                    (click)="app.setLegacyFightAnimation(false)">Event animation</button>
+                </div>
+            </ng-container>
             </ng-container>
           </div>
 

@@ -1,0 +1,575 @@
+:host {
+  display: block;
+  height: 100%;
+  min-height: 0;
+}
+
+.anim-stage {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  gap: 0.35rem;
+}
+
+.anim-field {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 220px;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  font-size: 0.72rem;
+  color: #1b2430;
+}
+
+.anim-sky,
+.anim-ground {
+  position: absolute;
+  left: 0;
+  right: 0;
+}
+
+.anim-sky {
+  top: 0;
+  height: 62%;
+  background: linear-gradient(#8fd6ff 0%, #bfe9ff 70%, #d8f2c4 100%);
+}
+
+.anim-ground {
+  top: 62%;
+  bottom: 0;
+  background: linear-gradient(#e7cf8d 0%, #7fc45a 22%, #61ad46 100%);
+}
+
+/* ------------------------------------------------------------ entrance -- */
+
+.anim-shutter {
+  position: absolute;
+  inset: 0;
+  background: #10151c;
+  transform-origin: center;
+  z-index: 40;
+  pointer-events: none;
+}
+
+.anim-intro-card {
+  position: absolute;
+  z-index: 41;
+  padding: 0.25rem 0.6rem;
+  border-radius: 0.4rem;
+  background: #fffdf5;
+  border: 2px solid #2b3240;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.anim-intro-player {
+  left: 6%;
+  top: 34%;
+}
+
+.anim-intro-opponent {
+  right: 6%;
+  top: 34%;
+}
+
+.anim-intro-vs {
+  left: 50%;
+  top: 34%;
+  background: #ffcf3f;
+}
+
+.anim-skip-intro {
+  position: absolute;
+  right: 0.4rem;
+  bottom: 0.4rem;
+  z-index: 42;
+  border: 1px solid #2b3240;
+  border-radius: 0.3rem;
+  background: rgb(255 255 255 / 85%);
+  font-size: 0.65rem;
+  padding: 0.1rem 0.4rem;
+}
+
+/* -------------------------------------------------------------- banner -- */
+
+.anim-banner {
+  position: absolute;
+  z-index: 30;
+  transform: translate(-50%, -50%);
+  min-width: 210px;
+  max-width: 46%;
+  padding: 0.3rem 0.45rem;
+  border-radius: 0.45rem;
+  background: #fffdf5;
+  border: 2px solid #2b3240;
+  box-shadow: 0 3px 0 rgb(0 0 0 / 25%);
+}
+
+.anim-banner-head {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.anim-banner-portrait {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+
+.anim-banner-name {
+  flex: 1 1 auto;
+  color: #e2621b;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.anim-banner-level {
+  min-width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 50%;
+  background: #ffcf3f;
+  border: 1px solid #2b3240;
+  text-align: center;
+  font-weight: 700;
+  line-height: 1rem;
+}
+
+.anim-banner-text {
+  margin-top: 0.15rem;
+  font-style: italic;
+  line-height: 1.15;
+}
+
+.anim-banner-toy .anim-banner-name {
+  color: #7b3fb5;
+}
+
+/* ------------------------------------------------------------ counters -- */
+
+.anim-counter {
+  position: absolute;
+  z-index: 29;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.1rem 0.35rem;
+  border-radius: 0.7rem;
+  background: #fffdf5;
+  border: 2px solid #2b3240;
+  font-weight: 700;
+}
+
+.anim-counter img {
+  width: 13px;
+  height: 13px;
+}
+
+.anim-counter-gain {
+  background: #b6f0b0;
+}
+
+.anim-counter-spend {
+  background: #f5edb0;
+}
+
+.anim-token {
+  position: absolute;
+  z-index: 28;
+  transform: translate(-50%, -50%);
+}
+
+.anim-token img {
+  width: 14px;
+  height: 14px;
+}
+
+/* ---------------------------------------------------------------- pets -- */
+
+.anim-pet {
+  position: absolute;
+  z-index: 10;
+  width: 62px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  will-change: left, top;
+}
+
+.anim-pet-level {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0 0.2rem;
+  border-radius: 0.25rem;
+  background: #a1642f;
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 700;
+}
+
+.anim-pet-xpbar {
+  display: inline-block;
+  width: 16px;
+  height: 4px;
+  background: rgb(255 255 255 / 45%);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.anim-pet-xpfill {
+  display: block;
+  height: 100%;
+  background: #ffcf3f;
+}
+
+.anim-pet-art {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.anim-pet-icon {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+}
+
+.anim-pet-opponent .anim-pet-icon {
+  transform: scaleX(-1);
+}
+
+.anim-pet-cross {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #c02626;
+  font-size: 1.6rem;
+  font-weight: 800;
+}
+
+.anim-pet-fainted .anim-pet-icon {
+  filter: grayscale(0.85);
+}
+
+.anim-pet-equipment {
+  position: absolute;
+  right: -4px;
+  top: -2px;
+  width: 16px;
+  height: 16px;
+}
+
+.anim-pet-equipment-break {
+  animation: anim-shatter 380ms ease-out forwards;
+}
+
+.anim-pet-equipment-gain {
+  animation: anim-pop 300ms ease-out;
+}
+
+.anim-pet-shatter {
+  position: absolute;
+  right: -6px;
+  top: -4px;
+  width: 22px;
+  height: 22px;
+  background: radial-gradient(circle, #8ed46a 0%, rgb(142 212 106 / 0%) 70%);
+}
+
+.anim-pet-fasticon {
+  position: absolute;
+  top: -14px;
+  width: 16px;
+  height: 16px;
+}
+
+.anim-pet-xpburst {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffe680 0%, rgb(255 207 63 / 0%) 70%);
+}
+
+.anim-pet-stats {
+  display: flex;
+  gap: 0.15rem;
+}
+
+.anim-pet-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1rem;
+  padding: 0 0.2rem;
+  border-radius: 0.6rem;
+  border: 1px solid #2b3240;
+  font-size: 0.6rem;
+  font-weight: 700;
+  background: #d7dde6;
+}
+
+.anim-pet-stat img {
+  width: 9px;
+  height: 9px;
+}
+
+.anim-pet-health {
+  background: #f3b1b1;
+}
+
+.anim-pet-mana {
+  background: #b9d2f6;
+}
+
+.anim-pet-source .anim-pet-art {
+  outline: 3px solid #4fd463;
+  outline-offset: -2px;
+  border-radius: 50%;
+}
+
+.anim-pet-hurt .anim-pet-art {
+  outline: 3px solid #e05353;
+  outline-offset: -2px;
+  border-radius: 50%;
+}
+
+.anim-pet-levelup .anim-pet-level {
+  background: #ffcf3f;
+  color: #2b3240;
+}
+
+/* ------------------------------------------------------- corpse, burst -- */
+
+.anim-corpse {
+  position: absolute;
+  z-index: 12;
+  filter: grayscale(0.85);
+}
+
+.anim-corpse-smoke {
+  position: absolute;
+  left: -26px;
+  top: 12px;
+  width: 34px;
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, rgb(255 255 255 / 0%), rgb(255 255 255 / 85%));
+}
+
+.anim-burst {
+  position: absolute;
+  z-index: 13;
+  color: #ffd83f;
+  font-size: 1.6rem;
+  text-shadow: 0 0 6px #fff08a;
+}
+
+/* -------------------------------------------------- projectiles, puffs -- */
+
+.anim-projectile {
+  position: absolute;
+  z-index: 20;
+  transform: translate(-50%, -50%);
+}
+
+.anim-projectile img {
+  width: 16px;
+  height: 16px;
+}
+
+.anim-puff {
+  position: absolute;
+  z-index: 15;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff 0%, rgb(255 255 255 / 0%) 70%);
+}
+
+.anim-puff-impact {
+  width: 26px;
+  height: 26px;
+}
+
+.anim-flash {
+  position: absolute;
+  z-index: 18;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff 0%, rgb(255 255 255 / 0%) 70%);
+}
+
+/* -------------------------------------------------------------- popups -- */
+
+.anim-popup {
+  position: absolute;
+  z-index: 22;
+  transform: translate(-50%, -100%);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.12rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.anim-popup-damage {
+  color: #d31414;
+  font-size: 1.25rem;
+  text-shadow:
+    -1px 0 #fff,
+    1px 0 #fff,
+    0 -1px #fff,
+    0 1px #fff;
+}
+
+.anim-popup-merged {
+  font-size: 1.45rem;
+}
+
+.anim-popup-stat {
+  padding: 0 0.25rem;
+  border-radius: 0.6rem;
+  border: 1px solid #2b3240;
+  background: #d7dde6;
+  font-size: 0.72rem;
+}
+
+.anim-popup-stat img {
+  width: 10px;
+  height: 10px;
+}
+
+.anim-popup-copy {
+  color: #fff;
+  font-size: 0.95rem;
+  text-shadow: 0 0 3px #000;
+}
+
+/* ---------------------------------------------------------- end screen -- */
+
+.anim-outro {
+  position: absolute;
+  inset: 0;
+  z-index: 45;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 0;
+  background: rgb(12 16 22 / 78%);
+  color: #fff;
+}
+
+.anim-outro-row {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.anim-outro-trophy,
+.anim-outro-heart {
+  filter: grayscale(1);
+  opacity: 0.7;
+}
+
+.anim-outro-trophy-filled {
+  filter: none;
+  text-shadow: 0 0 8px #ffcf3f;
+}
+
+.anim-outro-heart {
+  filter: none;
+  color: #e05353;
+}
+
+.anim-outro-heart-lost {
+  color: #6b7280;
+  text-decoration: line-through;
+}
+
+.anim-outro-face {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.anim-outro-emoji {
+  font-size: 2.2rem;
+}
+
+.anim-outro-caption {
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+/* ------------------------------------------------------------ controls -- */
+
+.anim-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0 0.2rem;
+}
+
+.anim-legacy {
+  margin-left: auto;
+  font-size: 0.7rem;
+}
+
+.anim-scrubber {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0 0.2rem 0.2rem;
+}
+
+.anim-scrubber input {
+  flex: 1 1 auto;
+}
+
+.anim-clock {
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.75;
+}
+
+.anim-empty {
+  padding: 1rem;
+  text-align: center;
+  opacity: 0.7;
+}
+
+@keyframes anim-shatter {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(1.6) rotate(35deg);
+    opacity: 0;
+  }
+}
+
+@keyframes anim-pop {
+  0% {
+    transform: scale(0.2);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}

@@ -11,13 +11,19 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import type { AppShellBattleResultsFacade } from './app-shell-battle-results.facade';
+import { BattleAnimationStageComponent } from '../simulation/battle-animation/battle-animation-stage.component';
 
 type TabletPane = 'battle' | 'logs';
 
 @Component({
   selector: 'app-shell-battle-results',
   standalone: true,
-  imports: [CommonModule, FormsModule, NgOptimizedImage],
+  imports: [
+    CommonModule,
+    FormsModule,
+    NgOptimizedImage,
+    BattleAnimationStageComponent,
+  ],
   templateUrl: './app-shell-battle-results.component.html',
   styleUrl: './app-shell-battle-results.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

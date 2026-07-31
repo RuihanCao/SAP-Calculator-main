@@ -7,6 +7,7 @@ import { CdkDragDrop, DragDropModule, DragStartDelay } from '@angular/cdk/drag-d
 import { Modal } from 'bootstrap';
 import { Player } from 'app/domain/entities/player.class';
 import { Battle } from 'app/domain/interfaces/battle.interface';
+import { AnimationEvent } from 'app/domain/interfaces/animation-event.interface';
 import { Log } from 'app/domain/interfaces/log.interface';
 import {
   RandomDecisionCapture,
@@ -217,6 +218,12 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 
   showBattleAnalysis = false;
   showRandomOverrides = true;
+  /**
+   * The event driven renderer is the default. The prose parsing one stays
+   * reachable behind `?legacyAnimation=1` and the Legacy view button until the
+   * W3 parity loop signs the new one off (exp01 PLAN, W2).
+   */
+  useLegacyFightAnimation = false;
   fightAnimationFrames: FightAnimationFrame[] = [];
   fightAnimationTimeline: FightAnimationTimeline | null = null;
   fightAnimationFrameIndex = -1;
@@ -355,6 +362,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly printFormGroup = () => printFormGroupImpl(this);
 
   ngOnInit(): void {
+    this.loadFightAnimationPreference();
     this.loadThemePreference();
     this.loadSoundPreference();
     this.isLoadedFromUrl = this.loadStateFromUrl(true);
@@ -737,6 +745,23 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   get logs() {
     return this.logService.getLogs();
   }
+  get viewBattleEvents(): AnimationEvent[] {
+    return this.viewBattle?.events ?? [];
+  }
+
+  setLegacyFightAnimation(useLegacy: boolean): void {
+    this.useLegacyFightAnimation = useLegacy;
+    this.cdr.markForCheck();
+  }
+
+  private loadFightAnimationPreference(): void {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    const params = new URLSearchParams(window.location.search);
+    this.useLegacyFightAnimation = params.get('legacyAnimation') === '1';
+  }
+
   get currentFightAnimationFrame(): FightAnimationFrame | null {
     if (
       this.fightAnimationFrameIndex < 0 ||
