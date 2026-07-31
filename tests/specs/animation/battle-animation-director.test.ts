@@ -23,11 +23,14 @@ import {
   buildBattleTimeline,
   buildSeedBoard,
   advancePlayback,
+  boardStateTimes,
+  getBeats,
   initialPlayback,
   nextCheckpointMs,
   parseBannerText,
   pause,
   play,
+  popupValueAt,
   rewind,
   skip,
   parseSeedBoardMessage,
@@ -372,10 +375,13 @@ describe('battle animation director', () => {
 
     it('pops a 0 for a hit the equipment absorbed', () => {
       const timeline = timelineFor('f08-equipment-melon-peanut');
-      const zeroes = cuesOfKind<DamagePopupCue>(timeline, 'damagePopup').filter(
-        (popup) => popup.value === 0,
+      // The numeral is a running total for the pairing, so a later hit merges
+      // into it: what has to be on screen is the 0 in its own frames.
+      const blocked = cuesOfKind<DamagePopupCue>(timeline, 'damagePopup').filter(
+        (popup) => popup.steps[0].value === 0,
       );
-      expect(zeroes.length).toBeGreaterThan(0);
+      expect(blocked.length).toBeGreaterThan(0);
+      expect(popupValueAt(blocked[0], blocked[0].startMs + 10).value).toBe(0);
     });
   });
 
@@ -848,12 +854,15 @@ describe('battle animation director', () => {
         const fast = timelineFor(id, 'fast').durationMs;
         normalTotal += normal;
         fastTotal += fast;
-        expect(normal / fast).toBeGreaterThan(1.9);
-        expect(normal / fast).toBeLessThan(3.4);
+        expect(normal / fast).toBeGreaterThan(2.1);
+        expect(normal / fast).toBeLessThan(3.1);
       }
+      // The clips total 86.67 s normal and 34.08 s fast, which is 2.54x.
       const ratio = normalTotal / fastTotal;
-      expect(ratio).toBeGreaterThan(2.1);
-      expect(ratio).toBeLessThan(3.0);
+      expect(ratio).toBeGreaterThan(2.35);
+      expect(ratio).toBeLessThan(2.65);
+      expect(fastTotal / 1000).toBeGreaterThan(34.08 * 0.95);
+      expect(fastTotal / 1000).toBeLessThan(34.08 * 1.05);
     });
   });
 
@@ -909,23 +918,59 @@ describe('battle animation director', () => {
     it('abandons the rest of the animation in about 0.8 s on skip', () => {
       let state = play(initialPlayback(), timeline);
       state = advancePlayback(state, timeline, 1200);
+      const pressedAt = state.timeMs;
       state = skip(state, timeline);
+      // Checklist 17: the beat in flight plays out at the ordinary speed, so
+      // the clock creeps rather than warping through the clashes that are
+      // never going to be shown.
       state = advancePlayback(state, timeline, 400);
-      expect(state.timeMs).toBeGreaterThan(1200);
+      expect(state.timeMs).toBe(pressedAt + 400);
+      state = advancePlayback(state, timeline, 399);
+      expect(state.timeMs).toBe(pressedAt + 799);
       expect(state.timeMs).toBeLessThan(timeline.battleEndMs);
-      state = advancePlayback(state, timeline, 400);
+      // Then the board is straight on its final state.
+      state = advancePlayback(state, timeline, 2);
       expect(state.timeMs).toBe(timeline.battleEndMs);
+      const sampler = new TimelineSampler(timeline);
+      expect(sampler.frameAt(state.timeMs).board).toEqual(timeline.finalBoard);
+      // And the end screen runs, with the bar gone (checklist 18).
+      const outro = sampler.frameAt(timeline.battleEndMs + 3200);
+      expect(outro.phase).toBe('outro');
+      expect(outro.controls).toBe(0);
     });
 
-    it('steps back one board state on rewind and stays playable', () => {
+    it('steps back exactly one board state per press and stays playable', () => {
+      const boardAt = (timeMs: number) => sampler.frameAt(timeMs).board;
+      const sampler = new TimelineSampler(timeline);
+      const states = boardStateTimes(timeline);
+      expect(states.length).toBeGreaterThan(4);
+
       let state = play(initialPlayback(), timeline);
       state = advancePlayback(state, timeline, 6000);
-      const before = state.timeMs;
+      // Whatever board is on screen, one press shows the one before it.
+      const showing = states.filter((at) => at <= state.timeMs).length - 1;
       state = rewind(state, timeline);
-      expect(state.timeMs).toBeLessThan(before);
-      expect(state.playing).toBe(true);
-      const moved = advancePlayback(state, timeline, 200);
-      expect(moved.timeMs).toBe(state.timeMs + 200);
+      expect(state.timeMs).toBe(states[showing - 1]);
+      expect(boardAt(state.timeMs)).toEqual(boardAt(states[showing - 1]));
+      // The real client freezes here with a dead bar; this one only stops.
+      expect(state.playing).toBe(false);
+      expect(advancePlayback(state, timeline, 5000).timeMs).toBe(state.timeMs);
+
+      // A second press walks back another state rather than sticking.
+      state = rewind(state, timeline);
+      expect(state.timeMs).toBe(states[showing - 2]);
+
+      // And PLAY picks the battle up from where the press landed.
+      const resumed = advancePlayback(play(state, timeline), timeline, 120);
+      expect(resumed.playing).toBe(true);
+      expect(resumed.timeMs).toBe(state.timeMs + 120);
+    });
+
+    it('cannot rewind past the first board of the battle', () => {
+      const start = boardStateTimes(timeline)[0];
+      let state = { ...initialPlayback(), timeMs: start };
+      state = rewind(state, timeline);
+      expect(state.timeMs).toBe(start);
     });
 
     it('advances one beat per press with AUTOPLAY off, and runs on with it on', () => {
@@ -949,6 +994,99 @@ describe('battle animation director', () => {
       let state = { ...play(initialPlayback(), timeline), speed: 2 };
       state = advancePlayback(state, timeline, 500);
       expect(state.timeMs).toBe(1000);
+    });
+  });
+
+  describe('W3 round 3 fixes', () => {
+    it('carries the level-up onto the pet the plaque and the pills show', () => {
+      // Checklist 14: xp is one gold burst, so the engine draws no attack and
+      // no health pill for it. The board still has to move, or the Pig reads
+      // its old 4/14 while its damage numeral is already the new 6.
+      const timeline = timelineFor('f14-xp-pug');
+      const sampler = new TimelineSampler(timeline);
+      const burst = timeline.steps.find((step) => step.kind === 'statChange');
+      const pigAt = (timeMs: number) => {
+        const pig = sampler.frameAt(timeMs).board.player.find((p) => p.name === 'Pig');
+        return `${pig?.level} ${pig?.attack}/${pig?.health}`;
+      };
+      expect(burst).toBeTruthy();
+      expect(pigAt(burst!.commitMs - 1)).toBe('1 4/14');
+      expect(pigAt(burst!.commitMs)).toBe('2 6/16');
+      const firstClash = timeline.steps.find((step) => step.kind === 'clash');
+      expect(pigAt(firstClash!.commitMs)).toBe('2 6/13');
+    });
+
+    it('anchors a damage numeral to the pet, not to the slot it left', () => {
+      const timeline = timelineFor('f11-jump-african-wild-dog');
+      const jump = cuesOfKind<ClashCue>(timeline, 'clash').find((cue) => cue.jump);
+      expect(jump).toBeTruthy();
+      const frame = new TimelineSampler(timeline).frameAt(jump!.contactMs);
+      const dog = frame.popups.find((popup) => popup.petId === jump!.jumperId);
+      const otter = frame.popups.find((popup) => popup.petId === jump!.jumpTargetId);
+      expect(dog).toBeTruthy();
+      expect(otter).toBeTruthy();
+      // The attacker is at the target's slot at the contact frame, so its own
+      // counter-attack numeral is there too, inside the flash.
+      expect(dog!.anchor.jumpTargetSide).toBe(otter!.anchor.side);
+      expect(dog!.anchor.jumpTargetSlot).toBe(otter!.anchor.slot);
+      expect(dog!.anchor.lean).toBe(1);
+      // The target never leaves its slot, so its numeral does not move.
+      expect(otter!.anchor.jumpTargetSlot).toBeNull();
+      expect(otter!.anchor.lean).toBe(0);
+      expect(frame.flash?.aSlot).toBe(otter!.anchor.slot);
+      expect(frame.flash?.aSide).toBe(otter!.anchor.side);
+      // Both numerals are in that one frame, so they sit side by side rather
+      // than exactly on top of each other (checklist 14).
+      expect(dog!.offset).not.toBe(otter!.offset);
+      expect(Math.abs(dog!.offset - otter!.offset)).toBe(1);
+    });
+
+    it('keeps a popup readable under FAST instead of scaling its life', () => {
+      // A lifetime is not a beat: scaled by the speed factor it would be
+      // 0.32 s, too short to read and short enough to lose merges that the
+      // normal grammar makes.
+      expect(getBeats('normal').damagePopupMs).toBe(700);
+      expect(getBeats('fast').damagePopupMs).toBeGreaterThanOrEqual(350);
+      expect(getBeats('fast').statPillMs).toBe(getBeats('fast').damagePopupMs);
+    });
+
+    it('keeps the knockout chain on the trade cadence, so the last pair merges', () => {
+      for (const mode of ['normal', 'fast'] as const) {
+        const timeline = timelineFor('f10-hurt-knockout', mode);
+        const contacts = cuesOfKind<ClashCue>(timeline, 'clash').map(
+          (cue) => cue.contactMs,
+        );
+        // A shattered perk is a reaction drawn on the pet, and nothing waits
+        // for it, so the beat is the plain trade cadence and not 0.85 s.
+        const last = contacts[contacts.length - 1] - contacts[contacts.length - 2];
+        expect(last).toBeLessThanOrEqual(getBeats(mode).damagePopupMs);
+        expect(last).toBeCloseTo(getBeats(mode).clashCadenceMs, -1);
+
+        const merged = cuesOfKind<DamagePopupCue>(timeline, 'damagePopup').filter(
+          (popup) => popup.startMs >= contacts[contacts.length - 2],
+        );
+        expect(merged.map((popup) => popup.value).sort((a, b) => a - b)).toEqual([
+          2, 14,
+        ]);
+        for (const popup of merged) {
+          expect(popup.merges).toBe(1);
+        }
+      }
+    });
+
+    it('lands repeated reactions in one frame under FAST', () => {
+      // Checklist 16: both Horses answer both Rams in the same frame, against
+      // two staged beats at normal speed.
+      const pills = (mode: 'normal' | 'fast') =>
+        cuesOfKind<StatPillCue>(timelineFor('f04-summon-sheep', mode), 'statPill')
+          .filter((cue) => cue.statKind === 'attack' && cue.amount === 1)
+          .map((cue) => cue.startMs);
+      const fast = pills('fast');
+      expect(fast).toHaveLength(2);
+      expect(fast[0]).toBe(fast[1]);
+      const normal = pills('normal');
+      expect(normal).toHaveLength(2);
+      expect(normal[1]).toBeGreaterThan(normal[0]);
     });
   });
 
