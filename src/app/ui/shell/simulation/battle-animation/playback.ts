@@ -1,5 +1,5 @@
 import { AnimationTimeline } from './cues';
-import { checkpointTimes } from './director';
+import { boardStateTimes, checkpointTimes } from './director';
 
 /**
  * The transport.
@@ -14,8 +14,11 @@ export interface PlaybackState {
   playing: boolean;
   /** Playback rate on top of the grammar, 0.5 to 2. */
   speed: number;
-  /** SKIP plays out the beat in flight, then lands on the end screen. */
-  skip: { fromMs: number; toMs: number; elapsedMs: number; durationMs: number } | null;
+  /**
+   * SKIP plays the beat in flight out at normal speed and then jumps, so the
+   * abandoned clashes are never shown (checklist 17).
+   */
+  skip: { toMs: number; elapsedMs: number; playOutMs: number } | null;
   /**
    * With AUTOPLAY off the battle advances one beat per press, so playing stops
    * here rather than running on (checklist 17).
@@ -43,10 +46,10 @@ export const advancePlayback = (
 ): PlaybackState => {
   if (state.skip) {
     const elapsedMs = state.skip.elapsedMs + deltaMs;
-    const progress = Math.min(1, elapsedMs / Math.max(1, state.skip.durationMs));
-    const timeMs =
-      state.skip.fromMs + (state.skip.toMs - state.skip.fromMs) * progress;
-    if (progress >= 1) {
+    if (elapsedMs >= state.skip.playOutMs) {
+      // The beat in flight has had its 0.8 s, so the rest is abandoned: the
+      // board jumps to its final state rather than being fast forwarded
+      // through the clashes that are never going to be shown.
       return {
         ...state,
         timeMs: state.skip.toMs,
@@ -55,7 +58,11 @@ export const advancePlayback = (
         finished: false,
       };
     }
-    return { ...state, timeMs, skip: { ...state.skip, elapsedMs } };
+    return {
+      ...state,
+      timeMs: Math.min(state.skip.toMs, state.timeMs + deltaMs * state.speed),
+      skip: { ...state.skip, elapsedMs },
+    };
   }
 
   if (!state.playing) {
@@ -112,9 +119,10 @@ export const seek = (
 });
 
 /**
- * SKIP, checklist 17. The beat already in flight plays out, then the board
- * jumps to its final state; unlike the real game we then show the end screen
- * rather than wiping to a shop we do not have.
+ * SKIP, checklist 17. It abandons the rest of the animation rather than
+ * hurrying through it: only the beat already in flight plays out, at the
+ * ordinary speed, and then the board is on its final state. Unlike the real
+ * game we then show the end screen rather than wiping to a shop we do not have.
  */
 export const skip = (
   state: PlaybackState,
@@ -128,42 +136,54 @@ export const skip = (
     playing: true,
     stopAtMs: null,
     skip: {
-      fromMs: state.timeMs,
       toMs: timeline.battleEndMs,
       elapsedMs: 0,
-      durationMs: SKIP_WARP_MS,
+      playOutMs: SKIP_WARP_MS,
     },
   };
 };
 
 /**
- * REWIND, one board state back, and the transport stays live afterwards.
- * The real client stalls here (checklist 17) and that bug is not copied.
+ * REWIND, checklist 17.
+ *
+ * The real client steps back to the previously completed board state and then
+ * stops advancing, with the whole bar dead behind it. This copies the step and
+ * the stop, which is what a step back has to do to be readable, and not the
+ * trap: PLAY resumes from where the press landed and a second press steps back
+ * another board state.
  */
 export const rewind = (
   state: PlaybackState,
   timeline: AnimationTimeline,
 ): PlaybackState => ({
   ...state,
-  timeMs: previousCheckpointMs(timeline, state.timeMs),
+  timeMs: previousBoardStateMs(timeline, state.timeMs),
+  playing: false,
   skip: null,
   stopAtMs: null,
   finished: false,
 });
 
-export const previousCheckpointMs = (
+/**
+ * The board state before the one on screen.
+ *
+ * The board on screen is the last one committed at or before `timeMs`, so one
+ * press back is the commit before that, which makes repeated presses walk
+ * backwards one state at a time however long the press is held for.
+ */
+export const previousBoardStateMs = (
   timeline: AnimationTimeline,
   timeMs: number,
 ): number => {
-  const times = checkpointTimes(timeline);
-  let target = timeline.introEndMs;
-  for (const at of times) {
-    if (at >= timeMs - 1) {
+  const times = boardStateTimes(timeline);
+  let showing = 0;
+  for (let at = 0; at < times.length; at += 1) {
+    if (times[at] > timeMs) {
       break;
     }
-    target = at;
+    showing = at;
   }
-  return target;
+  return times[Math.max(0, showing - 1)];
 };
 
 export const nextCheckpointMs = (
