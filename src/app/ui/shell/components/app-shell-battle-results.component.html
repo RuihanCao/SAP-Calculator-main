@@ -138,12 +138,16 @@
           [style.--fight-motion-scale]="app.fightAnimationMotionScale">
           <div class="animation-top-pane" [style.flex-basis.px]="animationTopHeightPx" [style.max-height.px]="animationTopHeightPx"
             [style.height.px]="animationTopHeightPx">
-            <app-battle-animation-stage *ngIf="!app.useLegacyFightAnimation"
-              [events]="app.viewBattleEvents"
-              [logs]="app.viewBattleLogs"
-              [speed]="app.fightAnimationSpeed"
-              (legacyRequested)="app.setLegacyFightAnimation(true)">
-            </app-battle-animation-stage>
+            <!-- The stage is a whole second renderer, so it is deferred out of
+                 the initial bundle and pulled in as soon as the app is up. -->
+            @defer (on immediate) {
+              <app-battle-animation-stage *ngIf="!app.useLegacyFightAnimation"
+                [events]="app.viewBattleEvents"
+                [logs]="app.viewBattleLogs"
+                [speed]="app.fightAnimationSpeed"
+                (legacyRequested)="app.setLegacyFightAnimation(true)">
+              </app-battle-animation-stage>
+            }
             <ng-container *ngIf="app.useLegacyFightAnimation">
             <ng-container *ngIf="app.currentFightAnimationRenderFrame as frameVm; else noAnimationFrames">
                 <div
