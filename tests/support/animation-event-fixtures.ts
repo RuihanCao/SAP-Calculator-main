@@ -41,6 +41,14 @@ export const runFixtureEvents = (id: string): AnimationEvent[] => {
   return dump.battles[0]?.events ?? [];
 };
 
+/** One battle's stream for a config written by hand rather than by a fixture. */
+export const runConfigEvents = (
+  config: SimulationConfig,
+): AnimationEvent[] => {
+  const dump = runAnimationEventDump(config);
+  return dump.battles[0]?.events ?? [];
+};
+
 const byId = <T extends { id: number }>(a: T, b: T): number => a.id - b.id;
 const byPetId = <T extends { pet: { id: number } }>(a: T, b: T): number =>
   a.pet.id - b.pet.id;
