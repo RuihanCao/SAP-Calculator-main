@@ -162,11 +162,24 @@ const NORMAL_BEATS: AnimationBeats = {
  *
  * The banner is gone, so its lead is gone and the projectile has nowhere to
  * come from; per target staging collapses to one frame; what is left runs at
- * about 0.42 of the normal beat. Measured end to end that lands the whole
- * battle between 2.3x (banner free) and 2.9x (banner heavy) faster, which is
- * the spread the reference clips show.
+ * about 0.45 of the normal beat. Measured end to end that lands the whole
+ * battle between 2.3x (banner free) and 3.1x (banner heavy) faster, which is
+ * the spread the reference clips show, and puts the ten measured fixtures
+ * within a couple of percent of the clips' own 34.1 s total.
  */
-const FAST_SCALE = 0.42;
+const FAST_SCALE = 0.45;
+
+/**
+ * How long a popup stays readable under FAST.
+ *
+ * A popup lifetime is not a beat, it is how long a number has to be on screen
+ * to be read, so it does not follow the speed factor down (checklist 2 and 19).
+ * Scaled it would be 0.29 s, which is both unreadable and short enough to lose
+ * merges the normal grammar makes: this floor keeps the numeral the same in
+ * both grammars, which is the whole point of FAST being a compression of the
+ * staging rather than a change of what happened.
+ */
+const FAST_POPUP_LIFE_MS = 350;
 
 const FAST_OVERRIDES: Partial<AnimationBeats> = {
   bannerLeadMs: 0,
@@ -175,6 +188,8 @@ const FAST_OVERRIDES: Partial<AnimationBeats> = {
   projectileStaggerMs: 0,
   summonStaggerMs: 0,
   trumpetSpendGapMs: 260,
+  damagePopupMs: FAST_POPUP_LIFE_MS,
+  statPillMs: FAST_POPUP_LIFE_MS,
 };
 
 /** Beats that describe a lifetime rather than a beat, so they are not scaled. */

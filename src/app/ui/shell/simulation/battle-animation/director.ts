@@ -111,6 +111,14 @@ export const buildBattleTimeline = (
   let lastDamageMs: number | null = null;
   let groupSummonStartMs: number | null = null;
   let groupSummonCount = 0;
+  /**
+   * FAST collapses repeated reactions into one frame (checklist 16).
+   *
+   * The same pet answering the same trigger twice in a row is one wave, so the
+   * second activation is rewound onto the first one's cursor and both land in
+   * the same frame. Anything that is not itself a reaction ends the wave.
+   */
+  let fastWave: { key: string; startMs: number } | null = null;
 
   let cueSerial = 0;
   const push = <T extends AnimationCue = AnimationCue>(cue: CueDraft<T>): T => {
@@ -260,9 +268,21 @@ export const buildBattleTimeline = (
     });
   };
 
+  /** What an ability activation is allowed to be made of, for the FAST wave. */
+  const REACTION_TYPES: ReadonlySet<AnimationEvent['type']> = new Set([
+    'abilityTrigger',
+    'projectile',
+    'statChange',
+    'statCopy',
+    'equipmentGain',
+  ] as Array<AnimationEvent['type']>);
+
   for (const event of events) {
     const before = cues.length;
     const stepCuesFrom = (): AnimationCue[] => cues.slice(before);
+    if (!REACTION_TYPES.has(event.type)) {
+      fastWave = null;
+    }
 
     switch (event.type) {
       case 'phase': {
@@ -277,6 +297,15 @@ export const buildBattleTimeline = (
         const petId = actorPetId(event);
         const side = actorSide(event);
         if (mode === 'fast') {
+          // Checklist 16: repeated reactions resolve together, so the same pet
+          // answering the same trigger again reuses the wave's own cursor
+          // instead of queueing behind the previous activation.
+          const waveKey = `${petId ?? `toy:${side}`}|${event.trigger ?? event.abilityName ?? ''}`;
+          if (fastWave && fastWave.key === waveKey) {
+            cursor = fastWave.startMs;
+          } else {
+            fastWave = { key: waveKey, startMs: cursor };
+          }
           // No banner at all in FAST; an icon over the acting pet stands in.
           if (petId != null) {
             push({
@@ -872,7 +901,10 @@ export const buildBattleTimeline = (
           equipment: event.equipment,
           ailment: event.ailment,
         });
-        cursor = atMs + Math.round(beats.equipmentBreakMs * 0.6);
+        // The shatter is a reaction drawn on the pet, and nothing waits for it
+        // (checklist 12): it overlaps whatever comes next rather than pushing
+        // it back, so a knockout chain that breaks a perk keeps the ordinary
+        // trade cadence instead of stretching to about 0.85 s.
         commitStep(event, atMs, atMs + beats.equipmentBreakMs, atMs, stepCuesFrom());
         break;
       }
@@ -894,8 +926,15 @@ export const buildBattleTimeline = (
     corpse.endMs = openEndMs;
   }
 
+  // The battle ends on its last beat, not on the last decoration still fading
+  // over it. A hurt outline lives a whole second after the hit it marks, and
+  // waiting it out added most of a second of nothing to every fixture; the end
+  // screen dims over it instead, which is what the clips show.
   const lastCueEnd = cues.reduce(
-    (max, cue) => Math.max(max, Number.isFinite(cue.endMs) ? cue.endMs : max),
+    (max, cue) =>
+      cue.kind === 'hurtOutline' || !Number.isFinite(cue.endMs)
+        ? max
+        : Math.max(max, cue.endMs),
     cursor,
   );
   const battleEndMs = Math.max(cursor, lastCueEnd) + beats.outcomeDelayMs;
@@ -916,21 +955,43 @@ export const buildBattleTimeline = (
   };
 };
 
-/** Board states the controls step through: every step that changes the board. */
+const BOARD_CHANGING: ReadonlySet<AnimationStepKind> = new Set<AnimationStepKind>([
+  'clash',
+  'hit',
+  'statChange',
+  'statCopy',
+  'corpseLaunch',
+  'pushForward',
+  'move',
+  'summon',
+  'transform',
+  'equipment',
+]);
+
+/**
+ * When each board state comes up, which is what REWIND steps through.
+ *
+ * A step starts before it changes anything, so this reads `commitMs` rather
+ * than `startMs`: landing on one of these instants puts exactly that board on
+ * screen, which is what a step back has to show.
+ */
+export const boardStateTimes = (timeline: AnimationTimeline): number[] => {
+  const times: number[] = [timeline.introEndMs];
+  for (const step of timeline.steps) {
+    if (!BOARD_CHANGING.has(step.kind)) {
+      continue;
+    }
+    if (step.commitMs > times[times.length - 1]) {
+      times.push(step.commitMs);
+    }
+  }
+  return times;
+};
+
+/** Beats the controls step through: every step that changes the board. */
 export const checkpointTimes = (timeline: AnimationTimeline): number[] => {
   const times: number[] = [timeline.introEndMs];
-  const boardChanging = new Set<AnimationStepKind>([
-    'clash',
-    'hit',
-    'statChange',
-    'statCopy',
-    'corpseLaunch',
-    'pushForward',
-    'move',
-    'summon',
-    'transform',
-    'equipment',
-  ]);
+  const boardChanging = BOARD_CHANGING;
   for (const step of timeline.steps) {
     if (!boardChanging.has(step.kind)) {
       continue;
