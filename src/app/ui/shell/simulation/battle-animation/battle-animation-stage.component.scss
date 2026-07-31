@@ -15,10 +15,12 @@
 .anim-field {
   position: relative;
   flex: 1 1 auto;
-  min-height: 220px;
+  min-height: 200px;
+  max-height: 100%;
   border-radius: 0.5rem;
   overflow: hidden;
-  font-size: 0.72rem;
+  /* Set from the component: one em is the whole stage's scale unit. */
+  font-size: 14px;
   color: #1b2430;
 }
 
@@ -98,10 +100,11 @@
   position: absolute;
   z-index: 30;
   transform: translate(-50%, -50%);
-  min-width: 210px;
+  min-width: 15em;
   max-width: 46%;
-  padding: 0.3rem 0.45rem;
-  border-radius: 0.45rem;
+  font-size: 0.8em;
+  padding: 0.3em 0.45em;
+  border-radius: 0.45em;
   background: #fffdf5;
   border: 2px solid #2b3240;
   box-shadow: 0 3px 0 rgb(0 0 0 / 25%);
@@ -114,8 +117,8 @@
 }
 
 .anim-banner-portrait {
-  width: 22px;
-  height: 22px;
+  width: 1.8em;
+  height: 1.8em;
   object-fit: contain;
 }
 
@@ -128,8 +131,8 @@
 }
 
 .anim-banner-level {
-  min-width: 1.1rem;
-  height: 1.1rem;
+  min-width: 1.2em;
+  height: 1.2em;
   border-radius: 50%;
   background: #ffcf3f;
   border: 1px solid #2b3240;
@@ -156,17 +159,18 @@
   transform: translate(-50%, -50%);
   display: flex;
   align-items: center;
-  gap: 0.2rem;
-  padding: 0.1rem 0.35rem;
-  border-radius: 0.7rem;
+  gap: 0.2em;
+  padding: 0.1em 0.4em;
+  border-radius: 0.8em;
+  font-size: 0.9em;
   background: #fffdf5;
   border: 2px solid #2b3240;
   font-weight: 700;
 }
 
 .anim-counter img {
-  width: 13px;
-  height: 13px;
+  width: 0.9em;
+  height: 0.9em;
 }
 
 .anim-counter-gain {
@@ -184,8 +188,8 @@
 }
 
 .anim-token img {
-  width: 14px;
-  height: 14px;
+  width: 1em;
+  height: 1em;
 }
 
 /* ---------------------------------------------------------------- pets -- */
@@ -193,7 +197,7 @@
 .anim-pet {
   position: absolute;
   z-index: 10;
-  width: 62px;
+  width: 5.6em;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -203,19 +207,19 @@
 .anim-pet-level {
   display: flex;
   align-items: center;
-  gap: 0.15rem;
-  padding: 0 0.2rem;
-  border-radius: 0.25rem;
+  gap: 0.15em;
+  padding: 0 0.25em;
+  border-radius: 0.25em;
   background: #a1642f;
   color: #fff;
-  font-size: 0.6rem;
+  font-size: 0.55em;
   font-weight: 700;
 }
 
 .anim-pet-xpbar {
   display: inline-block;
-  width: 16px;
-  height: 4px;
+  width: 1.4em;
+  height: 0.35em;
   background: rgb(255 255 255 / 45%);
   border-radius: 2px;
   overflow: hidden;
@@ -229,16 +233,16 @@
 
 .anim-pet-art {
   position: relative;
-  width: 44px;
-  height: 44px;
+  width: 4em;
+  height: 4em;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .anim-pet-icon {
-  width: 42px;
-  height: 42px;
+  width: 3.9em;
+  height: 3.9em;
   object-fit: contain;
 }
 
@@ -253,7 +257,7 @@
   align-items: center;
   justify-content: center;
   color: #c02626;
-  font-size: 1.6rem;
+  font-size: 2.4em;
   font-weight: 800;
 }
 
@@ -263,10 +267,10 @@
 
 .anim-pet-equipment {
   position: absolute;
-  right: -4px;
-  top: -2px;
-  width: 16px;
-  height: 16px;
+  right: -0.3em;
+  top: -0.15em;
+  width: 1.3em;
+  height: 1.3em;
 }
 
 .anim-pet-equipment-break {
@@ -279,26 +283,26 @@
 
 .anim-pet-shatter {
   position: absolute;
-  right: -6px;
-  top: -4px;
-  width: 22px;
-  height: 22px;
+  right: -0.45em;
+  top: -0.3em;
+  width: 1.7em;
+  height: 1.7em;
   background: radial-gradient(circle, #8ed46a 0%, rgb(142 212 106 / 0%) 70%);
 }
 
 .anim-pet-fasticon {
   position: absolute;
-  top: -14px;
-  width: 16px;
-  height: 16px;
+  top: -1.1em;
+  width: 1.3em;
+  height: 1.3em;
 }
 
 .anim-pet-xpburst {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 46px;
-  height: 46px;
+  width: 3.6em;
+  height: 3.6em;
   border-radius: 50%;
   background: radial-gradient(circle, #ffe680 0%, rgb(255 207 63 / 0%) 70%);
 }
@@ -311,18 +315,18 @@
 .anim-pet-stat {
   display: inline-flex;
   align-items: center;
-  gap: 0.1rem;
-  padding: 0 0.2rem;
-  border-radius: 0.6rem;
+  gap: 0.1em;
+  padding: 0 0.25em;
+  border-radius: 0.7em;
   border: 1px solid #2b3240;
-  font-size: 0.6rem;
+  font-size: 0.6em;
   font-weight: 700;
   background: #d7dde6;
 }
 
 .anim-pet-stat img {
-  width: 9px;
-  height: 9px;
+  width: 0.9em;
+  height: 0.9em;
 }
 
 .anim-pet-health {
@@ -360,19 +364,20 @@
 
 .anim-corpse-smoke {
   position: absolute;
-  left: -26px;
-  top: 12px;
-  width: 34px;
-  height: 12px;
-  border-radius: 6px;
+  left: -2.2em;
+  top: 1em;
+  width: 2.8em;
+  height: 1em;
+  border-radius: 0.5em;
   background: linear-gradient(90deg, rgb(255 255 255 / 0%), rgb(255 255 255 / 85%));
 }
 
 .anim-burst {
   position: absolute;
   z-index: 13;
+  transform-origin: center;
   color: #ffd83f;
-  font-size: 1.6rem;
+  font-size: 2.6em;
   text-shadow: 0 0 6px #fff08a;
 }
 
@@ -385,29 +390,29 @@
 }
 
 .anim-projectile img {
-  width: 16px;
-  height: 16px;
+  width: 1.3em;
+  height: 1.3em;
 }
 
 .anim-puff {
   position: absolute;
   z-index: 15;
-  width: 40px;
-  height: 40px;
+  width: 3.4em;
+  height: 3.4em;
   border-radius: 50%;
   background: radial-gradient(circle, #fff 0%, rgb(255 255 255 / 0%) 70%);
 }
 
 .anim-puff-impact {
-  width: 26px;
-  height: 26px;
+  width: 2.2em;
+  height: 2.2em;
 }
 
 .anim-flash {
   position: absolute;
   z-index: 18;
-  width: 54px;
-  height: 54px;
+  width: 4.6em;
+  height: 4.6em;
   border-radius: 50%;
   background: radial-gradient(circle, #fff 0%, rgb(255 255 255 / 0%) 70%);
 }
@@ -427,7 +432,7 @@
 
 .anim-popup-damage {
   color: #d31414;
-  font-size: 1.25rem;
+  font-size: 1.9em;
   text-shadow:
     -1px 0 #fff,
     1px 0 #fff,
@@ -436,25 +441,25 @@
 }
 
 .anim-popup-merged {
-  font-size: 1.45rem;
+  font-size: 2.3em;
 }
 
 .anim-popup-stat {
-  padding: 0 0.25rem;
-  border-radius: 0.6rem;
+  padding: 0 0.3em;
+  border-radius: 0.7em;
   border: 1px solid #2b3240;
   background: #d7dde6;
-  font-size: 0.72rem;
+  font-size: 0.9em;
 }
 
 .anim-popup-stat img {
-  width: 10px;
-  height: 10px;
+  width: 0.9em;
+  height: 0.9em;
 }
 
 .anim-popup-copy {
   color: #fff;
-  font-size: 0.95rem;
+  font-size: 1.4em;
   text-shadow: 0 0 3px #000;
 }
 
@@ -506,7 +511,7 @@
 }
 
 .anim-outro-emoji {
-  font-size: 2.2rem;
+  font-size: 3.4em;
 }
 
 .anim-outro-caption {

@@ -1,5 +1,6 @@
 <div class="anim-stage" *ngIf="frame as view; else noEvents">
-  <div class="anim-field" [class.anim-field-intro]="view.phase === 'intro'">
+  <div class="anim-field" #field [style.font-size.px]="fieldFontPx"
+    [class.anim-field-intro]="view.phase === 'intro'">
     <div class="anim-sky"></div>
     <div class="anim-ground"></div>
 
@@ -25,7 +26,7 @@
     </ng-container>
 
     <!-- trigger banner, checklist 0 and 11 -->
-    <div class="anim-banner" *ngIf="view.banner as banner" [ngStyle]="pointStyle(34, 15)"
+    <div class="anim-banner" *ngIf="view.banner as banner" [ngStyle]="pointStyle(34, 16)"
       [class.anim-banner-toy]="banner.toy" [style.opacity]="banner.progress < 0.15 ? banner.progress / 0.15 : 1">
       <div class="anim-banner-head">
         <img class="anim-banner-portrait" *ngIf="petIcon(banner.name) as icon" [src]="icon" [alt]="banner.name" />
@@ -98,7 +99,7 @@
       <span class="anim-corpse-smoke"></span>
     </div>
     <div class="anim-burst" *ngFor="let burst of view.bursts; trackBy: trackById"
-      [ngStyle]="pointStyle(burst.side === 'player' ? 78 : 92, 8)"
+      [ngStyle]="burstStyle(burst.side, burst.slot)"
       [style.opacity]="1 - burst.progress"
       [style.transform]="'translate(-50%, -50%) scale(' + (0.5 + burst.progress * 1.5) + ')'">&#10022;</div>
 

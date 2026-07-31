@@ -2,6 +2,11 @@
 
 ## Current
 
+W2 done on feature/anim01-w2-director, based on the W1 branch: the fight animation is rebuilt as a consumer of `Battle.events`.
+A director walks the stream once and writes a cue timeline with the checklist's own beats and overlaps, a pure sampler turns that timeline plus one millisecond into the frame on screen, and the stage component only places what the frame says.
+The prose parsing renderer stays reachable behind `?legacyAnimation=1` and a Legacy view button until W3 signs the new one off.
+Calculator-side clips for all 16 fixtures are recorded with `harness/record_calc.py`, which is W3's input.
+
 W1 done on feature/anim01-w1-event-stream: the engine now emits a structured `AnimationEvent[]` alongside the logs, with golden streams for all 16 fixtures.
 The codex review of that stream reported nine findings, all nine reproduced and all nine fixed on the same branch.
 
@@ -11,6 +16,11 @@ Awaiting Ruihan approval of clips plus checklist plus W1/W2 fine specs.
 
 ## History
 
+2026-07-31 W2: one timeline, no delay table. Cue durations are the beats, the clash cadence is a floor the next clash may not contact before, so a faint plus its slide fits inside it instead of adding to it, and the x2 fudge is gone.
+2026-07-31 W2: the board is rebuilt from the stream by applying each event's own delta rather than by trusting a pet ref's stats, because the two halves of one clash disagree about the pet being hit twice in that beat.
+2026-07-31 W2: 58 director specs over the 16 golden streams, including the per-hit popup merge, the corpse group hold, the FLIP slide inside the corpse flight and the FAST collapse; the four recorded end-of-battle boards are asserted against the reconstruction.
+2026-07-31 W2: FAST is built as a second timeline rather than a rate, and comes out at 2.4x over the ten fixtures the reference clips measured at 2.54x.
+2026-07-31 W2: REWIND steps back one board state and stays playable, which is deliberately not the real client's stall.
 2026-07-31 W1 review: nine codex findings, each reproduced with a headless `--dump-events` probe before it was touched, each fixed with a regression case in `tests/specs/animation/animation-event-review-fixes.test.ts`.
 2026-07-31 W1 review: the two structural ones were a projectile that was flushed before the effect it delivers, so f09 buffed the Worm before moving it, and a clash merge that gave up whenever a perk landed damage inside the same window.
 2026-07-31 W1 review: the deepest one is that hundreds of abilities write `pet.health` or `pet.attack` straight rather than through the increase helpers, so the recorder now settles pet stats against what the stream already said, at activation and clash boundaries, and draws whatever is left over.

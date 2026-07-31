@@ -32,6 +32,7 @@ Then set `ANIM01_GAME_URL` for `driver.py`.
 | `sim_config.js` | fixture spec to fork `SimulationConfig` |
 | `check_fixtures.sh` | runs `sim_notes.js` over every fixture, writes `expected/<id>.txt` |
 | `run_fixture.py` | drives the game to the battle for one fixture and records it |
+| `record_calc.py` | the mirror of `run_fixture.py` for our own app: loads a fixture through the share-state URL, plays the event driven animation and screencasts it |
 | `controls_probe.py` | same entry, plus a timed script of replay-control presses, for the speed mode and the stop/skip/rewind grammar |
 | `make_clip.py` | frame directory to webm clip plus filmstrip contact sheet |
 | `crop_strip.py` | one screen region over a time window, upscaled, for reading a widget frame by frame |
@@ -58,6 +59,26 @@ Regenerate them deliberately, then read the diff against CHECKLIST.md before com
 ```bash
 UPDATE_ANIMATION_GOLDENS=1 npx vitest run --config config/vitest.config.ts tests/specs/animation
 ```
+
+## Recording our own animation (W2)
+
+The calculator side of the comparison is recorded from the dev server on the box:
+
+```bash
+# dev server, box only, 127.0.0.1:4200
+node ./node_modules/@angular/cli/bin/ng serve --proxy-config config/proxy.conf.js --host 127.0.0.1 --port 4200
+
+export PLAYWRIGHT_BROWSERS_PATH=/root/autodl-tmp/ms-playwright
+/root/workspace/.venv-sap/bin/python record_calc.py --all --seconds 60
+for d in /root/autodl-tmp/sap-data/anim01/calc/f*; do
+  /root/workspace/.venv-sap/bin/python make_clip.py "$d" \
+    --out-dir /root/autodl-tmp/sap-data/anim01/calc/out --tiles 40 --mode even
+done
+```
+
+The fixture boards are loaded through the app's own `?c=<json>` share state, so nothing in the app is special cased for the recording.
+For the clip the stage element is reparented into a full viewport holder, which frames the animation the way the reference clips frame the real game; it is the same live component, only moved.
+Clips and filmstrips land in `/root/autodl-tmp/sap-data/anim01/calc/`, alongside the real game's under `.../anim01/out/`.
 
 ## Interception: route fulfilment, not the page hook
 

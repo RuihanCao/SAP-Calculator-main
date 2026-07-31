@@ -1,8 +1,10 @@
 import { CommonModule } from '@angular/common';
 import {
+  AfterViewInit,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  ElementRef,
   EventEmitter,
   Input,
   NgZone,
@@ -10,6 +12,7 @@ import {
   OnDestroy,
   Output,
   SimpleChanges,
+  ViewChild,
 } from '@angular/core';
 import {
   AnimationEvent,
@@ -75,7 +78,10 @@ const SLOT_GAP_X = 8.6;
 const FRONT_OFFSET_X = 4.6;
 const GROUND_Y = 66;
 const LIFT_Y = 26;
-const BANNER_ANCHOR: Point = { x: 34, y: 15 };
+const BANNER_ANCHOR: Point = { x: 34, y: 16 };
+/** Where a corpse flies to before it bursts, in percent of the stage. */
+const CORPSE_EXIT_DX = 22;
+const CORPSE_EXIT_DY = 56;
 const COUNTER_ANCHOR: Record<AnimationSide, Point> = {
   player: { x: 12, y: 12 },
   opponent: { x: 88, y: 12 },
@@ -97,7 +103,9 @@ const COUNTER_ANCHOR: Record<AnimationSide, Point> = {
   styleUrl: './battle-animation-stage.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class BattleAnimationStageComponent implements OnChanges, OnDestroy {
+export class BattleAnimationStageComponent
+  implements AfterViewInit, OnChanges, OnDestroy
+{
   @Input({ required: true }) events: ReadonlyArray<AnimationEvent> = [];
   @Input() logs: ReadonlyArray<Log> = [];
   @Input() speed = 1;
@@ -114,8 +122,17 @@ export class BattleAnimationStageComponent implements OnChanges, OnDestroy {
   fast = false;
   playback: PlaybackState = initialPlayback();
 
+  /**
+   * One em is the stage's scale unit, so the same layout reads in the split
+   * pane and full screen. Everything in the stylesheet is sized in em.
+   */
+  fieldFontPx = 14;
+
+  @ViewChild('field') private fieldRef?: ElementRef<HTMLElement>;
+
   private rafHandle: number | null = null;
   private lastTickMs = 0;
+  private resizeObserver: ResizeObserver | null = null;
 
   constructor(
     private readonly zone: NgZone,
@@ -131,8 +148,34 @@ export class BattleAnimationStageComponent implements OnChanges, OnDestroy {
     }
   }
 
+  ngAfterViewInit(): void {
+    this.observeField();
+  }
+
   ngOnDestroy(): void {
     this.stopLoop();
+    this.resizeObserver?.disconnect();
+    this.resizeObserver = null;
+  }
+
+  private observeField(): void {
+    if (typeof ResizeObserver === 'undefined') {
+      return;
+    }
+    this.resizeObserver?.disconnect();
+    const element = this.fieldRef?.nativeElement;
+    if (!element) {
+      return;
+    }
+    this.resizeObserver = new ResizeObserver((entries) => {
+      const height = entries[0]?.contentRect.height ?? 0;
+      const next = Math.max(9, Math.min(26, Math.round(height / 30)));
+      if (next !== this.fieldFontPx) {
+        this.fieldFontPx = next;
+        this.cdr.detectChanges();
+      }
+    });
+    this.resizeObserver.observe(element);
   }
 
   // ------------------------------------------------------------- transport --
@@ -256,23 +299,37 @@ export class BattleAnimationStageComponent implements OnChanges, OnDestroy {
       const towards = view.pet.side === 'player' ? 1 : -1;
       x += towards * view.lean * (FRONT_OFFSET_X * 0.55);
     }
-    const y = GROUND_Y - view.lift * LIFT_Y;
+    let y = GROUND_Y - view.lift * LIFT_Y;
+    let entrance = 1;
+    const intro = this.frame?.intro;
+    if (intro) {
+      // The line-up of checklist 18: the player board slides in from the left,
+      // the opponent board is delivered from the top right.
+      if (view.pet.side === 'player') {
+        entrance = intro.playerBoard;
+        x -= (1 - entrance) * 55;
+      } else {
+        entrance = intro.opponentBoard;
+        x += (1 - entrance) * 45;
+        y -= (1 - entrance) * 35;
+      }
+    }
     return {
       left: `${x}%`,
       top: `${y}%`,
-      opacity: `${0.25 + 0.75 * view.reveal}`,
+      opacity: `${(0.25 + 0.75 * view.reveal) * (entrance > 0 ? 1 : 0)}`,
       transform: `translate(-50%, -100%) scale(${0.7 + 0.3 * view.reveal})`,
     };
   }
 
   corpseStyle(view: CorpseView): Record<string, string> {
     const from = this.slotX(view.side, view.slot);
-    const x = from + 26 * view.progress;
-    const y = GROUND_Y - 4 * view.progress * (2.4 - view.progress) * 18;
+    const x = from + CORPSE_EXIT_DX * view.progress;
+    const y = GROUND_Y - CORPSE_EXIT_DY * view.progress;
     return {
       left: `${x}%`,
-      top: `${Math.max(-20, y)}%`,
-      opacity: `${1 - Math.max(0, view.progress - 0.75) * 4}`,
+      top: `${y}%`,
+      opacity: `${1 - Math.max(0, view.progress - 0.8) * 5}`,
       transform: `translate(-50%, -100%) rotate(${view.progress * 90}deg)`,
     };
   }
@@ -292,8 +349,8 @@ export class BattleAnimationStageComponent implements OnChanges, OnDestroy {
 
   popupStyle(view: PopupView): Record<string, string> {
     const x = this.slotX(view.side, view.slot);
-    const rise = view.progress * 8;
-    const y = GROUND_Y - 24 - rise;
+    const rise = view.progress * 6;
+    const y = GROUND_Y - 16 - rise;
     return {
       left: `${x}%`,
       top: `${y}%`,
@@ -307,6 +364,14 @@ export class BattleAnimationStageComponent implements OnChanges, OnDestroy {
 
   slotPointStyle(side: AnimationSide, slot: number, dy = 0): Record<string, string> {
     return this.pointStyle(this.slotX(side, slot), GROUND_Y - 12 + dy);
+  }
+
+  /** Where a corpse group leaves the screen, which is where it bursts. */
+  burstStyle(side: AnimationSide, slot: number): Record<string, string> {
+    return this.pointStyle(
+      this.slotX(side, slot) + CORPSE_EXIT_DX,
+      GROUND_Y - CORPSE_EXIT_DY,
+    );
   }
 
   counterStyle(side: AnimationSide): Record<string, string> {
@@ -413,6 +478,7 @@ export class BattleAnimationStageComponent implements OnChanges, OnDestroy {
     this.sampler = timeline ? new TimelineSampler(timeline) : null;
     this.playback = initialPlayback(this.speed);
     this.render();
+    this.observeField();
     if (this.autoPlay) {
       this.togglePlay();
     }
@@ -542,5 +608,10 @@ export class BattleAnimationStageComponent implements OnChanges, OnDestroy {
     }
     this.frame = this.sampler.frameAt(this.playback.timeMs);
     this.cdr.detectChanges();
+    if (!this.resizeObserver && this.fieldRef) {
+      // The field only exists once a frame has been drawn, so the scale unit is
+      // measured on the first render rather than in ngAfterViewInit.
+      this.observeField();
+    }
   }
 }

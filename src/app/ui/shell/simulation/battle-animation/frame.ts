@@ -398,7 +398,7 @@ export class TimelineSampler {
           bursts.push({
             id: cue.id,
             side: cue.side,
-            slot: 0,
+            slot: cue.index,
             progress,
           });
           break;

@@ -157,6 +157,8 @@ export interface CorpseLaunchCue extends CueBase {
 export interface StarburstCue extends CueBase {
   kind: 'starburst';
   side: AnimationSide;
+  /** Slot the corpse group left from, so the burst is where it went out. */
+  index: number;
   groupId: string;
 }
 

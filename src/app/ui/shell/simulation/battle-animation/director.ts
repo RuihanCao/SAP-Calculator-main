@@ -605,6 +605,7 @@ export const buildBattleTimeline = (
             seq: event.seq,
             group: event.group,
             side: event.pets[0].side,
+            index: findPet(board, event.pets[0].id)?.index ?? event.pets[0].index,
             groupId,
           });
         }
