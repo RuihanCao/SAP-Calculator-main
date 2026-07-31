@@ -1,0 +1,31 @@
+# f03-faint-chain - Hedgehog faint AoE chains into two more faints
+covers: faint trigger chain, AoE damage, cascading faints
+deterministic=true randomDecisions=0 randomEventLogs=0 stableOver25Runs=true orderOnlyAmbiguity=false winner=player
+--- expected event sequence (fork sim) ---
+000 board	Phase 1: Before battle
+001 board	___ (-/-) ___ (-/-) ___ (-/-) P2 <img src="assets/art/Public/Public/Pets/Pig.png" class="log-pet-icon" alt="Pig">(5/12/0xp) P1 <img src="assets/art/Public/Public/Pets/Hedgehog.png" class="log-pet-icon" alt="Hedgehog">(4/2/0xp) | O1 <img src="assets/art/Public/Public/Pets/Cow.png" class="log-pet-icon" alt="Cow">(4/7/0xp) O2 <img src="assets/art/Public/Public/Pets/Otter.png" class="log-pet-icon" alt="Otter">(2/2/0xp) O3 <img src="assets/art/Public/Public/Pets/Worm.png" class="log-pet-icon" alt="Worm">(1/10/0xp) ___ (-/-) ___ (-/-) 
+002 board	Phase 2: Start of battle
+003 board	___ (-/-) ___ (-/-) ___ (-/-) P2 <img src="assets/art/Public/Public/Pets/Pig.png" class="log-pet-icon" alt="Pig">(5/12/0xp) P1 <img src="assets/art/Public/Public/Pets/Hedgehog.png" class="log-pet-icon" alt="Hedgehog">(4/2/0xp) | O1 <img src="assets/art/Public/Public/Pets/Cow.png" class="log-pet-icon" alt="Cow">(4/7/0xp) O2 <img src="assets/art/Public/Public/Pets/Otter.png" class="log-pet-icon" alt="Otter">(2/2/0xp) O3 <img src="assets/art/Public/Public/Pets/Worm.png" class="log-pet-icon" alt="Worm">(1/10/0xp) ___ (-/-) ___ (-/-) 
+004 board	Phase 3: After Start of Battle
+005 board	___ (-/-) ___ (-/-) ___ (-/-) P2 <img src="assets/art/Public/Public/Pets/Pig.png" class="log-pet-icon" alt="Pig">(5/12/0xp) P1 <img src="assets/art/Public/Public/Pets/Hedgehog.png" class="log-pet-icon" alt="Hedgehog">(4/2/0xp) | O1 <img src="assets/art/Public/Public/Pets/Cow.png" class="log-pet-icon" alt="Cow">(4/7/0xp) O2 <img src="assets/art/Public/Public/Pets/Otter.png" class="log-pet-icon" alt="Otter">(2/2/0xp) O3 <img src="assets/art/Public/Public/Pets/Worm.png" class="log-pet-icon" alt="Worm">(1/10/0xp) ___ (-/-) ___ (-/-) 
+006 attack	Hedgehog attacks Cow for 4.
+007 attack	Cow attacks Hedgehog for 4.
+008 death	Hedgehog fainted.
+009 attack	Hedgehog sniped Pig for 2.
+010 attack	Hedgehog sniped Cow for 2.
+011 attack	Hedgehog sniped Otter for 2.
+012 attack	Hedgehog sniped Worm for 2.
+013 death	Otter fainted.
+014 board	___ (-/-) ___ (-/-) ___ (-/-) ___ (-/-) P1 <img src="assets/art/Public/Public/Pets/Pig.png" class="log-pet-icon" alt="Pig">(5/10/0xp) | O1 <img src="assets/art/Public/Public/Pets/Cow.png" class="log-pet-icon" alt="Cow">(4/1/0xp) O2 <img src="assets/art/Public/Public/Pets/Worm.png" class="log-pet-icon" alt="Worm">(1/8/0xp) ___ (-/-) ___ (-/-) ___ (-/-) 
+015 attack	Pig attacks Cow for 5.
+016 attack	Cow attacks Pig for 4.
+017 death	Cow fainted.
+018 board	___ (-/-) ___ (-/-) ___ (-/-) ___ (-/-) P1 <img src="assets/art/Public/Public/Pets/Pig.png" class="log-pet-icon" alt="Pig">(5/6/0xp) | O1 <img src="assets/art/Public/Public/Pets/Worm.png" class="log-pet-icon" alt="Worm">(1/8/0xp) ___ (-/-) ___ (-/-) ___ (-/-) ___ (-/-) 
+019 attack	Pig attacks Worm for 5.
+020 attack	Worm attacks Pig for 1.
+021 board	___ (-/-) ___ (-/-) ___ (-/-) ___ (-/-) P1 <img src="assets/art/Public/Public/Pets/Pig.png" class="log-pet-icon" alt="Pig">(5/5/0xp) | O1 <img src="assets/art/Public/Public/Pets/Worm.png" class="log-pet-icon" alt="Worm">(1/3/0xp) ___ (-/-) ___ (-/-) ___ (-/-) ___ (-/-) 
+022 attack	Pig attacks Worm for 5.
+023 attack	Worm attacks Pig for 1.
+024 death	Worm fainted.
+025 board	___ (-/-) ___ (-/-) ___ (-/-) ___ (-/-) P1 <img src="assets/art/Public/Public/Pets/Pig.png" class="log-pet-icon" alt="Pig">(5/4/0xp) | ___ (-/-) ___ (-/-) ___ (-/-) ___ (-/-) ___ (-/-) 
+026 board	Player is the winner

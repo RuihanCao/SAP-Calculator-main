@@ -1,0 +1,40 @@
+# f07-pushforward-multi - Three enemies faint at once, two survivors push forward
+covers: push forward after multiple faints, simultaneous multi faint, AoE
+deterministic=false randomDecisions=2 randomEventLogs=0 stableOver25Runs=false orderOnlyAmbiguity=true winner=player
+randomDecisions: Faint ability order (O1 Cow, O2 Otter, O3 Worm) | Faint ability order (O2 Otter, O3 Worm)
+--- expected event sequence (fork sim) ---
+000 board	Phase 1: Before battle
+001 board	___ (-/-) ___ (-/-) P3 <img src="assets/art/Public/Public/Pets/Duck.png" class="log-pet-icon" alt="Duck">(3/12/0xp) P2 <img src="assets/art/Public/Public/Pets/Pig.png" class="log-pet-icon" alt="Pig">(5/12/0xp) P1 <img src="assets/art/Public/Public/Pets/Hedgehog.png" class="log-pet-icon" alt="Hedgehog">(4/2/0xp) | O1 <img src="assets/art/Public/Public/Pets/Cow.png" class="log-pet-icon" alt="Cow">(4/6/0xp) O2 <img src="assets/art/Public/Public/Pets/Otter.png" class="log-pet-icon" alt="Otter">(1/2/0xp) O3 <img src="assets/art/Public/Public/Pets/Worm.png" class="log-pet-icon" alt="Worm">(1/2/0xp) O4 <img src="assets/art/Public/Public/Pets/Duck.png" class="log-pet-icon" alt="Duck">(1/9/0xp) O5 <img src="assets/art/Public/Public/Pets/Swan.png" class="log-pet-icon" alt="Swan">(1/9/0xp) 
+002 board	Phase 2: Start of battle
+003 board	___ (-/-) ___ (-/-) P3 <img src="assets/art/Public/Public/Pets/Duck.png" class="log-pet-icon" alt="Duck">(3/12/0xp) P2 <img src="assets/art/Public/Public/Pets/Pig.png" class="log-pet-icon" alt="Pig">(5/12/0xp) P1 <img src="assets/art/Public/Public/Pets/Hedgehog.png" class="log-pet-icon" alt="Hedgehog">(4/2/0xp) | O1 <img src="assets/art/Public/Public/Pets/Cow.png" class="log-pet-icon" alt="Cow">(4/6/0xp) O2 <img src="assets/art/Public/Public/Pets/Otter.png" class="log-pet-icon" alt="Otter">(1/2/0xp) O3 <img src="assets/art/Public/Public/Pets/Worm.png" class="log-pet-icon" alt="Worm">(1/2/0xp) O4 <img src="assets/art/Public/Public/Pets/Duck.png" class="log-pet-icon" alt="Duck">(1/9/0xp) O5 <img src="assets/art/Public/Public/Pets/Swan.png" class="log-pet-icon" alt="Swan">(1/9/0xp) 
+004 board	Phase 3: After Start of Battle
+005 board	___ (-/-) ___ (-/-) P3 <img src="assets/art/Public/Public/Pets/Duck.png" class="log-pet-icon" alt="Duck">(3/12/0xp) P2 <img src="assets/art/Public/Public/Pets/Pig.png" class="log-pet-icon" alt="Pig">(5/12/0xp) P1 <img src="assets/art/Public/Public/Pets/Hedgehog.png" class="log-pet-icon" alt="Hedgehog">(4/2/0xp) | O1 <img src="assets/art/Public/Public/Pets/Cow.png" class="log-pet-icon" alt="Cow">(4/6/0xp) O2 <img src="assets/art/Public/Public/Pets/Otter.png" class="log-pet-icon" alt="Otter">(1/2/0xp) O3 <img src="assets/art/Public/Public/Pets/Worm.png" class="log-pet-icon" alt="Worm">(1/2/0xp) O4 <img src="assets/art/Public/Public/Pets/Duck.png" class="log-pet-icon" alt="Duck">(1/9/0xp) O5 <img src="assets/art/Public/Public/Pets/Swan.png" class="log-pet-icon" alt="Swan">(1/9/0xp) 
+006 attack	Hedgehog attacks Cow for 4.
+007 attack	Cow attacks Hedgehog for 4.
+008 death	Hedgehog fainted.
+009 attack	Hedgehog sniped Pig for 2.
+010 attack	Hedgehog sniped Duck for 2.
+011 attack	Hedgehog sniped Cow for 2.
+012 attack	Hedgehog sniped Otter for 2.
+013 attack	Hedgehog sniped Worm for 2.
+014 attack	Hedgehog sniped Duck for 2.
+015 attack	Hedgehog sniped Swan for 2.
+016 death	Cow fainted.
+017 death	Otter fainted.
+018 death	Worm fainted.
+019 board	___ (-/-) ___ (-/-) ___ (-/-) P2 <img src="assets/art/Public/Public/Pets/Duck.png" class="log-pet-icon" alt="Duck">(3/10/0xp) P1 <img src="assets/art/Public/Public/Pets/Pig.png" class="log-pet-icon" alt="Pig">(5/10/0xp) | O1 <img src="assets/art/Public/Public/Pets/Duck.png" class="log-pet-icon" alt="Duck">(1/7/0xp) O2 <img src="assets/art/Public/Public/Pets/Swan.png" class="log-pet-icon" alt="Swan">(1/7/0xp) ___ (-/-) ___ (-/-) ___ (-/-) 
+020 attack	Pig attacks Duck for 5.
+021 attack	Duck attacks Pig for 1.
+022 board	___ (-/-) ___ (-/-) ___ (-/-) P2 <img src="assets/art/Public/Public/Pets/Duck.png" class="log-pet-icon" alt="Duck">(3/10/0xp) P1 <img src="assets/art/Public/Public/Pets/Pig.png" class="log-pet-icon" alt="Pig">(5/9/0xp) | O1 <img src="assets/art/Public/Public/Pets/Duck.png" class="log-pet-icon" alt="Duck">(1/2/0xp) O2 <img src="assets/art/Public/Public/Pets/Swan.png" class="log-pet-icon" alt="Swan">(1/7/0xp) ___ (-/-) ___ (-/-) ___ (-/-) 
+023 attack	Pig attacks Duck for 5.
+024 attack	Duck attacks Pig for 1.
+025 death	Duck fainted.
+026 board	___ (-/-) ___ (-/-) ___ (-/-) P2 <img src="assets/art/Public/Public/Pets/Duck.png" class="log-pet-icon" alt="Duck">(3/10/0xp) P1 <img src="assets/art/Public/Public/Pets/Pig.png" class="log-pet-icon" alt="Pig">(5/8/0xp) | O1 <img src="assets/art/Public/Public/Pets/Swan.png" class="log-pet-icon" alt="Swan">(1/7/0xp) ___ (-/-) ___ (-/-) ___ (-/-) ___ (-/-) 
+027 attack	Pig attacks Swan for 5.
+028 attack	Swan attacks Pig for 1.
+029 board	___ (-/-) ___ (-/-) ___ (-/-) P2 <img src="assets/art/Public/Public/Pets/Duck.png" class="log-pet-icon" alt="Duck">(3/10/0xp) P1 <img src="assets/art/Public/Public/Pets/Pig.png" class="log-pet-icon" alt="Pig">(5/7/0xp) | O1 <img src="assets/art/Public/Public/Pets/Swan.png" class="log-pet-icon" alt="Swan">(1/2/0xp) ___ (-/-) ___ (-/-) ___ (-/-) ___ (-/-) 
+030 attack	Pig attacks Swan for 5.
+031 attack	Swan attacks Pig for 1.
+032 death	Swan fainted.
+033 board	___ (-/-) ___ (-/-) ___ (-/-) P2 <img src="assets/art/Public/Public/Pets/Duck.png" class="log-pet-icon" alt="Duck">(3/10/0xp) P1 <img src="assets/art/Public/Public/Pets/Pig.png" class="log-pet-icon" alt="Pig">(5/6/0xp) | ___ (-/-) ___ (-/-) ___ (-/-) ___ (-/-) ___ (-/-) 
+034 board	Player is the winner

@@ -1,0 +1,36 @@
+{
+ "id": "f10-hurt-knockout",
+ "title": "Peacock hurt trigger, Gorilla coconut, Hippo knock-out trigger",
+ "covers": [
+  "hurt trigger",
+  "knock out trigger",
+  "equipment gained mid battle",
+  "stat change popup"
+ ],
+ "turn": 11,
+ "player": [
+  {
+   "pet": "Peacock",
+   "attack": 2,
+   "health": 14
+  },
+  {
+   "pet": "Gorilla",
+   "attack": 7,
+   "health": 12
+  }
+ ],
+ "opponent": [
+  {
+   "pet": "Hippo",
+   "attack": 6,
+   "health": 16
+  },
+  {
+   "pet": "Otter",
+   "attack": 2,
+   "health": 8
+  }
+ ],
+ "notes": "Peacock gains attack every time it is hurt, Hippo gains stats on each knock out, Gorilla gains a Coconut when hurt. Dense trigger-badge fixture."
+}

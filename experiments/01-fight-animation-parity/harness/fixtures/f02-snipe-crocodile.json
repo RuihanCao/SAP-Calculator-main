@@ -1,0 +1,9 @@
+{
+ "id": "f02-snipe-crocodile",
+ "title": "Crocodile start-of-battle snipe at the last enemy",
+ "covers": ["snipe / ranged", "start of battle trigger", "long range source to target"],
+ "turn": 11,
+ "player": [{"pet":"Crocodile","attack":8,"health":6},{"pet":"Pig","attack":3,"health":10}],
+ "opponent": [{"pet":"Cow","attack":3,"health":6},{"pet":"Otter","attack":2,"health":6},{"pet":"Worm","attack":1,"health":8}],
+ "notes": "Crocodile hits the LAST enemy, so source and target are at opposite ends of the board. Maximum-distance snipe."
+}
