@@ -339,6 +339,7 @@ export class SimulationRunner {
       this.currBattle = {
         winner: 'draw',
         logs: this.logService.getLogs(),
+        events: this.logService.getAnimationEvents(),
       };
       this.battles.push(this.currBattle);
     } else {
@@ -430,6 +431,8 @@ export class SimulationRunner {
     this.initializeEquipmentMultipliers();
 
     // Before battle phase
+    this.logService.beginAnimationCapture(this.player, this.opponent);
+    this.logService.animation.recordPhase('before-battle');
     this.logService.createLog({
       message: 'Phase 1: Before battle',
       type: 'board',
@@ -446,6 +449,7 @@ export class SimulationRunner {
     const hasChurros = (pet: { equipment?: { name?: string } }) =>
       pet.equipment?.name === 'Churros';
     // Init SOB (Churros pets before toys)
+    this.logService.animation.recordPhase('start-of-battle');
     this.logService.createLog({
       message: 'Phase 2: Start of battle',
       type: 'board',
@@ -466,6 +470,7 @@ export class SimulationRunner {
       this.abilityCycle();
     } while (this.abilityService.hasAbilityCycleEvents);
 
+    this.logService.animation.recordPhase('after-start-of-battle');
     this.logService.createLog({
       message: 'Phase 3: After Start of Battle',
       type: 'board',

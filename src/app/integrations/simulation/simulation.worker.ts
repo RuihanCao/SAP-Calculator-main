@@ -102,6 +102,9 @@ const sanitizeResult = (result: SimulationResult): SimulationResult => {
     return {
       winner: battle?.winner ?? 'draw',
       logs,
+      // Animation events are plain data already, so they cross the worker
+      // boundary as-is with nothing to strip.
+      events: Array.isArray(battle?.events) ? battle.events : [],
     };
   });
 

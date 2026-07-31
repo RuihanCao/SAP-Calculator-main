@@ -112,7 +112,7 @@ export class ToyEventService {
         isRandomOrder,
         randomEventReason,
       );
-      event.callback(this.gameService.gameApi);
+      this.runToyEvent(event, () => event.callback(this.gameService.gameApi));
     }
 
     this.startOfBattleToyEvents = [];
@@ -169,10 +169,40 @@ export class ToyEventService {
           : 'deterministic';
         this.logToyEvent(event, label, isRandomOrder, randomEventReason);
       }
-      executor(event);
+      this.runToyEvent(event, () => executor(event));
     }
 
     queue.length = 0;
+  }
+
+  /** Opens the toy's trigger banner around one toy activation, checklist 0. */
+  private runToyEvent(event: AbilityEvent, run: () => void): void {
+    const toyName =
+      (event.customParams?.toyName as string | undefined) ??
+      event.player?.toy?.name;
+    const toy =
+      [event.player?.toy, event.player?.hardToy].find(
+        (candidate) => candidate?.name === toyName,
+      ) ?? null;
+    if (!toyName) {
+      run();
+      return;
+    }
+    this.logService.animation.beginAbility({
+      toy: { name: toyName, level: toy?.level ?? 1 },
+      board: event.player,
+      abilitySource: 'toy',
+      trigger: event.abilityType ?? null,
+      triggers: event.abilityType ? [event.abilityType] : [],
+      abilityName: toyName,
+      level: toy?.level ?? 1,
+      triggeredBy: event.triggerPet ?? null,
+    });
+    try {
+      run();
+    } finally {
+      this.logService.animation.endAbility();
+    }
   }
 
   private logToyEvent(

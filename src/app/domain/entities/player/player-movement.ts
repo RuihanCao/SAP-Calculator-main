@@ -5,6 +5,7 @@ import { LogService } from 'app/integrations/log.service';
 import { AbilityService } from 'app/integrations/ability/ability.service';
 import { Onion } from 'app/domain/entities/catalog/equipment/golden/onion.class';
 import type { PlayerLike } from './player-like.types';
+import { AnimationMove } from 'app/domain/interfaces/animation-event.interface';
 
 const MAX_PET_SLOT = 4;
 
@@ -65,11 +66,50 @@ const findClosestEmptyBehind = (
 };
 
 
+/** Slot of every pet currently on the board, for animation diffing only. */
+const capturePositions = (player: PlayerLike): Map<Pet, number> => {
+  const positions = new Map<Pet, number>();
+  for (let index = 0; index <= MAX_PET_SLOT; index++) {
+    const pet = player.getPet(index);
+    if (pet) {
+      positions.set(pet, index);
+    }
+  }
+  return positions;
+};
+
+const diffPositions = (
+  player: PlayerLike,
+  before: Map<Pet, number>,
+  exclude?: Pet,
+): AnimationMove[] => {
+  const moves: AnimationMove[] = [];
+  for (let index = 0; index <= MAX_PET_SLOT; index++) {
+    const pet = player.getPet(index);
+    if (!pet || pet === exclude) {
+      continue;
+    }
+    const from = before.get(pet);
+    if (from != null && from !== index) {
+      const ref = player.animation.petRef(pet);
+      if (ref) {
+        moves.push({ pet: ref, from, to: index });
+      }
+    }
+  }
+  return moves;
+};
+
 export const pushPetsForward = (player: PlayerLike): void => {
   const array = clone(player.petArray);
+  const before = capturePositions(player);
   for (let index = 0; index <= MAX_PET_SLOT; index++) {
     trySetPet(player, index, array[index]);
   }
+  player.animation.recordPushForward(
+    player.isOpponent ? 'opponent' : 'player',
+    diffPositions(player, before),
+  );
 };
 
 export const onionCheck = (player: PlayerLike): void => {
@@ -136,6 +176,7 @@ export const pushPet = (
   }
 
   const position = pet.position;
+  const before = capturePositions(player);
   setSlotDirect(pet.parent, position, undefined);
   let destination;
   if (spaces > 0) {
@@ -156,6 +197,13 @@ export const pushPet = (
     }
     player.setPet(destination, pet);
   }
+
+  player.animation.recordMove({
+    pet,
+    from: position,
+    to: pet.position,
+    displaced: diffPositions(player, before, pet),
+  });
 
   if (jump) {
     pet.jumped = true;

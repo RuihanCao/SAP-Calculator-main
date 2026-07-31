@@ -225,6 +225,8 @@ export class Ability {
     tiger?: boolean,
     pteranodon?: boolean,
     customParams?: AbilityCustomParams,
+    /** The trigger that fired, when the caller knows it. Animation only. */
+    activeTrigger?: AbilityTrigger,
   ): boolean {
     //Check if pet is removed
     if (this.owner.removed && !this.matchesTrigger('PostRemovalFaint')) {
@@ -261,7 +263,27 @@ export class Ability {
           this.currentUses,
         );
       }
-      this.abilityFunction(context);
+      // One banner per activation, checklist 11. This is the single site every
+      // pet and equipment ability funnels through, so no catalog class needs to
+      // know about the animation stream.
+      this.owner.animation.beginAbility({
+        pet: this.owner,
+        abilitySource: this.abilityType === 'Equipment' ? 'equipment' : 'pet',
+        trigger: activeTrigger ?? (this.triggers.length === 1 ? this.triggers[0] : null),
+        triggers: this.triggers,
+        abilityName: this.name ?? null,
+        textName:
+          this.abilityType === 'Equipment'
+            ? (this.owner.equipment?.name ?? null)
+            : null,
+        level: this.level,
+        triggeredBy: triggerPet ?? null,
+      });
+      try {
+        this.abilityFunction(context);
+      } finally {
+        this.owner.animation.endAbility();
+      }
       return true;
     } catch (error) {
       console.error(

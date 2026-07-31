@@ -116,9 +116,16 @@ export class AbilityEngine {
   }
 
   removeDeadPets() {
+    // Corpses that leave in the same sweep launch together (checklist 3), on
+    // both boards, so the group spans the two calls.
+    this.logService.animation.beginCorpseGroup();
     let petRemoved = false;
-    petRemoved = this.player.removeDeadPets();
-    petRemoved = this.opponent.removeDeadPets() || petRemoved;
+    try {
+      petRemoved = this.player.removeDeadPets();
+      petRemoved = this.opponent.removeDeadPets() || petRemoved;
+    } finally {
+      this.logService.animation.endCorpseGroup();
+    }
     return petRemoved;
   }
 

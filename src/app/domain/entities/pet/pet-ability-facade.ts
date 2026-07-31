@@ -93,7 +93,7 @@ export abstract class PetAbilityFacade {
 
     const matchingPetAbilities = this.getAbilitiesWithTrigger(trigger, 'Pet');
     for (const ability of matchingPetAbilities) {
-      ability.execute(gameApi, triggerPet, tiger, pteranodon, customParams);
+      ability.execute(gameApi, triggerPet, tiger, pteranodon, customParams, trigger);
       if (this.transformed && this.transformedInto) {
         this.transformedInto.executeAbilities(
           trigger,
@@ -112,7 +112,7 @@ export abstract class PetAbilityFacade {
       'Equipment',
     );
     for (const ability of matchingEquipmentAbilities) {
-      ability.execute(gameApi, triggerPet, tiger, pteranodon, customParams);
+      ability.execute(gameApi, triggerPet, tiger, pteranodon, customParams, trigger);
       if (this.transformed && this.transformedInto) {
         this.transformedInto.executeAbilities(
           trigger,
@@ -136,7 +136,14 @@ export abstract class PetAbilityFacade {
   ): void {
     const matchingAbilities = this.getAbilities(trigger, type);
     for (const ability of matchingAbilities) {
-      ability.execute(gameApi, triggerPet, undefined, undefined, customParams);
+      ability.execute(
+        gameApi,
+        triggerPet,
+        undefined,
+        undefined,
+        customParams,
+        trigger,
+      );
     }
   }
 

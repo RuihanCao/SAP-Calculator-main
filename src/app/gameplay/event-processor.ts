@@ -107,6 +107,7 @@ export class EventProcessor {
       return;
     }
 
+    this.ctx.logService.animation.recordPhase('turn', this.ctx.getTurns());
     this.pushPetsForwards();
     this.ctx.logService.printState(this.ctx.player, this.ctx.opponent);
 
@@ -178,8 +179,15 @@ export class EventProcessor {
       return;
     }
 
-    playerPet.attackPet(opponentPet);
-    opponentPet.attackPet(playerPet);
+    // Both front pets trade in one beat, so the two hits are one clash event
+    // rather than two sequential frames (checklist 1).
+    this.ctx.logService.animation.beginClash();
+    try {
+      playerPet.attackPet(opponentPet);
+      opponentPet.attackPet(playerPet);
+    } finally {
+      this.ctx.logService.animation.endClash();
+    }
 
     playerPet.useAttackDefenseEquipment();
     opponentPet.useAttackDefenseEquipment();
@@ -196,17 +204,23 @@ export class EventProcessor {
 
   endLog(winner?: Player | null) {
     let message;
+    let outcome: 'player' | 'opponent' | 'draw';
     if (winner == null) {
       message = 'Draw';
+      outcome = 'draw';
     } else if (winner == this.ctx.player) {
       message = 'Player is the winner';
+      outcome = 'player';
     } else {
       message = 'Opponent is the winner';
+      outcome = 'opponent';
     }
+    this.ctx.logService.animation.recordOutcome(outcome);
     this.ctx.logService.createLog({
       message: message,
       type: 'board',
     });
+    this.ctx.logService.endAnimationCapture();
   }
 
   private tryAllEnemiesFaintedToyTrigger(

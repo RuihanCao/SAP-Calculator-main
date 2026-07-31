@@ -183,6 +183,13 @@ export class ToyService {
     if (puma) {
       message += ` (Puma)`;
     }
+    this.logService.animation.recordHit({
+      kind: 'snipe',
+      sourceToy: { name: toyName, level: parent?.toy?.level ?? 1 },
+      board: parent,
+      target: pet,
+      damage,
+    });
     this.logService.createLog({
       message: message,
       type: 'attack',
@@ -287,10 +294,36 @@ export class ToyService {
         ? 'tie-broken'
         : 'deterministic';
       this.logLocalStartOfBattleToyEvent(event, isRandomOrder, randomEventReason);
-      event.callback(this.gameService.gameApi);
+      this.runLocalToyEvent(event, () =>
+        event.callback(this.gameService.gameApi),
+      );
     }
 
     this.localStartOfBattleEvents = [];
+  }
+
+  /** Opens the toy's trigger banner around one activation, checklist 0. */
+  private runLocalToyEvent(event: AbilityEvent, run: () => void): void {
+    const toy = event.player?.toy ?? null;
+    if (!toy?.name) {
+      run();
+      return;
+    }
+    this.logService.animation.beginAbility({
+      toy: { name: toy.name, level: toy.level ?? 1 },
+      board: event.player,
+      abilitySource: 'toy',
+      trigger: 'StartBattle',
+      triggers: ['StartBattle'],
+      abilityName: toy.name,
+      level: toy.level ?? 1,
+      triggeredBy: event.triggerPet ?? null,
+    });
+    try {
+      run();
+    } finally {
+      this.logService.animation.endAbility();
+    }
   }
 
   private logLocalStartOfBattleToyEvent(
