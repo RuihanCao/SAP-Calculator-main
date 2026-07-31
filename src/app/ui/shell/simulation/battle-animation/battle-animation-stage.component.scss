@@ -141,10 +141,47 @@
   line-height: 1rem;
 }
 
+.anim-banner-divider {
+  margin: 0.2em 0 0.15em;
+  border-top: 2px dotted #b9b19a;
+}
+
 .anim-banner-text {
-  margin-top: 0.15rem;
+  line-height: 1.2;
+}
+
+.anim-banner-trigger {
+  font-weight: 800;
+  margin-right: 0.2em;
+}
+
+.anim-banner-glyph {
+  width: 0.95em;
+  height: 0.95em;
+  vertical-align: -0.12em;
+  margin: 0 0.05em;
+}
+
+.anim-banner-note {
+  margin-top: 0.15em;
+  color: #6b7280;
   font-style: italic;
-  line-height: 1.15;
+  font-size: 0.9em;
+}
+
+.anim-banner-uses {
+  position: absolute;
+  right: -0.1em;
+  top: 50%;
+  transform: translate(100%, -50%);
+  padding: 0.1em 0.35em;
+  border: 2px solid #2b3240;
+  border-left: none;
+  border-radius: 0 0.35em 0.35em 0;
+  background: #ffcf3f;
+  font-size: 0.8em;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .anim-banner-toy .anim-banner-name {
@@ -205,6 +242,7 @@
 }
 
 .anim-pet-level {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 0.15em;
@@ -281,13 +319,52 @@
   animation: anim-pop 300ms ease-out;
 }
 
-.anim-pet-shatter {
+/* Fragments of a consumed perk, thrown out around the pet, checklist 10. */
+.anim-pet-shard {
   position: absolute;
-  right: -0.45em;
-  top: -0.3em;
-  width: 1.7em;
-  height: 1.7em;
-  background: radial-gradient(circle, #8ed46a 0%, rgb(142 212 106 / 0%) 70%);
+  left: 50%;
+  top: 40%;
+  width: 0.5em;
+  height: 0.5em;
+  border-radius: 0.1em;
+  background: #6fbf3f;
+  border: 1px solid #3d7a22;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.anim-pet-shard-on {
+  animation: anim-shard 420ms ease-out forwards;
+}
+
+.anim-pet-shard-on[data-shard='0'] {
+  --shard-x: -1.9em;
+  --shard-y: -1.4em;
+}
+
+.anim-pet-shard-on[data-shard='1'] {
+  --shard-x: 1.9em;
+  --shard-y: -1.5em;
+}
+
+.anim-pet-shard-on[data-shard='2'] {
+  --shard-x: -2.2em;
+  --shard-y: 0.9em;
+}
+
+.anim-pet-shard-on[data-shard='3'] {
+  --shard-x: 2.2em;
+  --shard-y: 1em;
+}
+
+.anim-pet-shard-on[data-shard='4'] {
+  --shard-x: -0.5em;
+  --shard-y: -2.2em;
+}
+
+.anim-pet-shard-on[data-shard='5'] {
+  --shard-x: 0.7em;
+  --shard-y: 1.9em;
 }
 
 .anim-pet-fasticon {
@@ -301,10 +378,22 @@
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 3.6em;
-  height: 3.6em;
+  width: 5em;
+  height: 5em;
   border-radius: 50%;
-  background: radial-gradient(circle, #ffe680 0%, rgb(255 207 63 / 0%) 70%);
+  background: radial-gradient(circle, #fff3b0 0%, #ffcf3f 35%, rgb(255 207 63 / 0%) 70%);
+  pointer-events: none;
+}
+
+.anim-pet-xpring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 3.4em;
+  height: 3.4em;
+  border-radius: 50%;
+  border: 0.25em solid #ffd83f;
+  pointer-events: none;
 }
 
 .anim-pet-stats {
@@ -344,6 +433,13 @@
 }
 
 .anim-pet-hurt .anim-pet-art {
+  outline: 3px solid #e05353;
+  outline-offset: -2px;
+  border-radius: 50%;
+}
+
+/* Checklist 1: the red outline is up before contact, not only inside it. */
+.anim-pet-windup .anim-pet-art {
   outline: 3px solid #e05353;
   outline-offset: -2px;
   border-radius: 50%;
@@ -403,9 +499,33 @@
   background: radial-gradient(circle, #fff 0%, rgb(255 255 255 / 0%) 70%);
 }
 
+/* Checklist 7 and 8: a summon and a transform use the same cloud, and it is a
+   cloud rather than a glow, so the sprite swap happens behind something
+   opaque instead of fading through. */
+.anim-puff-cloud {
+  width: 4.4em;
+  height: 3.4em;
+  border-radius: 0;
+  background:
+    radial-gradient(circle at 26% 62%, #fff 0 46%, rgb(255 255 255 / 0%) 48%),
+    radial-gradient(circle at 50% 74%, #fff 0 44%, rgb(255 255 255 / 0%) 46%),
+    radial-gradient(circle at 74% 62%, #fff 0 46%, rgb(255 255 255 / 0%) 48%),
+    radial-gradient(circle at 38% 34%, #fff 0 40%, rgb(255 255 255 / 0%) 42%),
+    radial-gradient(circle at 63% 32%, #fff 0 38%, rgb(255 255 255 / 0%) 40%);
+  filter: drop-shadow(0 0 0.2em rgb(255 255 255 / 80%));
+}
+
+/* Checklist 5: a ranged arrival and a jump landing are a hard white puff. */
 .anim-puff-impact {
-  width: 2.2em;
-  height: 2.2em;
+  width: 2.6em;
+  height: 2.6em;
+  background: radial-gradient(circle, #fff 0 42%, rgb(255 255 255 / 55%) 62%, rgb(255 255 255 / 0%) 72%);
+}
+
+.anim-puff-mana {
+  width: 3em;
+  height: 3em;
+  background: radial-gradient(circle, #fff 0 36%, rgb(185 210 246 / 70%) 60%, rgb(185 210 246 / 0%) 74%);
 }
 
 .anim-flash {
@@ -455,6 +575,22 @@
 .anim-popup-stat img {
   width: 0.9em;
   height: 0.9em;
+}
+
+/* Checklist 14: mana lands as a large blue numeral, not as a grey chip. */
+.anim-popup-mana {
+  color: #2f6fd0;
+  font-size: 1.7em;
+  text-shadow:
+    -1px 0 #fff,
+    1px 0 #fff,
+    0 -1px #fff,
+    0 1px #fff;
+}
+
+.anim-popup-mana img {
+  width: 0.85em;
+  height: 0.85em;
 }
 
 .anim-popup-copy {
@@ -521,34 +657,90 @@
 
 /* ------------------------------------------------------------ controls -- */
 
+/*
+ * The game's own bar, checklist 17: five buttons at the top of the play area,
+ * no playback rate. It lives inside the field so it fades in with the entrance
+ * and leaves with the battle.
+ */
 .anim-controls {
+  position: absolute;
+  z-index: 35;
+  top: 9.6%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   display: flex;
-  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.5em;
+  transition: opacity 120ms linear;
+}
+
+.anim-controls-gone {
+  pointer-events: none;
+}
+
+/* One tile per control, label over glyph, the shape the real bar uses. */
+.anim-ctl {
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0 0.2rem;
+  width: 2.9em;
+  padding: 0.15em 0.1em 0.25em;
+  border: none;
+  border-radius: 0.35em;
+  background: rgb(56 104 138 / 55%);
+  color: #fff;
 }
 
-.anim-legacy {
-  margin-left: auto;
-  font-size: 0.7rem;
+.anim-ctl-label {
+  font-size: 0.5em;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  line-height: 1.1;
 }
 
-.anim-scrubber {
+.anim-ctl-glyph {
+  font-size: 1.1em;
+  line-height: 1;
+}
+
+/* Engaged is a dimmed glyph, the treatment the real bar uses (checklist 16). */
+.anim-ctl-engaged {
+  opacity: 0.5;
+}
+
+/* ------------------------------------------------------ tools, not game -- */
+
+.anim-tools {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0 0.2rem 0.2rem;
+  gap: 0.5rem;
+  padding: 0 0.3rem 0.2rem;
+  opacity: 0.55;
 }
 
-.anim-scrubber input {
+.anim-tools:hover,
+.anim-tools:focus-within {
+  opacity: 1;
+}
+
+.anim-tool {
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: inherit;
+}
+
+.anim-scrub {
   flex: 1 1 auto;
+  height: 0.6rem;
 }
 
 .anim-clock {
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-variant-numeric: tabular-nums;
-  opacity: 0.75;
 }
 
 .anim-empty {
@@ -576,5 +768,22 @@
 
   100% {
     transform: scale(1);
+  }
+}
+
+@keyframes anim-shard {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.6);
+  }
+
+  70% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--shard-x, 0)), calc(-50% + var(--shard-y, 0)))
+      scale(1) rotate(180deg);
   }
 }

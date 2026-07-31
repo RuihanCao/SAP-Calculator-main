@@ -142,8 +142,6 @@
               [events]="app.viewBattleEvents"
               [logs]="app.viewBattleLogs"
               [speed]="app.fightAnimationSpeed"
-              [speedOptions]="app.fightAnimationSpeedOptions"
-              (speedChange)="app.setFightAnimationSpeed($event)"
               (legacyRequested)="app.setLegacyFightAnimation(true)">
             </app-battle-animation-stage>
             <ng-container *ngIf="app.useLegacyFightAnimation">

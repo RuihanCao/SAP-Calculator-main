@@ -76,6 +76,11 @@ const TRUMPET_ICON = PAYLOAD_ICONS.trumpet;
 const MIDLINE_X = 50;
 const SLOT_GAP_X = 8.6;
 const FRONT_OFFSET_X = 4.6;
+/**
+ * How close to the midline a clashing pet gets. The two sprites meet with the
+ * flash between them and do not overlap, checklist 1.
+ */
+const CLASH_GAP_X = 3.4;
 const GROUND_Y = 66;
 const LIFT_Y = 26;
 const BANNER_ANCHOR: Point = { x: 34, y: 16 };
@@ -109,10 +114,8 @@ export class BattleAnimationStageComponent
   @Input({ required: true }) events: ReadonlyArray<AnimationEvent> = [];
   @Input() logs: ReadonlyArray<Log> = [];
   @Input() speed = 1;
-  @Input() speedOptions: readonly number[] = [0.5, 1, 1.5, 2];
   @Input() autoPlay = false;
 
-  @Output() speedChange = new EventEmitter<number>();
   @Output() legacyRequested = new EventEmitter<void>();
 
   normalTimeline: AnimationTimeline | null = null;
@@ -120,6 +123,12 @@ export class BattleAnimationStageComponent
   sampler: TimelineSampler | null = null;
   frame: FrameView | null = null;
   fast = false;
+  /**
+   * Checklist 17: on, the battle runs to the end; off, PLAY buys one beat.
+   * The real client keeps the toggle for the whole browser session, so it is
+   * not reset when a new battle is loaded.
+   */
+  autoplay = true;
   playback: PlaybackState = initialPlayback();
 
   /**
@@ -203,8 +212,24 @@ export class BattleAnimationStageComponent
     }
     this.playback = this.playing
       ? pause(this.playback)
-      : play(this.playback, timeline);
+      : play(this.playback, timeline, this.autoplay);
     this.syncLoop();
+  }
+
+  toggleAutoplay(): void {
+    this.autoplay = !this.autoplay;
+    if (this.playing) {
+      const timeline = this.timeline;
+      this.playback = timeline
+        ? play(pause(this.playback), timeline, this.autoplay)
+        : this.playback;
+    }
+    this.render();
+  }
+
+  /** 0..1, so the bar arrives with the entrance and goes when the battle does. */
+  get controlsOpacity(): number {
+    return this.frame?.controls ?? 1;
   }
 
   /** Checklist 17: one board state back, and still playable afterwards. */
@@ -232,7 +257,7 @@ export class BattleAnimationStageComponent
     if (!timeline) {
       return;
     }
-    this.playback = play(seek(this.playback, timeline, 0), timeline);
+    this.playback = play(seek(this.playback, timeline, 0), timeline, this.autoplay);
     this.syncLoop();
   }
 
@@ -257,12 +282,6 @@ export class BattleAnimationStageComponent
       };
       this.sampler = new TimelineSampler(to);
     }
-    this.render();
-  }
-
-  onSpeed(speed: number): void {
-    this.playback = { ...this.playback, speed };
-    this.speedChange.emit(speed);
     this.render();
   }
 
@@ -296,8 +315,9 @@ export class BattleAnimationStageComponent
       const target = this.slotX(view.jumpTargetSide, view.jumpTargetSlot);
       x += (target - x) * view.lean;
     } else if (view.lean > 0) {
-      const towards = view.pet.side === 'player' ? 1 : -1;
-      x += towards * view.lean * (FRONT_OFFSET_X * 0.55);
+      const meeting =
+        view.pet.side === 'player' ? MIDLINE_X - CLASH_GAP_X : MIDLINE_X + CLASH_GAP_X;
+      x += (meeting - x) * view.lean;
     }
     let y = GROUND_Y - view.lift * LIFT_Y;
     let entrance = 1;
@@ -355,6 +375,7 @@ export class BattleAnimationStageComponent
       left: `${x}%`,
       top: `${y}%`,
       opacity: `${view.progress > 0.75 ? (1 - view.progress) * 4 : 1}`,
+      transform: `translate(calc(-50% + ${view.offset * 2.6}em), -100%)`,
     };
   }
 
@@ -447,12 +468,15 @@ export class BattleAnimationStageComponent
   readonly sides: AnimationSide[] = ['player', 'opponent'];
   readonly trophySlots = Array.from({ length: 10 }, (_, index) => index);
   readonly heartSlots = Array.from({ length: 5 }, (_, index) => index);
+  /** Shards a consumed melon scatters around the pet, checklist 10. */
+  readonly shardSlots = Array.from({ length: 6 }, (_, index) => index);
   readonly attackIcon = ATTACK_ICON;
   readonly healthIcon = HEALTH_ICON;
   readonly manaIcon = MANA_ICON;
   readonly xpIcon = XP_ICON;
   readonly trumpetIcon = TRUMPET_ICON;
 
+  trackByIndex = (index: number): number => index;
   trackByPetId = (_: number, view: PetView): number => view.pet.id;
   trackById = (_: number, view: { id: string }): string => view.id;
   trackByCorpse = (_: number, view: CorpseView): number => view.petId;

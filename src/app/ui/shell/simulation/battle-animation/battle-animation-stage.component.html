@@ -1,36 +1,37 @@
 <div class="anim-stage" *ngIf="frame as view; else noEvents">
-  <div class="anim-controls">
-    <div class="btn-group btn-group-sm" role="group" aria-label="Animation controls">
-      <button type="button" class="btn btn-outline-secondary" (click)="onRestart()">RESTART</button>
-      <button type="button" class="btn btn-outline-secondary" (click)="onRewind()">REWIND</button>
-      <button type="button" class="btn btn-outline-primary" (click)="togglePlay()">
-        {{ playing ? 'PAUSE' : 'PLAY' }}
-      </button>
-      <button type="button" class="btn btn-outline-secondary" [class.active]="fast" (click)="toggleFast()">
-        FAST
-      </button>
-      <button type="button" class="btn btn-outline-secondary" (click)="onSkip()">SKIP</button>
-    </div>
-
-    <div class="btn-group btn-group-sm" role="group" aria-label="Animation speed">
-      <button type="button" class="btn btn-outline-secondary" *ngFor="let option of speedOptions"
-        [class.active]="playback.speed === option" (click)="onSpeed(option)">
-        {{ option }}x
-      </button>
-    </div>
-
-    <button type="button" class="btn btn-sm btn-link anim-legacy" (click)="useLegacy()">Legacy view</button>
-  </div>
-
-  <div class="anim-scrubber">
-    <input class="form-range" type="range" [min]="0" [max]="timeline?.durationMs || 0" [step]="50"
-      [value]="playback.timeMs" (input)="onScrub($any($event.target).value)" aria-label="Animation position" />
-    <span class="anim-clock">{{ (playback.timeMs / 1000).toFixed(1) }}s / {{ ((timeline?.durationMs || 0) / 1000).toFixed(1) }}s</span>
-  </div>
   <div class="anim-field" #field [style.font-size.px]="fieldFontPx"
     [class.anim-field-intro]="view.phase === 'intro'">
     <div class="anim-sky"></div>
     <div class="anim-ground"></div>
+
+    <!-- the replay control bar, checklist 17 and 18. It rides with the play
+         area: it fades in near the end of the entrance and goes when the
+         battle ends, and it never shows a playback rate. -->
+    <div class="anim-controls" [style.opacity]="view.controls"
+      [class.anim-controls-gone]="view.controls === 0">
+      <button type="button" class="anim-ctl" data-anim-control="rewind" (click)="onRewind()">
+        <span class="anim-ctl-label">REWIND</span>
+        <span class="anim-ctl-glyph" aria-hidden="true">&#9198;</span>
+      </button>
+      <button type="button" class="anim-ctl" data-anim-control="play" (click)="togglePlay()">
+        <span class="anim-ctl-label">{{ playing ? 'PAUSE' : 'PLAY' }}</span>
+        <span class="anim-ctl-glyph" aria-hidden="true">{{ playing ? '&#9208;' : '&#9654;' }}</span>
+      </button>
+      <button type="button" class="anim-ctl" data-anim-control="autoplay"
+        [class.anim-ctl-engaged]="autoplay" (click)="toggleAutoplay()">
+        <span class="anim-ctl-label">AUTOPLAY</span>
+        <span class="anim-ctl-glyph" aria-hidden="true">&#8646;</span>
+      </button>
+      <button type="button" class="anim-ctl" data-anim-control="fast" [class.anim-ctl-engaged]="fast"
+        (click)="toggleFast()">
+        <span class="anim-ctl-label">FAST</span>
+        <span class="anim-ctl-glyph" aria-hidden="true">&#9193;</span>
+      </button>
+      <button type="button" class="anim-ctl" data-anim-control="skip" (click)="onSkip()">
+        <span class="anim-ctl-label">SKIP</span>
+        <span class="anim-ctl-glyph" aria-hidden="true">&#9197;</span>
+      </button>
+    </div>
 
     <!-- entrance, checklist 18 -->
     <ng-container *ngIf="view.intro as intro">
@@ -53,7 +54,7 @@
       <button type="button" class="anim-skip-intro" (click)="skipIntro()">Skip intro</button>
     </ng-container>
 
-    <!-- trigger banner, checklist 0 and 11 -->
+    <!-- trigger banner, checklist 0, 11 and 15 -->
     <div class="anim-banner" *ngIf="view.banner as banner" [ngStyle]="pointStyle(34, 16)"
       [class.anim-banner-toy]="banner.toy" [style.opacity]="banner.progress < 0.15 ? banner.progress / 0.15 : 1">
       <div class="anim-banner-head">
@@ -61,7 +62,17 @@
         <span class="anim-banner-name">{{ banner.name }}</span>
         <span class="anim-banner-level">{{ banner.level }}</span>
       </div>
-      <div class="anim-banner-text">{{ banner.text || banner.name }}</div>
+      <div class="anim-banner-divider"></div>
+      <div class="anim-banner-text">
+        <span class="anim-banner-trigger" *ngIf="banner.parsed.trigger as trigger">{{ trigger }} &#8594;</span>
+        <ng-container *ngFor="let segment of banner.parsed.body; trackBy: trackByIndex">
+          <span>{{ segment.text }}</span>
+          <img class="anim-banner-glyph" *ngIf="segment.icon as icon" [src]="payloadIcon(icon)" alt=""
+            aria-hidden="true" />
+        </ng-container>
+      </div>
+      <div class="anim-banner-note" *ngIf="banner.parsed.note as note">{{ note }}</div>
+      <div class="anim-banner-uses" *ngIf="banner.parsed.uses as uses">{{ uses }}</div>
     </div>
 
     <!-- trumpet counters, checklist 14 and 19 -->
@@ -87,6 +98,7 @@
       [class.anim-pet-opponent]="pet.pet.side === 'opponent'"
       [class.anim-pet-source]="pet.outline === 'source'"
       [class.anim-pet-hurt]="pet.outline === 'hurt'"
+      [class.anim-pet-windup]="pet.outline === 'windup'"
       [class.anim-pet-fainted]="pet.fainted"
       [class.anim-pet-levelup]="pet.leveledUp && pet.xpBurst > 0">
       <div class="anim-pet-level">
@@ -94,6 +106,11 @@
         <span class="anim-pet-xpbar" *ngIf="view.board.xpInPlay">
           <span class="anim-pet-xpfill" [style.width.%]="((pet.pet.exp || 0) % 5) * 20"></span>
         </span>
+        <!-- xp lands as a gold burst on the plaque, checklist 14 -->
+        <span class="anim-pet-xpburst" *ngIf="pet.xpBurst > 0" [style.opacity]="1 - pet.xpBurst"
+          [style.transform]="'translate(-50%, -50%) scale(' + (0.4 + pet.xpBurst * 1.6) + ')'"></span>
+        <span class="anim-pet-xpring" *ngIf="pet.xpBurst > 0" [style.opacity]="1 - pet.xpBurst"
+          [style.transform]="'translate(-50%, -50%) scale(' + (0.3 + pet.xpBurst * 2.4) + ')'"></span>
       </div>
       <div class="anim-pet-art">
         <img class="anim-pet-icon" *ngIf="petIcon(pet.pet.name) as icon" [src]="icon" [alt]="pet.pet.name" />
@@ -101,21 +118,22 @@
         <img class="anim-pet-equipment" *ngIf="equipmentIcon(pet.pet) as icon" [src]="icon"
           [class.anim-pet-equipment-break]="pet.equipmentBreaking"
           [class.anim-pet-equipment-gain]="pet.equipmentGaining" [alt]="pet.pet.equipment || ''" />
-        <span class="anim-pet-shatter" *ngIf="pet.equipmentBreaking" aria-hidden="true"></span>
+        <!-- a consumed perk shatters into fragments around the pet, checklist 10 -->
+        <span class="anim-pet-shard" *ngFor="let shard of shardSlots; trackBy: trackByIndex"
+          [class.anim-pet-shard-on]="pet.equipmentBreaking" [attr.data-shard]="shard" aria-hidden="true"></span>
         <img class="anim-pet-fasticon" *ngIf="pet.fastIcon as payload" [src]="payloadIcon(payload)" alt=""
           aria-hidden="true" />
-        <span class="anim-pet-xpburst" *ngIf="pet.xpBurst > 0" [style.opacity]="1 - pet.xpBurst"
-          [style.transform]="'translate(-50%, -50%) scale(' + (0.4 + pet.xpBurst * 1.8) + ')'"></span>
       </div>
       <div class="anim-pet-stats">
         <span class="anim-pet-stat anim-pet-attack">
           <img [src]="attackIcon" alt="" aria-hidden="true" />{{ pet.pet.attack }}
         </span>
-        <span class="anim-pet-stat anim-pet-health">
-          <img [src]="healthIcon" alt="" aria-hidden="true" />{{ pet.pet.health }}
-        </span>
+        <!-- mana sits between attack and health, checklist 14 -->
         <span class="anim-pet-stat anim-pet-mana" *ngIf="pet.pet.mana as mana">
           <img [src]="manaIcon" alt="" aria-hidden="true" />{{ mana }}
+        </span>
+        <span class="anim-pet-stat anim-pet-health">
+          <img [src]="healthIcon" alt="" aria-hidden="true" />{{ pet.pet.health }}
         </span>
       </div>
     </div>
@@ -137,23 +155,27 @@
       <img [src]="payloadIcon(projectile.payload)" alt="" aria-hidden="true" />
     </div>
 
-    <!-- puffs: summon, transform, impact -->
+    <!-- puffs: summon and transform clouds, ranged impact, jump landing, mana -->
     <div class="anim-puff" *ngFor="let puff of view.puffs; trackBy: trackById"
       [ngStyle]="slotPointStyle(puff.side, puff.slot)"
-      [class.anim-puff-impact]="puff.kind === 'impact'"
-      [style.opacity]="1 - puff.progress"
-      [style.transform]="'translate(-50%, -50%) scale(' + (0.4 + puff.progress * 1.4) + ')'"></div>
+      [class.anim-puff-cloud]="puff.kind === 'summon' || puff.kind === 'transform'"
+      [class.anim-puff-impact]="puff.kind === 'impact' || puff.kind === 'landing'"
+      [class.anim-puff-mana]="puff.kind === 'mana'"
+      [style.opacity]="puff.opacity"
+      [style.transform]="'translate(-50%, -50%) scale(' + (0.5 + puff.progress * 1.1) + ')'"></div>
 
     <!-- the single contact flash, checklist 1 -->
     <div class="anim-flash" *ngIf="view.flash" [ngStyle]="flashStyle()"></div>
 
-    <!-- popups, checklist 2 and 19 -->
+    <!-- popups, checklist 2, 15 and 19 -->
     <div class="anim-popup" *ngFor="let popup of view.popups; trackBy: trackById" [ngStyle]="popupStyle(popup)"
       [class.anim-popup-damage]="popup.kind === 'damage'"
       [class.anim-popup-stat]="popup.kind === 'stat'"
+      [class.anim-popup-mana]="popup.kind === 'mana'"
       [class.anim-popup-copy]="popup.kind === 'copy'"
       [class.anim-popup-merged]="popup.merged">
-      <img *ngIf="popup.kind === 'stat'" [src]="statIcon(popup.statKind)" alt="" aria-hidden="true" />
+      <img *ngIf="popup.kind === 'stat' || popup.kind === 'mana'" [src]="statIcon(popup.statKind)" alt=""
+        aria-hidden="true" />
       <span>{{ popup.text }}</span>
     </div>
 
@@ -180,6 +202,14 @@
     </div>
   </div>
 
+  <!-- tools, not part of the game's own bar -->
+  <div class="anim-tools">
+    <button type="button" class="anim-tool" (click)="onRestart()">RESTART</button>
+    <input class="form-range anim-scrub" type="range" [min]="0" [max]="timeline?.durationMs || 0" [step]="50"
+      [value]="playback.timeMs" (input)="onScrub($any($event.target).value)" aria-label="Animation position" />
+    <span class="anim-clock">{{ (playback.timeMs / 1000).toFixed(1) }}s / {{ ((timeline?.durationMs || 0) / 1000).toFixed(1) }}s</span>
+    <button type="button" class="anim-tool anim-legacy" (click)="useLegacy()">Legacy view</button>
+  </div>
 </div>
 
 <ng-template #noEvents>
