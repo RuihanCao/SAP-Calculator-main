@@ -1,0 +1,369 @@
+[
+  {
+    "type": "phase",
+    "group": null,
+    "phase": "before-battle",
+    "turn": null,
+    "seq": 0
+  },
+  {
+    "type": "phase",
+    "group": null,
+    "phase": "start-of-battle",
+    "turn": null,
+    "seq": 1
+  },
+  {
+    "type": "abilityTrigger",
+    "group": 0,
+    "actor": {
+      "kind": "pet",
+      "pet": {
+        "id": 1,
+        "name": "Crocodile",
+        "side": "player",
+        "index": 0,
+        "level": 1,
+        "attack": 8,
+        "health": 6
+      }
+    },
+    "abilitySource": "pet",
+    "trigger": "StartBattle",
+    "triggers": [
+      "StartBattle"
+    ],
+    "abilityName": "CrocodileAbility",
+    "level": 1,
+    "text": "Start of battle: Deal 8 damage to the last enemy.",
+    "triggeredBy": null,
+    "seq": 2
+  },
+  {
+    "type": "projectile",
+    "group": 0,
+    "source": {
+      "kind": "pet",
+      "pet": {
+        "id": 1,
+        "name": "Crocodile",
+        "side": "player",
+        "index": 0,
+        "level": 1,
+        "attack": 8,
+        "health": 6
+      }
+    },
+    "payload": "attack-glyph",
+    "targets": [
+      {
+        "id": 13,
+        "name": "Worm",
+        "side": "opponent",
+        "index": 2,
+        "level": 1,
+        "attack": 1,
+        "health": 0
+      }
+    ],
+    "seq": 3
+  },
+  {
+    "type": "hit",
+    "group": 0,
+    "kind": "snipe",
+    "source": {
+      "kind": "pet",
+      "pet": {
+        "id": 1,
+        "name": "Crocodile",
+        "side": "player",
+        "index": 0,
+        "level": 1,
+        "attack": 8,
+        "health": 6
+      }
+    },
+    "target": {
+      "id": 13,
+      "name": "Worm",
+      "side": "opponent",
+      "index": 2,
+      "level": 1,
+      "attack": 1,
+      "health": 0
+    },
+    "damage": 8,
+    "blocked": false,
+    "seq": 4
+  },
+  {
+    "type": "faint",
+    "group": null,
+    "pet": {
+      "id": 13,
+      "name": "Worm",
+      "side": "opponent",
+      "index": 2,
+      "level": 1,
+      "attack": 1,
+      "health": 0
+    },
+    "killedBy": {
+      "id": 1,
+      "name": "Crocodile",
+      "side": "player",
+      "index": 0,
+      "level": 1,
+      "attack": 8,
+      "health": 6
+    },
+    "seq": 5
+  },
+  {
+    "type": "corpseLaunchGroup",
+    "group": null,
+    "pets": [
+      {
+        "id": 13,
+        "name": "Worm",
+        "side": "opponent",
+        "index": 2,
+        "level": 1,
+        "attack": 1,
+        "health": 0
+      }
+    ],
+    "seq": 6
+  },
+  {
+    "type": "phase",
+    "group": null,
+    "phase": "after-start-of-battle",
+    "turn": null,
+    "seq": 7
+  },
+  {
+    "type": "phase",
+    "group": null,
+    "phase": "turn",
+    "turn": 1,
+    "seq": 8
+  },
+  {
+    "type": "clash",
+    "group": null,
+    "jump": false,
+    "hits": [
+      {
+        "source": {
+          "id": 1,
+          "name": "Crocodile",
+          "side": "player",
+          "index": 0,
+          "level": 1,
+          "attack": 8,
+          "health": 6
+        },
+        "target": {
+          "id": 11,
+          "name": "Cow",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 3,
+          "health": -2
+        },
+        "damage": 8,
+        "blocked": false
+      },
+      {
+        "source": {
+          "id": 11,
+          "name": "Cow",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 3,
+          "health": -2
+        },
+        "target": {
+          "id": 1,
+          "name": "Crocodile",
+          "side": "player",
+          "index": 0,
+          "level": 1,
+          "attack": 8,
+          "health": 3
+        },
+        "damage": 3,
+        "blocked": false
+      }
+    ],
+    "seq": 9
+  },
+  {
+    "type": "faint",
+    "group": null,
+    "pet": {
+      "id": 11,
+      "name": "Cow",
+      "side": "opponent",
+      "index": 0,
+      "level": 1,
+      "attack": 3,
+      "health": -2
+    },
+    "killedBy": {
+      "id": 1,
+      "name": "Crocodile",
+      "side": "player",
+      "index": 0,
+      "level": 1,
+      "attack": 8,
+      "health": 3
+    },
+    "seq": 10
+  },
+  {
+    "type": "corpseLaunchGroup",
+    "group": null,
+    "pets": [
+      {
+        "id": 11,
+        "name": "Cow",
+        "side": "opponent",
+        "index": 0,
+        "level": 1,
+        "attack": 3,
+        "health": -2
+      }
+    ],
+    "seq": 11
+  },
+  {
+    "type": "phase",
+    "group": null,
+    "phase": "turn",
+    "turn": 2,
+    "seq": 12
+  },
+  {
+    "type": "pushForward",
+    "group": null,
+    "side": "opponent",
+    "moves": [
+      {
+        "pet": {
+          "id": 12,
+          "name": "Otter",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 2,
+          "health": 6
+        },
+        "from": 1,
+        "to": 0
+      }
+    ],
+    "seq": 13
+  },
+  {
+    "type": "clash",
+    "group": null,
+    "jump": false,
+    "hits": [
+      {
+        "source": {
+          "id": 1,
+          "name": "Crocodile",
+          "side": "player",
+          "index": 0,
+          "level": 1,
+          "attack": 8,
+          "health": 3
+        },
+        "target": {
+          "id": 12,
+          "name": "Otter",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 2,
+          "health": -2
+        },
+        "damage": 8,
+        "blocked": false
+      },
+      {
+        "source": {
+          "id": 12,
+          "name": "Otter",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 2,
+          "health": -2
+        },
+        "target": {
+          "id": 1,
+          "name": "Crocodile",
+          "side": "player",
+          "index": 0,
+          "level": 1,
+          "attack": 8,
+          "health": 1
+        },
+        "damage": 2,
+        "blocked": false
+      }
+    ],
+    "seq": 14
+  },
+  {
+    "type": "faint",
+    "group": null,
+    "pet": {
+      "id": 12,
+      "name": "Otter",
+      "side": "opponent",
+      "index": 0,
+      "level": 1,
+      "attack": 2,
+      "health": -2
+    },
+    "killedBy": {
+      "id": 1,
+      "name": "Crocodile",
+      "side": "player",
+      "index": 0,
+      "level": 1,
+      "attack": 8,
+      "health": 1
+    },
+    "seq": 15
+  },
+  {
+    "type": "corpseLaunchGroup",
+    "group": null,
+    "pets": [
+      {
+        "id": 12,
+        "name": "Otter",
+        "side": "opponent",
+        "index": 0,
+        "level": 1,
+        "attack": 2,
+        "health": -2
+      }
+    ],
+    "seq": 16
+  },
+  {
+    "type": "outcome",
+    "group": null,
+    "winner": "player",
+    "seq": 17
+  }
+]
