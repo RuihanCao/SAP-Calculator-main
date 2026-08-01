@@ -2,6 +2,11 @@
 
 ## Current
 
+W3 round 5 applied on feature/anim01-w2-director: the pixel critic read round 4 against the reference frames and called seventeen things, and all seventeen are in, headed by REWIND restarting the animation from the entrance instead of freezing the stage, a 16:9 play area inside black bars so nothing drifts with the window, pets and slot pitch measured against the lane, stat badges rebuilt as a numeral inside a rock and inside a heart, a fainting pet that whites out and launches instead of taking a red cross, the other player's avatar standing at the field's right, and an end screen veil fitted per band.
+W3 round 5 also fixed four things the reference frames showed while checking those: the field sheet was drawn 123.8% of the play area where the lane says 135.9%, the corpse trail's clouds were being clipped into rectangles, the damage numerals' text stroke was eating their own fill, and f11's toast drew two attack rocks because the parser read the verb as the stat.
+W3 round 5 deviates from the critic on one item, with the frame as the reason: it asked for a corpse in flight to drop its stat pills and its level plaque and to hide a negative health, and the reference launches the whole card with the health badge reading -5 (f01 t=32.01, clips/f01-plain-trades/f_00905_0032006.jpg), so the card is kept.
+W3 round 5 evidence: filmstrips and probes under `/root/autodl-tmp/sap-data/anim01/calc-r5/`, including a REWIND probe that hashes a ladder of frames after each press, 8 of 8 distinct on the bar and on the end screen with the outro reached a second time.
+
 W3 round 4 applied on feature/anim01-w2-director: Ruihan rejected four things after using the live app, and all four are in, the field is the game's own `FieldBattle` art with a random field option beside the button, both boards face each other the way the reference frames have them, one press opens a fullscreen animation that plays itself from the entrance, and the end screen is the outcome with REWIND and EXIT and no shop-run score.
 W3 round 4 also fixed two things the reference frames showed while checking those four: the entrance shutter closed out of the middle instead of squeezing the scene into a band from the edges, and the end screen kept 32% of the field's light where the real one keeps 23%.
 
