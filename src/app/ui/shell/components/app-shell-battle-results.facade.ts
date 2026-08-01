@@ -38,6 +38,8 @@ export interface AppShellBattleResultsFacade {
   setViewBattleLogFilter: (filter: BattleLogEventFilter) => void;
   viewBattleEvents: AnimationEvent[];
   viewBattleLogs: Log[];
+  /** The near side's name for the animation's entrance banner. */
+  teamName: string;
   useLegacyFightAnimation: boolean;
   setLegacyFightAnimation: (useLegacy: boolean) => void;
   currentFightAnimationRenderFrame: FightAnimationRenderFrameModel | null;
@@ -130,6 +132,9 @@ export function createAppShellBattleResultsFacade(
     },
     get viewBattleLogs() {
       return app.viewBattleLogs;
+    },
+    get teamName() {
+      return app.teamName;
     },
     get useLegacyFightAnimation() {
       return app.useLegacyFightAnimation;

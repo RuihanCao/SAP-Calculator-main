@@ -161,6 +161,8 @@
                 [events]="app.viewBattleEvents"
                 [logs]="app.viewBattleLogs"
                 [speed]="app.fightAnimationSpeed"
+                [playerTeamName]="app.teamName"
+                [opponentTeamName]="''"
                 (legacyRequested)="app.setLegacyFightAnimation(true)">
               </app-battle-animation-stage>
             }
@@ -668,6 +670,8 @@
       [autoPlay]="true"
       [fullscreen]="true"
       [randomBackground]="randomBattleBackground"
+      [playerTeamName]="app.teamName"
+      [opponentTeamName]="''"
       (exitRequested)="closeBattleAnimation()">
     </app-battle-animation-stage>
   </div>
