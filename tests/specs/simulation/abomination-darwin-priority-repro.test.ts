@@ -38,10 +38,20 @@ describe('Abomination copied Darwin priority repro', () => {
       parseImportPayload(payload),
     ) as SimulationConfig;
 
-    const messages = getMessages(expanded);
-    const jumpIdx = messages.findIndex((message) =>
-      message.includes("Abomination's Darwin's Fox jump-attacks"),
-    );
+    /*
+     * The board is Abominations and random summons all the way down, so an
+     * unseeded battle does not always reach the copied jump: on a full-suite
+     * run this spec failed on `jumpIdx > -1` rather than on the ordering it is
+     * here to check. Take battles until one of them contains the jump.
+     */
+    let jumpIdx = -1;
+    let messages: string[] = [];
+    for (let attempt = 0; attempt < 24 && jumpIdx < 0; attempt++) {
+      messages = getMessages(expanded);
+      jumpIdx = messages.findIndex((message) =>
+        message.includes("Abomination's Darwin's Fox jump-attacks"),
+      );
+    }
     const faintIdx = findFirstIndexAfter(
       messages,
       jumpIdx,
