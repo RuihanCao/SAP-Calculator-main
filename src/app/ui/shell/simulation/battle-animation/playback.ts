@@ -146,21 +146,27 @@ export const skip = (
 /**
  * REWIND, checklist 17.
  *
- * The real client steps back to the previously completed board state and then
- * stops advancing, with the whole bar dead behind it. This copies the step and
- * the stop, which is what a step back has to do to be readable, and not the
- * trap: PLAY resumes from where the press landed and a second press steps back
- * another board state.
+ * Measured off the reference rather than guessed at. On `ctl-rewind` the press
+ * lands at t=21.9 and the very next frames are the entrance again: the screen
+ * is black, the field opens out of the shutter band at t=22.10, the team
+ * banners come back at t=22.81, and the battle runs on from its first beat
+ * (clips/ctl-rewind/, out/ctl-rewind_filmstrip.jpg frames 00 to 07). So REWIND
+ * is not a step back, it is a restart from the top of the entrance, and it
+ * keeps playing rather than parking the transport.
+ *
+ * `autoplay` is carried through for the same reason PLAY carries it: with the
+ * toggle off the restart buys one beat and stops on the first board state.
  */
 export const rewind = (
   state: PlaybackState,
   timeline: AnimationTimeline,
+  autoplay = true,
 ): PlaybackState => ({
   ...state,
-  timeMs: previousBoardStateMs(timeline, state.timeMs),
-  playing: false,
+  timeMs: 0,
+  playing: true,
   skip: null,
-  stopAtMs: null,
+  stopAtMs: autoplay ? null : nextCheckpointMs(timeline, 0),
   finished: false,
 });
 
