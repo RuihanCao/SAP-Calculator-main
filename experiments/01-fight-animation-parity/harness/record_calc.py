@@ -31,6 +31,22 @@ APP_URL = os.environ.get("ANIM01_APP_URL", "http://127.0.0.1:4200")
 
 EMPTY_PET = {"name": None, "attack": 0, "health": 0, "exp": 0, "equipment": None}
 
+# Chromium on this box.
+#
+# The container cannot start Chromium's out-of-process network service: every
+# http navigation dies with ERR_INSUFFICIENT_RESOURCES while data: URLs still
+# load, so the network service is forced in-process. The other trap, which looks
+# identical from the outside, is the system disk filling up: with under a few
+# hundred MB free on `/` the renderer crashes on navigation and CDP
+# captureScreenshot answers "Unable to capture screenshot". Check `df -h /`
+# before believing anything else.
+LAUNCH_ARGS = [
+    "--no-sandbox",
+    "--disable-dev-shm-usage",
+    "--force-device-scale-factor=1",
+    "--enable-features=NetworkServiceInProcess2",
+]
+
 
 def exp_for_level(level):
     if level == 3:
@@ -122,9 +138,7 @@ async def record_one(fid, base_url, seconds, fast, quality, swap=False):
             os.remove(os.path.join(outdir, name))
 
     async with async_playwright() as pw:
-        browser = await pw.chromium.launch(
-            args=["--no-sandbox", "--force-device-scale-factor=1"]
-        )
+        browser = await pw.chromium.launch(args=LAUNCH_ARGS)
         context = await browser.new_context(viewport={"width": 1280, "height": 800})
         page = await context.new_page()
         await page.goto(fixture_url(fixture, base_url), wait_until="load", timeout=120000)
@@ -203,15 +217,39 @@ async def record_one(fid, base_url, seconds, fast, quality, swap=False):
         await page.dispatch_event(
             "app-battle-animation-stage [data-anim-control='play']", "click"
         )
+        # When the battle is over, read off the stage root.
+        #
+        # This used to read the tools row's clock text, which is only drawn on
+        # the calculator's inline pane and is not inside the element the holder
+        # above reparents; every re-recording either hung for the whole
+        # `--seconds` budget or died on a strict-mode locator error, and that
+        # was mistaken for the animation itself being broken. `data-anim-*`
+        # lives on the stage root, exists in both presentations and survives the
+        # move. A stage that never publishes them (an older build, a stalled
+        # frame loop) falls back to the deadline instead of throwing.
         deadline = time.time() + seconds
+        missing = 0
         while time.time() < deadline:
             await page.wait_for_timeout(250)
-            label = await page.locator("app-battle-animation-stage .anim-clock").inner_text()
-            try:
-                now, total = [float(part.strip().rstrip("s")) for part in label.split("/")]
-            except ValueError:
+            state = await page.evaluate(
+                """() => {
+                  const stage = document.querySelector('app-battle-animation-stage .anim-stage');
+                  if (!stage) { return null; }
+                  return {
+                    done: stage.dataset.animDone === '1',
+                    time: Number(stage.dataset.animTime || 0),
+                    duration: Number(stage.dataset.animDuration || 0),
+                  };
+                }"""
+            )
+            if state is None or state["duration"] <= 0:
+                missing += 1
+                if missing > 8:
+                    print(f"  {fid}: no data-anim-* on the stage, recording to the deadline")
+                    break
                 continue
-            if total > 0 and now >= total - 0.05:
+            missing = 0
+            if state["done"]:
                 await page.wait_for_timeout(700)
                 break
 

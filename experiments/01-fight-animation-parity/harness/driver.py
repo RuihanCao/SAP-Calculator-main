@@ -49,6 +49,17 @@ GAME_URL = os.environ.get(
 for d in (WORK, CMD, RESP, SHOTS, CLIPS, PROFILE):
     os.makedirs(d, exist_ok=True)
 
+# The capture resolution. The layout the fixtures were measured on is the
+# 1280x800 viewport, so the viewport stays there by default and the pixel
+# density is what gets raised: at ANIM01_SCALE=3 a `shot` comes back 3840x2400
+# and the game's own UI art (the level plaque is 39x26 CSS px) is big enough to
+# crop as a real asset instead of being traced by hand.
+VIEWPORT = {
+    "width": int(os.environ.get("ANIM01_VW", "1280")),
+    "height": int(os.environ.get("ANIM01_VH", "800")),
+}
+SCALE = float(os.environ.get("ANIM01_SCALE", "1"))
+
 state = {
     "page": None,
     "cdp": None,
@@ -137,8 +148,25 @@ async def do_cmd(c):
     op = c["op"]
 
     if op == "shot":
-        r = await cdp.send("Page.captureScreenshot", {"format": c.get("format", "jpeg"),
-                                                      "quality": c.get("quality", 75)})
+        args = {"format": c.get("format", "jpeg"), "quality": c.get("quality", 75)}
+        # CDP hands back CSS pixels whatever the page's device pixel ratio is,
+        # so a `clip` carrying an explicit scale is the only way to get the
+        # extra detail the client is already rendering at ANIM01_SCALE. Without
+        # this the level plaque comes back 39x26 and is not croppable art.
+        scale = c.get("scale")
+        if scale:
+            size = await page.evaluate(
+                "() => ({w: window.innerWidth, h: window.innerHeight})"
+            )
+            args["clip"] = {
+                "x": 0,
+                "y": 0,
+                "width": size["w"],
+                "height": size["h"],
+                "scale": float(scale),
+            }
+            args["captureBeyondViewport"] = False
+        r = await cdp.send("Page.captureScreenshot", args)
         ext = "png" if c.get("format") == "png" else "jpg"
         path = c.get("path") or os.path.join(SHOTS, f"s_{int(time.time())}.{ext}")
         with open(path, "wb") as f:
@@ -254,11 +282,16 @@ async def main():
         ctx = await p.chromium.launch_persistent_context(
             PROFILE,
             headless=True,
-            viewport={"width": 1280, "height": 800},
+            viewport=VIEWPORT,
+            device_scale_factor=SCALE,
             args=[
                 "--enable-unsafe-swiftshader",
                 "--no-sandbox",
                 "--disable-dev-shm-usage",
+                # This container cannot start Chromium's out-of-process network
+                # service: every navigation fails ERR_INSUFFICIENT_RESOURCES
+                # while data: URLs still load. See harness/README.md.
+                "--enable-features=NetworkServiceInProcess2",
                 "--use-gl=angle",
                 "--use-angle=swiftshader",
                 "--autoplay-policy=no-user-gesture-required",

@@ -1,5 +1,6 @@
 import { Log } from 'app/domain/interfaces/log.interface';
 import { AnimationSide } from 'app/domain/interfaces/animation-event.interface';
+import { isAilmentEquipmentName } from 'app/integrations/equipment/equipment-categories';
 import {
   AnimationBoardPet,
   AnimationBoardState,
@@ -108,7 +109,12 @@ const parseSide = (
       mana: parsed.mana,
       exp: parsed.exp,
       equipment: parsed.equipment,
-      equipmentIsAilment: false,
+      // An ailment and a food perk live in different art directories, and the
+      // board log only carries the name, so the kind is decided here from the
+      // catalogue. Hardcoding `false` sent every ailment a pet was already
+      // wearing at the first bell to `Food/<name>.png`, which is the broken
+      // Tasty icon.
+      equipmentIsAilment: isAilmentEquipmentName(parsed.equipment),
       fainted: false,
     });
   }

@@ -305,14 +305,13 @@ describe('Round 5, measured against the reference frames', () => {
     it('builds the badges as a numeral inside a rock and inside a heart', () => {
       const attack = styles.slice(styles.indexOf('.anim-pet-attack {'));
       const health = styles.slice(styles.indexOf('.anim-pet-health {'));
-      // The rock is charcoal and the heart is red, both stroked in near black.
-      expect(attack).toContain("fill='%2354585d'");
-      expect(attack).toContain("stroke='%230d0d0d'");
-      expect(health).toContain("fill='%23e51f26'");
-      expect(health).toContain("stroke='%230d0d0d'");
-      // Both carry a white halo stroke as well as the black keyline.
-      expect(attack.slice(0, 900)).toContain("stroke='%23ffffff'");
-      expect(health.slice(0, 900)).toContain("stroke='%23ffffff'");
+      // Round 7: the shapes are the pack's own text-map sprites, which arrive
+      // with the client's charcoal rock, red heart, black keyline and white
+      // halo already on them. They used to be SVG paths approximating that.
+      expect(attack.slice(0, 200)).toContain('fist.png');
+      expect(health.slice(0, 200)).toContain('heart.png');
+      const mana = styles.slice(styles.indexOf('.anim-pet-mana {'));
+      expect(mana.slice(0, 200)).toContain('mana.png');
       // The numeral is inside the shape, white, outlined in black.
       expect(styles).toMatch(/\.anim-pet-stat\s*\{[^}]*color:\s*#fff/);
       expect(styles).toMatch(/\.anim-pet-stat\s*\{[^}]*@include keyline\([^)]*#0d0d0d\)/);
@@ -321,7 +320,8 @@ describe('Round 5, measured against the reference frames', () => {
         /anim-pet-stat[^>]*>\s*\n?\s*<img \[src\]="attackIcon"/,
       );
       // One white plate carries the pair.
-      expect(styles).toMatch(/\.anim-pet-stats\s*\{[^}]*linear-gradient\(#fff, #fff\)/);
+      const statPlate = styles.slice(styles.indexOf('.anim-pet-stats::before {'));
+      expect(statPlate.slice(0, 300)).toContain('background: #fff');
     });
 
     /**
@@ -330,19 +330,20 @@ describe('Round 5, measured against the reference frames', () => {
      * frame it is 39 by 26 of the 540 play area, so 2.17 by 1.44 scale units.
      */
     it('draws the level plaque as a wooden two-lobed sign', () => {
-      expect(stageTemplate).toContain('anim-pet-level-word');
-      expect(stageTemplate).toContain('>Lvl<');
-      expect(stageTemplate).not.toContain('Lv{{');
+      // Round 7: cut whole out of the client rather than drawn. Everything
+      // except the numeral is in the cut, cap and "Lvl" included, because only
+      // the numeral changes; round 5 read the cap as the lettering's own
+      // keyline and left it out, which came back a third short.
       const plaque = styles.slice(styles.indexOf('.anim-pet-level {'));
-      expect(plaque).toMatch(/width:\s*2\.17em/);
-      expect(plaque).toMatch(/height:\s*1\.44em/);
-      // Two brown lobes under a dark bar, keylined and haloed.
-      const sign = plaque.slice(0, 1600);
-      expect((sign.match(/fill='%23a06a24'/g) ?? []).length).toBe(2);
-      expect(sign).toContain("stroke='%23130b04'");
-      expect(styles).toMatch(/\.anim-pet-level-num\s*\{[^}]*color:\s*#ffc21c/);
-      // And no flat brown chip is left behind it.
-      expect(sign).not.toContain('a1642f');
+      expect(plaque.slice(0, 400)).toContain('level-plaque.png');
+      expect(plaque).toMatch(/width:\s*2\.28em/);
+      expect(plaque).toMatch(/height:\s*1\.67em/);
+      expect(styles).not.toContain("fill='%23a06a24'");
+      const num = styles.slice(styles.indexOf('.anim-pet-level-num {'));
+      expect(num.slice(0, 300)).toContain('#ffc21c');
+      // The client sets the plaque back over its own team's rear.
+      expect(styles).toContain('translateX(-1.25em)');
+      expect(styles).toContain('translateX(1.25em)');
       expect(styles).not.toContain('#a1642f');
     });
   });
@@ -368,12 +369,13 @@ describe('Round 5, measured against the reference frames', () => {
       expect(stageTemplate).toContain('anim-corpse-puff');
       expect(stageTemplate).not.toContain('anim-corpse-smoke');
       const puff = styles.slice(styles.indexOf('.anim-corpse-puff {'));
-      // The same drawn cloud a summon uses, not a wisp and not a gradient.
-      expect(puff.slice(0, 400)).toContain('$cloud-svg');
+      // Round 7: the same cloud a summon uses, and it is the client's own puff
+      // cut out of a reference frame rather than a stack of drawn circles.
+      expect(puff.slice(0, 400)).toContain('cloud.png');
       expect(puff.slice(0, 400)).not.toContain('gradient');
-      // And the cloud really is five lobes rather than a clipped rectangle.
-      expect((styles.match(/%3Ccircle /g) ?? []).length).toBe(5);
-      expect(styles).toMatch(/\.anim-puff-cloud\s*\{[^}]*\$cloud-svg/);
+      expect(styles).not.toContain('%3Ccircle ');
+      const summonPuff = styles.slice(styles.indexOf('.anim-puff-cloud {'));
+      expect(summonPuff.slice(0, 300)).toContain('cloud.png');
     });
 
     /**
@@ -437,9 +439,14 @@ describe('Round 5, measured against the reference frames', () => {
       // Blue near, orange far, black VS, all on white plates with a keyline.
       expect(styles).toMatch(/\.anim-intro-player\s*\{[^}]*color:\s*#23a6e6/);
       expect(styles).toMatch(/\.anim-intro-opponent\s*\{[^}]*color:\s*#f2661f/);
-      expect(styles).toMatch(/\.anim-intro-vs\s*\{[^}]*color:\s*#101010/);
-      expect(styles).toMatch(/\.anim-intro-card\s*\{[^}]*background:\s*#fff/);
-      expect(styles).toMatch(/\.anim-intro-card\s*\{[^}]*border:[^;]*#101010/);
+      // Round 7: the VS square is the client's own plate, lettering included,
+      // and the two name cards wear the shared nine-slice cut of that same
+      // plate rather than each drawing its own white box and keyline.
+      const vs = styles.slice(styles.indexOf('.anim-intro-vs {'));
+      expect(vs.slice(0, 400)).toContain('plate-vs.png');
+      const card = styles.slice(styles.indexOf('.anim-intro-card {'));
+      expect(card.slice(0, 400)).toContain('@include game-plate');
+      expect(styles.slice(styles.indexOf('@mixin game-plate'), styles.indexOf('@mixin game-plate') + 400)).toContain('plate-name.png');
     });
 
     it('carries the calculator s own team name through, and falls back', () => {
@@ -460,7 +467,10 @@ describe('Round 5, measured against the reference frames', () => {
         stageTemplate.indexOf('<div class="anim-controls"'),
         stageTemplate.indexOf('<!-- entrance'),
       );
-      expect((bar.match(/<svg class="anim-ctl-glyph"/g) ?? []).length).toBe(5);
+      // Round 7: the glyphs are the client's own printing, lifted off its bar,
+      // so there is no drawn path and no font character in the row at all.
+      expect((bar.match(/<img class="anim-ctl-glyph"/g) ?? []).length).toBe(5);
+      expect(bar).not.toContain('<svg');
       expect(bar).not.toMatch(/&#9\d\d\d;/);
       expect(bar).not.toContain('&#65038;');
       expect(styles).not.toContain('font-variant-emoji');
@@ -468,8 +478,11 @@ describe('Round 5, measured against the reference frames', () => {
 
     it('sizes the tiles and the row off the reference bar', () => {
       const tile = styles.slice(styles.indexOf('.anim-ctl {'));
-      expect(tile).toMatch(/width:\s*2\.17em/);
-      expect(tile).toMatch(/height:\s*2\.28em/);
+      // Re-measured in round 7 at a 720 play area: 50.0 by 58.7 css with a
+      // 4.3 css corner, and no keyline, which the old tile invented.
+      expect(tile).toMatch(/width:\s*2\.08em/);
+      expect(tile).toMatch(/height:\s*2\.45em/);
+      expect(tile).toMatch(/border:\s*none/);
       const bar = styles.slice(styles.indexOf('.anim-controls {'));
       expect(bar).toMatch(/gap:\s*1\.11em/);
       expect(bar).toMatch(/top:\s*1\.1%/);
@@ -477,7 +490,7 @@ describe('Round 5, measured against the reference frames', () => {
 
     it('uses the same tile on the end screen', () => {
       const outro = stageTemplate.slice(stageTemplate.indexOf('anim-outro-actions'));
-      expect((outro.match(/<svg class="anim-ctl-glyph"/g) ?? []).length).toBe(2);
+      expect((outro.match(/class="anim-ctl-glyph/g) ?? []).length).toBe(2);
       expect(outro).toContain('class="anim-ctl anim-outro-action"');
     });
   });
@@ -596,9 +609,11 @@ describe('Round 5, measured against the reference frames', () => {
       expect(styles).toMatch(/\.anim-stage\s*\{[^}]*font-family:\s*"Lapsus Pro"/);
       const from = styles.indexOf('.anim-popup-damage {');
       const damage = styles.slice(from, styles.indexOf('}', from));
-      expect(damage).toMatch(/font-size:\s*3em/);
+      // Round 7 re-reading off the reference: the client's red is flat #f00 and
+      // the numeral stands about a fifth taller than round 5 drew it.
+      expect(damage).toMatch(/font-size:\s*3\.6em/);
       expect(damage).toMatch(/@include keyline\(0\.05em\)/);
-      expect(damage).toContain('#e8232b');
+      expect(damage).toContain('#f00');
       expect(damage).not.toContain('#fff');
       expect(styles).not.toContain('-webkit-text-stroke');
       expect(styles).toMatch(/@mixin keyline\(/);
@@ -671,7 +686,10 @@ describe('Round 5, measured against the reference frames', () => {
     it('is sized and anchored off the reference plate', () => {
       const banner = styles.slice(styles.indexOf('.anim-banner {'));
       expect(banner).toMatch(/width:\s*16\.7em/);
-      expect(banner).toMatch(/border:[^;]*#101010/);
+      // Round 7: the same cut plate the entrance names wear, so the two read as
+      // one layer, and no drop shadow, which the reference toast does not have.
+      expect(banner).toMatch(/@include game-plate/);
+      expect(banner).not.toMatch(/box-shadow:\s*0 0\.14em/);
       expect(styles).toMatch(/\.anim-banner-name\s*\{[^}]*white-space:\s*nowrap/);
     });
 
@@ -680,8 +698,12 @@ describe('Round 5, measured against the reference frames', () => {
         path.join(stageDir, 'battle-animation-stage.component.ts'),
         'utf8',
       );
-      expect(stageSource).toContain('ROCK_PATH');
-      expect(stageSource).not.toContain('fill="#9aa1a9"');
+      // Round 7: the inline damage glyph is the pack's own rock sprite, the one
+      // the client itself prints in ability text. Nothing in this component is
+      // drawn any more, so there is no inline SVG left in it at all.
+      expect(stageSource).toContain('fist.png');
+      expect(stageSource).not.toContain('<svg');
+      expect(stageSource).not.toContain('ROCK_PATH');
     });
   });
 });

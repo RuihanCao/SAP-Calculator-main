@@ -2,6 +2,7 @@
 Updated: 2026-08-01 (handoff)
 
 ## Current
+- **Round 7 (asset extraction, W-B):** every hand-drawn SVG/CSS element in the battle animation replaced by real game art, ailment icon bug found and fixed, `record_calc.py` unblocked. Branch `feature/anim01-w3-asset-extraction`. Provenance in `EXTRACTION.md`, functional gate `harness/functional_gate.py` 3/3 clean, animation suite 308/308.
 - **Last segment:** rounds 4-6 pixel-standard pass done; event axis 16/16, visual axis aligned (background/facing/letterbox/whiteout/corpse/end screen/controls), ~14 residuals listed — see RESULTS.md; eyeball: delivery artifact https://claude.ai/code/artifact/63558a0d-bc8f-4a29-a8bb-e469b3769cec or live http://127.0.0.1:4200 via `ssh -CNL 4200:127.0.0.1:4200 myAutodl` (Battle animation button; ?legacyAnimation=1 for the old renderer).
 - **Running:** ng serve :4200 on the box (log /root/workspace/worktrees/SAP-Calc-anim01-w2/tmp/w2/ngserve.log); play-web :8765 and sim-server :3001 (unrelated, healthy); harness driver daemon likely parked/dead (restart via harness/README.md if needed); no batch runs, no monitors.
 - **Branch/PR:** feature/anim01-w2-director / PR #3 (draft, depends on #1, #2; all three draft, merge bottom-up).

@@ -122,3 +122,24 @@ export const AILMENT_CATEGORIES: { [key: string]: string[] } = {
     'Webbed',
   ],
 };
+
+const AILMENT_NAMES = new Set(
+  Object.values(AILMENT_CATEGORIES)
+    .flat()
+    .filter(Boolean)
+    .map((name) => name.toLowerCase()),
+);
+
+/**
+ * Whether a perk name is an ailment rather than a food perk.
+ *
+ * Which of the two it is decides which art directory the icon comes from
+ * (`Ailments/` against `Food/`), so anything that resolves an icon from a name
+ * alone has to ask here rather than assume. Assuming was the Tasty broken-image
+ * bug: the battle animation's seed board read the perk name off the board log
+ * and passed `false`, which sent every ailment a pet was already wearing at the
+ * first bell to `Food/<name>.png` and a 404.
+ */
+export function isAilmentEquipmentName(name?: string | null): boolean {
+  return name ? AILMENT_NAMES.has(name.toLowerCase()) : false;
+}

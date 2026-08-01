@@ -62,54 +62,50 @@ interface Point {
 }
 
 /**
- * Drawn glyphs, for the two payloads the extracted text-map sheet does not
- * carry in a form that survives being shrunk to a projectile (checklist 15).
+ * The art the stage is built from.
  *
- * The sheet's attack icon is a fist whose silhouette collapses into a dark
- * blob at 1.5 em, and its experience icon is a gold star where the real game
- * throws a red book, so both are drawn here instead of mis-cropped from it.
+ * Two sources, in the order the game-replication skill sets: the ripped asset
+ * pack's own text-map sprites first, then pieces cut out of 3x captures of the
+ * real client by `harness/extract_assets.py` for the in-battle chrome the pack
+ * does not carry. Nothing here is drawn by hand: the SVG rock and the SVG
+ * experience book that used to live in this file were the last two, and both
+ * exist in the pack (`fist`, `xp`) as the very sprites the client prints.
  */
-const drawnIcon = (body: string): string =>
-  'data:image/svg+xml;charset=utf-8,' +
-  encodeURIComponent(
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">${body}</svg>`,
-  );
-
-/**
- * The attack payload is a rock, not a fist.
- *
- * Read off the reference toast in f11 at t=30.45
- * (clips/f11-jump-african-wild-dog/f_00862_0030453.jpg, cropped as
- * `toast.png`): "Jump attack the second enemy for 3 [rock] damage" carries a
- * blue-grey irregular polygon with a heavy black keyline, the same silhouette
- * the attack stat badge wears in charcoal. The earlier fist was a mis-crop of
- * the text-map sheet and collapsed into a grey blob at projectile size.
- */
-const ROCK_PATH =
-  'M9.4 4.6 21.5 3l7.4 6.9-1.3 12.4-8.2 6.9-9.8-1.6L4 20.2l1.1-11z';
-
-const ATTACK_GLYPH = drawnIcon(
-  `<path d="${ROCK_PATH}" fill="#93a7bb" stroke="#12161c" stroke-width="3" stroke-linejoin="round"/>` +
-    `<path d="M11.5 8.6 19 7.4l3.7 3.6" fill="none" stroke="#c3d3e0" stroke-width="2.2" ` +
-    'stroke-linecap="round" stroke-linejoin="round"/>',
-);
-
-const XP_BOOK = drawnIcon(
-  '<rect x="4.5" y="4.5" width="23" height="23" rx="3.2" fill="#d92d24" stroke="#141a21" stroke-width="2.6"/>' +
-    '<rect x="19" y="7.4" width="5.6" height="17.2" rx="1.6" fill="#fff6e2" stroke="#141a21" stroke-width="1.8"/>' +
-    '<path d="M9 11.6h7M9 16h7M9 20.4h4.4" fill="none" stroke="#ffd7d3" stroke-width="2" stroke-linecap="round"/>',
-);
+const ICONS = '/assets/art/Public/Public/Icons/TextMap-resources.assets-31-split';
+const EXTRACTED = '/assets/art/Extracted';
 
 const PAYLOAD_ICONS: Record<AnimationPayloadKind, string> = {
-  'attack-glyph': ATTACK_GLYPH,
-  heart: '/assets/art/Public/Public/Icons/heart-from-textmap.png',
-  'mana-potion':
-    '/assets/art/Public/Public/Icons/TextMap-resources.assets-31-split/mana.png',
-  'xp-book': XP_BOOK,
-  'perk-icon':
-    '/assets/art/Public/Public/Icons/TextMap-resources.assets-31-split/snipe.png',
-  trumpet:
-    '/assets/art/Public/Public/Icons/TextMap-resources.assets-31-split/trumpet.png',
+  'attack-glyph': `${ICONS}/fist.png`,
+  heart: `${ICONS}/heart.png`,
+  'mana-potion': `${ICONS}/mana.png`,
+  'xp-book': `${ICONS}/xp.png`,
+  'perk-icon': `${ICONS}/perk.png`,
+  trumpet: `${ICONS}/trumpet.png`,
+};
+
+/**
+ * The replay bar's printing, cut off the client's own bar. PLAY is the SKIP
+ * triangle with its stop bar cropped away, because a capture of a running
+ * replay never shows the bar in its paused state.
+ */
+const GLYPHS = {
+  rewind: `${EXTRACTED}/glyph-rewind.png`,
+  pause: `${EXTRACTED}/glyph-pause.png`,
+  play: `${EXTRACTED}/glyph-play.png`,
+  autoplay: `${EXTRACTED}/glyph-autoplay.png`,
+  fast: `${EXTRACTED}/glyph-fast.png`,
+  skip: `${EXTRACTED}/glyph-skip.png`,
+} as const;
+
+/**
+ * The end screen's face.
+ *
+ * Only the winning face has been captured off the client so far, so a loss and
+ * a draw keep the caption alone rather than wearing a face that was invented
+ * for them; the missing capture is recorded in the experiment's task list.
+ */
+const OUTRO_FACES: Partial<Record<AnimationSide | 'draw', string>> = {
+  player: `${EXTRACTED}/outro-face.png`,
 };
 
 const ATTACK_ICON = PAYLOAD_ICONS['attack-glyph'];
@@ -152,7 +148,12 @@ const CLASH_GAP_X = 6;
  * dirt lane with its head over the bushes behind it, exactly as the real game
  * composes the board.
  */
-const GROUND_Y = 74.4;
+/*
+ * Round 7 re-reading: on the reference a pet's feet sit about 6px of a 960 wide
+ * frame above the bottom of the dirt band and ours sat 12px above it, so the
+ * card's foot goes down by 6px of that frame, 1.1% of the play area.
+ */
+const GROUND_Y = 75.5;
 const LIFT_Y = 26;
 /**
  * The ability toast. On the same reference frame the plate runs x=264 to 565
@@ -333,6 +334,21 @@ export class BattleAnimationStageComponent
       return 0;
     }
     return this.playback.timeMs / timeline.durationMs;
+  }
+
+  /**
+   * The recorder's end-of-battle signal, published on the stage root.
+   *
+   * It is read from a data attribute rather than from the tools row's clock
+   * text, because the tools row only exists on the inline pane and the recorder
+   * moves the stage into its own holder before pressing play.
+   */
+  get animationComplete(): boolean {
+    const timeline = this.timeline;
+    if (!timeline || timeline.durationMs <= 0) {
+      return false;
+    }
+    return this.playback.timeMs >= timeline.durationMs - 1;
   }
 
   togglePlay(): void {
@@ -636,6 +652,22 @@ export class BattleAnimationStageComponent
 
   petIcon(name: string): string | null {
     return getPetIconPath(name);
+  }
+
+  /** The bar's printing, so the template never names a file. */
+  readonly glyph = GLYPHS;
+
+  /**
+   * What a shattering perk throws out, checklist 10: copies of the perk's own
+   * sprite rather than coloured chips.
+   */
+  shardImage(pet: AnimationBoardPet): string | null {
+    const icon = this.equipmentIcon(pet);
+    return icon ? `url(${icon})` : null;
+  }
+
+  outroFace(winner: AnimationSide | 'draw'): string | null {
+    return OUTRO_FACES[winner] ?? null;
   }
 
   equipmentIcon(pet: AnimationBoardPet): string | null {
