@@ -1,167 +1,17 @@
 {
- "cloud": {
-  "capture_scale": 3.0,
-  "css_box": [
-   893,
-   306,
-   170,
-   122
-  ],
-  "opaque_cut": false,
-  "pixels": [
-   510,
-   342
-  ],
-  "source_still": "f11b/r_009_0006550.png"
- },
- "glyph-autoplay": {
-  "capture_scale": 3.0,
-  "css_box": [
-   617,
-   66,
-   46,
-   36
-  ],
-  "opaque_cut": false,
-  "pixels": [
-   138,
-   108
-  ],
-  "source_still": "f11-jump-african-wild-dog/r_003_0003000.png"
- },
- "glyph-fast": {
-  "capture_scale": 3.0,
-  "css_box": [
-   695,
-   66,
-   46,
-   36
-  ],
-  "opaque_cut": false,
-  "pixels": [
-   138,
-   108
-  ],
-  "source_still": "f11-jump-african-wild-dog/r_003_0003000.png"
- },
- "glyph-pause": {
-  "capture_scale": 3.0,
-  "css_box": [
-   539,
-   66,
-   46,
-   36
-  ],
-  "opaque_cut": false,
-  "pixels": [
-   138,
-   108
-  ],
-  "source_still": "f11-jump-african-wild-dog/r_003_0003000.png"
- },
- "glyph-play": {
-  "capture_scale": 3.0,
-  "css_box": [
-   772,
-   66,
-   30,
-   36
-  ],
-  "opaque_cut": false,
-  "pixels": [
-   90,
-   108
-  ],
-  "source_still": "f11-jump-african-wild-dog/r_003_0003000.png"
- },
- "glyph-rewind": {
-  "capture_scale": 3.0,
-  "css_box": [
-   462,
-   66,
-   46,
-   36
-  ],
-  "opaque_cut": false,
-  "pixels": [
-   138,
-   108
-  ],
-  "source_still": "f11-jump-african-wild-dog/r_003_0003000.png"
- },
- "glyph-skip": {
-  "capture_scale": 3.0,
-  "css_box": [
-   772,
-   66,
-   46,
-   36
-  ],
-  "opaque_cut": false,
-  "pixels": [
-   138,
-   108
-  ],
-  "source_still": "f11-jump-african-wild-dog/r_003_0003000.png"
- },
  "level-plaque": {
   "capture_scale": 3.0,
   "css_box": [
    494,
    376,
-   45.5,
+   52,
    40
   ],
   "opaque_cut": false,
   "pixels": [
-   127,
+   147,
    120
   ],
   "source_still": "f11-jump-african-wild-dog/r_003_0003000.png"
- },
- "outro-face": {
-  "capture_scale": 3.0,
-  "css_box": [
-   498,
-   192,
-   284,
-   284
-  ],
-  "opaque_cut": false,
-  "pixels": [
-   852,
-   852
-  ],
-  "source_still": "outro/r_030_0022455.png"
- },
- "plate-name": {
-  "capture_scale": 3.0,
-  "css_box": [
-   176,
-   255,
-   176,
-   74
-  ],
-  "opaque_cut": false,
-  "pixels": [
-   514,
-   215
-  ],
-  "source_still": "f11-jump-african-wild-dog/r_001_0001000.png"
- },
- "plate-vs": {
-  "capture_scale": 3.0,
-  "css_box": [
-   594,
-   247,
-   92,
-   90
-  ],
-  "opaque_cut": false,
-  "pixels": [
-   271,
-   265
-  ],
-  "source_still": "f11-jump-african-wild-dog/r_001_0001000.png"
  }
 }

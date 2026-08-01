@@ -38,11 +38,11 @@
       <div class="anim-controls" [style.opacity]="view.controls"
         [class.anim-controls-gone]="view.controls === 0">
         <button type="button" class="anim-ctl" data-anim-control="rewind" (click)="onRewind()">
-          <span class="anim-ctl-label">REWIND</span>
+          <span class="anim-ctl-label anim-ctl-label-mid">REWIND</span>
           <img class="anim-ctl-glyph" [src]="glyph.rewind" alt="" aria-hidden="true" />
         </button>
         <button type="button" class="anim-ctl" data-anim-control="play" (click)="togglePlay()">
-          <span class="anim-ctl-label">{{ playing ? 'PAUSE' : 'PLAY' }}</span>
+          <span class="anim-ctl-label" [class.anim-ctl-label-mid]="playing">{{ playing ? 'PAUSE' : 'PLAY' }}</span>
           <img class="anim-ctl-glyph" [src]="playing ? glyph.pause : glyph.play" alt="" aria-hidden="true" />
         </button>
         <button type="button" class="anim-ctl" data-anim-control="autoplay"
@@ -280,7 +280,7 @@
         <div class="anim-outro-actions" [style.opacity]="outro.face">
           <button type="button" class="anim-ctl anim-outro-action" data-anim-outro="rewind"
             (click)="onRewind()">
-            <span class="anim-ctl-label">REWIND</span>
+            <span class="anim-ctl-label anim-ctl-label-mid">REWIND</span>
             <img class="anim-ctl-glyph" [src]="glyph.rewind" alt="" aria-hidden="true" />
           </button>
           <button type="button" class="anim-ctl anim-outro-action" data-anim-outro="exit"

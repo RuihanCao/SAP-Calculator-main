@@ -60,8 +60,12 @@ ASSETS = {
     # nothing but green.
     "level-plaque": (
         "f11-jump-african-wild-dog/r_003_0003000.png",
-        [494, 376, 45.5, 40],
-        {"palette_only": True, "drop_green": True},
+        [494, 376, 52, 40],
+        # The numeral goes too: it is the one part that changes, and dropping it
+        # by its own yellow leaves the wood's rounded right end in the cut
+        # instead of a straight edge where the box stopped. The hole it leaves
+        # in the cap is exactly where the stage draws the numeral back.
+        {"palette_only": True, "drop_green": True, "drop_yellow": True},
     ),
     # The replay bar. The tile itself is a flat translucent rectangle and is
     # drawn by the stylesheet from the colour measured here; what is cut is the
@@ -216,6 +220,13 @@ def cut(name, still, css_box, options):
     if not options.get("keep_background"):
         if not options.get("palette_only"):
             piece = flood_background(piece, options.get("tolerance", 60))
+        if options.get("drop_yellow"):
+            pixels = piece.load()
+            for x in range(piece.size[0]):
+                for y in range(piece.size[1]):
+                    r, g, b, a = pixels[x, y]
+                    if a and r > 170 and g > 120 and b < 110 and r - b > 90:
+                        pixels[x, y] = (0, 0, 0, 0)
         if options.get("drop_green"):
             # The cloud sits in front of the forest band, and the notches
             # between its lobes are pockets of leaf green the border walk cannot
