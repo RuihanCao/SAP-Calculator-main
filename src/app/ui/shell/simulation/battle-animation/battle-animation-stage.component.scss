@@ -63,11 +63,19 @@
 
 .anim-shutter {
   position: absolute;
-  inset: 0;
+  left: 0;
+  right: 0;
   background: #10151c;
-  transform-origin: center;
   z-index: 40;
   pointer-events: none;
+}
+
+.anim-shutter-top {
+  top: 0;
+}
+
+.anim-shutter-bottom {
+  bottom: 0;
 }
 
 .anim-intro-card {
@@ -642,7 +650,15 @@
   justify-content: center;
   gap: 1.6em;
   padding: 0.6rem 0;
-  background: rgb(12 16 22 / 82%);
+  /*
+   * How dark the end screen goes, measured rather than picked. On the
+   * reference screen (outro-victory t=65.70) the field keeps about 23% of the
+   * light it had while the battle was on, and what is left is neutral, not
+   * blue: its forest band reads (3, 12, 3) against (37, 117, 27) in the lit
+   * frame. A near black veil at 85% lands on that, where the earlier
+   * blue-grey one at 82% left the field at 32% and tinted it.
+   */
+  background: rgb(6 8 11 / 85%);
   color: #fff;
 }
 

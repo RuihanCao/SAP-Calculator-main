@@ -40,7 +40,17 @@
 
     <!-- entrance, checklist 18 -->
     <ng-container *ngIf="view.intro as intro">
-      <div class="anim-shutter" [style.transform]="'scaleY(' + intro.shutter + ')'"></div>
+      <!--
+        The shutter, checklist 18. The real game squeezes the scene into a
+        horizontal band as black closes in from the top and the bottom, and
+        the battlefield opens back out of that band the same way, so it is two
+        bars rather than one rectangle growing out of the middle. Read off
+        outro-defeat: the shop is already a middle band at t=36.46
+        (clips/outro-defeat/f_01274_0036456.jpg), the screen is black at
+        t=36.83, and the empty field opens as a middle band at t=37.14.
+      -->
+      <div class="anim-shutter anim-shutter-top" [style.height.%]="intro.shutter * 50"></div>
+      <div class="anim-shutter anim-shutter-bottom" [style.height.%]="intro.shutter * 50"></div>
       <div class="anim-intro-card anim-intro-player" *ngIf="intro.cardsVisible"
         [style.opacity]="intro.playerCard"
         [style.transform]="'translateX(' + (-40 + 40 * intro.playerCard) + '%)'">
