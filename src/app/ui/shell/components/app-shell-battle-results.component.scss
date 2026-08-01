@@ -2902,3 +2902,22 @@
   background-color: rgba(220, 53, 69, 0.12);
 }
 
+
+/*
+ * The fullscreen battle animation. It is the whole viewport with nothing of
+ * the calculator around it, black behind the field so a stage that does not
+ * match the screen's aspect letterboxes the way the game does.
+ */
+.battle-animation-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  background: #000;
+}
+
+.battle-animation-fullscreen app-battle-animation-stage {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+}

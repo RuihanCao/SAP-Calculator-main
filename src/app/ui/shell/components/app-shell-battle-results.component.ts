@@ -58,6 +58,20 @@ export class AppShellBattleResultsComponent
 
   activeTabletPane: TabletPane = 'battle';
 
+  /**
+   * The battle animation has the whole viewport. It is opened by its own
+   * button and it plays itself from the entrance, so this is the only state
+   * the entry flow needs: one press in, EXIT or Escape out.
+   */
+  battleAnimationFullscreen = false;
+
+  /**
+   * Fight on a biome drawn from the pack rather than on the one the reference
+   * replays use. Off by default, so what opens is the field the real replays
+   * are fought on.
+   */
+  randomBattleBackground = false;
+
   private readonly dividerStorageKey = 'sap.battleLogs.leftPaneWidthPx';
 
   private readonly tabletMediaQuery =
@@ -145,6 +159,43 @@ export class AppShellBattleResultsComponent
 
   setTabletActivePane(pane: TabletPane): void {
     this.activeTabletPane = pane;
+  }
+
+  /** There is a battle to animate, which is what the button needs. */
+  get hasBattleAnimation(): boolean {
+    return (this.app.viewBattleEvents?.length ?? 0) > 0;
+  }
+
+  openBattleAnimation(): void {
+    if (!this.hasBattleAnimation) {
+      return;
+    }
+    this.battleAnimationFullscreen = true;
+    this.setPageScrollLock(true);
+  }
+
+  setRandomBattleBackground(random: boolean): void {
+    this.randomBattleBackground = random;
+  }
+
+  closeBattleAnimation(): void {
+    if (!this.battleAnimationFullscreen) {
+      return;
+    }
+    this.battleAnimationFullscreen = false;
+    this.setPageScrollLock(false);
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscapeKey(): void {
+    this.closeBattleAnimation();
+  }
+
+  private setPageScrollLock(locked: boolean): void {
+    if (typeof document === 'undefined') {
+      return;
+    }
+    document.body.style.overflow = locked ? 'hidden' : '';
   }
 
   onDividerPointerDown(event: PointerEvent): void {
