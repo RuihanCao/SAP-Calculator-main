@@ -221,6 +221,18 @@ const easeInOut = (p: number): number =>
 /** Height of an arc at progress p, 0 at both ends and 1 in the middle. */
 const arc = (p: number): number => 4 * p * (1 - p);
 
+/**
+ * How high a jump attacker hangs while it is hitting, checklist 14.
+ *
+ * It does not land. On the reference contact frame (f11 t=30.45,
+ * clips/f11-jump-african-wild-dog/f_00862_0030453.jpg) the African Wild Dog is
+ * over the otter with its art centred at 0.472 of the play area, against the
+ * 0.602 a standing pet sits at, which is half the arc's full height, and the
+ * target stays visible under it rather than being occluded by a pet planted in
+ * its slot.
+ */
+export const JUMP_CONTACT_LIFT = 0.5;
+
 const rampAt = (timeMs: number, startMs: number, spanMs: number): number =>
   clamp01((timeMs - startMs) / Math.max(1, spanMs));
 
@@ -618,7 +630,7 @@ export class TimelineSampler {
           lift = arc(p);
         } else if (timeMs < clash.returnStartMs) {
           travel = 1;
-          lift = 0;
+          lift = JUMP_CONTACT_LIFT;
         } else {
           const p = rampAt(
             timeMs,
@@ -626,7 +638,9 @@ export class TimelineSampler {
             clash.endMs - clash.returnStartMs,
           );
           travel = 1 - easeInOut(p);
-          lift = arc(p);
+          // The way home leaves from the height it was hanging at, so there is
+          // no drop to the ground between the hit and the jump back.
+          lift = Math.max(arc(p), JUMP_CONTACT_LIFT * (1 - p));
         }
         jumpByPet.set(clash.jumperId, { travel, lift, targetSlot, targetSide });
         const flashProgress = rampAt(timeMs, contact, 220);
