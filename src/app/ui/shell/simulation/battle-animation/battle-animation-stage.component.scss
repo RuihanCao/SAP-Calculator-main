@@ -1,3 +1,31 @@
+/*
+ * The cloud, drawn once and used by everything that puffs.
+ *
+ * It has to be a shape rather than a stack of radial gradients: a gradient's
+ * default ending shape is the farthest corner, so on a box that is not square
+ * the lobes overrun the box and are clipped back into rectangles, which is
+ * what the round-4 corpse trail was drawing.
+ */
+$cloud-svg: "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 78'%3E%3Cg fill='%23ffffff'%3E%3Ccircle cx='25' cy='51' r='25'/%3E%3Ccircle cx='51' cy='58' r='20'/%3E%3Ccircle cx='76' cy='51' r='24'/%3E%3Ccircle cx='37' cy='29' r='23'/%3E%3Ccircle cx='65' cy='27' r='20'/%3E%3C/g%3E%3C/svg%3E";
+
+/*
+ * The outline the game puts on a numeral: a solid black line outside the
+ * glyph. A text stroke is painted centred on the outline in Chrome, which eats
+ * the fill and turns a bright red numeral muddy, so this is eight shadows
+ * instead, which sit behind the fill.
+ */
+@mixin keyline($width, $colour: #0b0b0b) {
+  text-shadow:
+    #{$width} 0 0 $colour,
+    -#{$width} 0 0 $colour,
+    0 #{$width} 0 $colour,
+    0 -#{$width} 0 $colour,
+    #{$width * 0.75} #{$width * 0.75} 0 $colour,
+    -#{$width * 0.75} #{$width * 0.75} 0 $colour,
+    #{$width * 0.75} -#{$width * 0.75} 0 $colour,
+    -#{$width * 0.75} -#{$width * 0.75} 0 $colour;
+}
+
 :host {
   display: block;
   height: 100%;
@@ -10,6 +38,31 @@
   height: 100%;
   min-height: 0;
   gap: 0.35rem;
+
+  /* The game's own face, so nothing on the stage is the calculator's font. */
+  font-family: "Lapsus Pro", "Segoe UI", sans-serif;
+}
+
+/*
+ * The letterbox, checklist 18.
+ *
+ * Every reference recording is a 960 by 600 viewport whose play area runs rows
+ * 30 to 569, so 960 by 540: an aspect of 1.7745 against 16:9's 1.7778, with
+ * black bars taking the rest. Holding that box is what makes a percentage on
+ * this stage mean the same thing it meant when it was measured on a reference
+ * frame, whatever the window is; without it the lane band alone drifted 10%
+ * thin at 1280 by 800.
+ */
+.anim-stage-box {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  border-radius: 0.5rem;
+  overflow: hidden;
 }
 
 /*
@@ -17,26 +70,34 @@
  * reference clips are recorded on: sky and clouds, mountains, the forest band,
  * the dirt lane the pets stand on, then grass.
  *
- * The framing is measured off the reference frame rather than guessed. In f01
- * at t=29.36 (clips/f01-plain-trades/f_00829_0029361.jpg) the lane runs from
- * 0.556 to 0.707 of the play area's height, and in the sheet itself the lane
- * runs from 0.448 to 0.560 of the image. One scale carries both edges: 123.8%
- * of the field's height, anchored at the top, which also puts the pets' feet
- * on the lane where the real game puts them. Fitting the whole sheet against
- * that reference frame instead, over the columns no pet or panel covers,
- * independently returns a best scale of 124.0%, so the two readings agree to
- * about one pixel. The width is stretched to the field because every band is
- * horizontal.
+ * The framing is measured off the reference frame rather than guessed, and
+ * re-measured in round 5 because the old reading was 10% short.
+ *
+ * On the reference (f11 t=30.45, clips/f11-jump-african-wild-dog/
+ * f_00862_0030453.jpg, play area rows 30 to 569) the lane runs from 0.5611 to
+ * 0.7074 of the play area, and in the sheet itself it runs from 0.4530 to
+ * 0.5607 of the image, sampled on a column no art covers. One scale carries
+ * both edges: 0.1464/0.1077 is 1.359, so the sheet is drawn 135.9% of the play
+ * area's height, and its top has to sit 0.0546 of the play area above it. A
+ * percentage background position offsets by P x (container - image), which is
+ * -0.359 of the play area here, so P is 15.2%. Checked back: the lane lands at
+ * 0.5610 and 0.7074, and the forest's own top edge lands at 0.264 against a
+ * measured 0.272.
+ *
+ * The width is stretched to the field because every band is horizontal, and
+ * because the play area is now locked to 16:9 the stretch is the same one the
+ * reference recording has.
  *
  * The image itself is bound from the component, because the biome is either
  * the replay's own one or a random draw from the pack.
  */
 .anim-field {
   position: relative;
-  flex: 1 1 auto;
-  min-height: 200px;
+  width: 100%;
+  height: auto;
+  max-width: 100%;
   max-height: 100%;
-  border-radius: 0.5rem;
+  aspect-ratio: 16 / 9;
   overflow: hidden;
   /* Set from the component: one em is the whole stage's scale unit. */
   font-size: 14px;
@@ -44,8 +105,8 @@
   background-color: #6edcff;
   background-image: url('/assets/art/Public/Public/Background/FieldBattle.png');
   background-repeat: no-repeat;
-  background-position: top center;
-  background-size: 100% 123.8%;
+  background-position: center 15.2%;
+  background-size: 100% 135.9%;
   image-rendering: auto;
 }
 
@@ -55,17 +116,40 @@
   background: #000;
 }
 
-.anim-stage-fullscreen .anim-field {
+.anim-stage-fullscreen .anim-stage-box {
   border-radius: 0;
+}
+
+/* --------------------------------------------------------- the mascot -- */
+
+/*
+ * The other player's avatar, `Mascot/TurtleBattle.png`, standing at the
+ * field's right in every reference battle frame.
+ *
+ * Placed off f11 t=30.45, where the figure's cream runs x=853 to 923 and
+ * y=210 to 333 of a 960 by 540 play area against the same cream in the asset.
+ * That fixes the scale at 0.278, so the sprite's 512 square box lands 26.4% of
+ * the play area tall with its left edge 86.0% across, and the boots come down
+ * on the lane's top edge.
+ */
+.anim-mascot {
+  position: absolute;
+  left: 86%;
+  bottom: 42.5%;
+  height: 26.4%;
+  width: auto;
+  z-index: 4;
+  pointer-events: none;
 }
 
 /* ------------------------------------------------------------ entrance -- */
 
+/* Checklist 18: the bars are the screen going black, so they are black. */
 .anim-shutter {
   position: absolute;
   left: 0;
   right: 0;
-  background: #10151c;
+  background: #000;
   z-index: 40;
   pointer-events: none;
 }
@@ -78,100 +162,173 @@
   bottom: 0;
 }
 
-.anim-intro-card {
+/*
+ * The two team names and the VS plaque.
+ *
+ * One centred row over the near board, the geometry of f11 t=22.16
+ * (out/f11-jump-african-wild-dog_board.jpg): the plates sit side by side on
+ * one baseline whose centre is 34.6% down the play area, each is white with a
+ * heavy black keyline, and the names are blue on the near side and orange on
+ * the far side with a black VS between them.
+ */
+.anim-intro-row {
   position: absolute;
+  left: 50%;
+  top: 34.6%;
+  transform: translate(-50%, -50%);
   z-index: 41;
-  padding: 0.25rem 0.6rem;
-  border-radius: 0.4rem;
-  background: #fffdf5;
-  border: 2px solid #2b3240;
+  display: flex;
+  align-items: center;
+  gap: 0.45em;
+  max-width: 92%;
+}
+
+.anim-intro-card {
+  flex: 0 1 auto;
+  padding: 0.22em 0.7em 0.3em;
+  border: 0.19em solid #101010;
+  border-radius: 0.42em;
+  background: #fff;
+  font-size: 1.25em;
   font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .anim-intro-player {
-  left: 6%;
-  top: 34%;
+  color: #23a6e6;
 }
 
 .anim-intro-opponent {
-  right: 6%;
-  top: 34%;
+  color: #f2661f;
 }
 
 .anim-intro-vs {
-  left: 50%;
-  top: 34%;
-  background: #ffcf3f;
+  flex: 0 0 auto;
+  padding: 0.22em 0.42em 0.3em;
+  color: #101010;
 }
 
 /* -------------------------------------------------------------- banner -- */
 
+/*
+ * The ability toast, checklist 11.
+ *
+ * Sized off the reference plate on f11 t=30.45, which runs x=264 to 565 and
+ * y=141 to 258 of a 960 by 540 play area: 16.7em wide against this stage's
+ * scale unit, a heavy black keyline, and a name row over a ruled divider with
+ * the body under it.
+ */
 .anim-banner {
   position: absolute;
   z-index: 30;
   transform: translate(-50%, -50%);
-  min-width: 15em;
-  max-width: 46%;
-  font-size: 0.8em;
-  padding: 0.3em 0.45em;
-  border-radius: 0.45em;
-  background: #fffdf5;
-  border: 2px solid #2b3240;
-  box-shadow: 0 3px 0 rgb(0 0 0 / 25%);
+  width: 16.7em;
+  max-width: 62%;
+  font-size: 1em;
+  padding: 0.34em 0.5em 0.4em;
+  border-radius: 0.5em;
+  background: #fff;
+  border: 0.17em solid #101010;
+  box-shadow: 0 0.14em 0 rgb(0 0 0 / 22%);
 }
 
 .anim-banner-head {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.3em;
 }
 
 .anim-banner-portrait {
-  width: 1.8em;
-  height: 1.8em;
+  width: 1.7em;
+  height: 1.7em;
   object-fit: contain;
 }
 
 .anim-banner-name {
   flex: 1 1 auto;
-  color: #e2621b;
-  font-weight: 800;
+  color: #f2591f;
+  font-size: 1.3em;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.01em;
+  line-height: 1.05;
+  /* One line, so a long name never wraps a stray glyph under the plate. */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
 }
 
 .anim-banner-level {
-  min-width: 1.2em;
-  height: 1.2em;
+  flex: 0 0 auto;
+  width: 1.85em;
+  height: 1.85em;
   border-radius: 50%;
-  background: #ffcf3f;
-  border: 1px solid #2b3240;
+  background: radial-gradient(circle at 38% 32%, #ffd76a 0%, #f5a91b 68%, #d8880c 100%);
+  border: 0.16em solid #101010;
   text-align: center;
+  font-size: 1.05em;
   font-weight: 700;
-  line-height: 1rem;
+  line-height: 1.6;
+  color: #fff5d0;
+
+  @include keyline(0.035em, #8a5300);
 }
 
 .anim-banner-divider {
-  margin: 0.2em 0 0.15em;
-  border-top: 2px dotted #b9b19a;
+  position: relative;
+  margin: 0.26em 0 0.22em;
+  border-top: 0.1em solid #3b3b3b;
+}
+
+/* The small pipped box the real card hangs on the middle of the rule. */
+.anim-banner-pip {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0.62em;
+  height: 0.62em;
+  transform: translate(-50%, -50%);
+  border: 0.11em solid #2b2b2b;
+  border-radius: 0.14em;
+  background: #fff;
+}
+
+.anim-banner-pip::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0.14em;
+  height: 0.14em;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: #2b2b2b;
 }
 
 .anim-banner-text {
-  line-height: 1.2;
+  font-size: 1.12em;
+  line-height: 1.22;
 }
 
 .anim-banner-trigger {
-  font-weight: 800;
+  font-weight: 700;
   margin-right: 0.2em;
 }
 
+/* The amount and its glyph stay on one line, so no icon wraps on its own. */
+.anim-banner-run {
+  white-space: nowrap;
+}
+
+/* The inline payload glyph, a rock for damage, on the text's own baseline. */
 .anim-banner-glyph {
-  width: 0.95em;
-  height: 0.95em;
-  vertical-align: -0.12em;
-  margin: 0 0.05em;
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.14em;
+  margin: 0 0.1em;
 }
 
 .anim-banner-note {
@@ -187,7 +344,7 @@
   top: 50%;
   transform: translate(100%, -50%);
   padding: 0.1em 0.35em;
-  border: 2px solid #2b3240;
+  border: 0.15em solid #101010;
   border-left: none;
   border-radius: 0 0.35em 0.35em 0;
   background: #ffcf3f;
@@ -213,7 +370,7 @@
   border-radius: 0.8em;
   font-size: 0.9em;
   background: #fffdf5;
-  border: 2px solid #2b3240;
+  border: 0.14em solid #101010;
   font-weight: 700;
 }
 
@@ -246,32 +403,62 @@
 .anim-pet {
   position: absolute;
   z-index: 10;
-  width: 5.6em;
+  width: 5.2em;
   display: flex;
   flex-direction: column;
   align-items: center;
   will-change: left, top;
 }
 
+/*
+ * The level plaque, checklist 18.
+ *
+ * A wooden sign with two lobes under a dark bar, keylined in black and haloed
+ * in white, carrying a small white "Lvl" and a tall yellow numeral. Measured
+ * on f11 t=30.45 at 39 by 26 of a 960 by 540 play area, which is 2.17 by 1.44
+ * of this stage's scale unit, 0.72 above the sprite.
+ */
 .anim-pet-level {
   position: relative;
+  width: 2.17em;
+  height: 1.44em;
+  margin-bottom: 0.1em;
   display: flex;
-  align-items: center;
-  gap: 0.15em;
-  padding: 0 0.25em;
-  border-radius: 0.25em;
-  background: #a1642f;
-  color: #fff;
-  font-size: 0.55em;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0.02em;
+  background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 40'%3E%3Cg fill='%23ffffff' stroke='%23ffffff' stroke-width='9' stroke-linejoin='round'%3E%3Crect x='4' y='16' width='24' height='21' rx='10'/%3E%3Crect x='32' y='16' width='24' height='21' rx='10'/%3E%3Crect x='3' y='3' width='54' height='16' rx='5'/%3E%3C/g%3E%3Cg stroke='%23130b04' stroke-width='5' stroke-linejoin='round'%3E%3Crect x='4' y='16' width='24' height='21' rx='10' fill='%23a06a24'/%3E%3Crect x='32' y='16' width='24' height='21' rx='10' fill='%23a06a24'/%3E%3Crect x='3' y='3' width='54' height='16' rx='5' fill='%23231404'/%3E%3C/g%3E%3C/svg%3E")
+    center / 100% 100% no-repeat;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.anim-pet-level-word {
+  font-size: 0.68em;
   font-weight: 700;
+  color: #fff4dd;
+  margin-top: 0.2em;
+}
+
+/* The numeral is the tall yellow one that rides up out of the bar. */
+.anim-pet-level-num {
+  font-size: 1.08em;
+  font-weight: 700;
+  color: #ffc21c;
+  margin-top: -0.12em;
+
+  @include keyline(0.04em, #130b04);
 }
 
 .anim-pet-xpbar {
+  position: absolute;
+  left: 12%;
+  bottom: -0.34em;
   display: inline-block;
-  width: 1.4em;
-  height: 0.35em;
-  background: rgb(255 255 255 / 45%);
-  border-radius: 2px;
+  width: 76%;
+  height: 0.22em;
+  background: rgb(20 12 4 / 55%);
+  border-radius: 0.11em;
   overflow: hidden;
 }
 
@@ -281,18 +468,24 @@
   background: #ffcf3f;
 }
 
+/*
+ * The sprite box. Measured against the lane rather than picked: on f11 t=30.45
+ * the lane runs 80px of a 540 play area and the worm's art fills 82px of it,
+ * so a pet's box is 15.6% of the play area, 4.7 of this stage's scale unit.
+ * The earlier 4 left every pet about 18% short against the lane.
+ */
 .anim-pet-art {
   position: relative;
-  width: 4em;
-  height: 4em;
+  width: 4.7em;
+  height: 4.7em;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .anim-pet-icon {
-  width: 3.9em;
-  height: 3.9em;
+  width: 4.7em;
+  height: 4.7em;
   object-fit: contain;
 }
 
@@ -303,27 +496,23 @@
  * there.
  */
 
-.anim-pet-cross {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #c02626;
-  font-size: 2.4em;
-  font-weight: 800;
-}
-
-.anim-pet-fainted .anim-pet-icon {
-  filter: grayscale(0.85);
+/*
+ * Fainting, checklist 3. There is no red cross anywhere in the reference: the
+ * corpse whites out and launches (f01 t=32.01,
+ * clips/f01-plain-trades/f_00905_0032006.jpg, where the pig is washed to white
+ * with its black keyline intact and only the darkest patches left as colour).
+ */
+.anim-pet-fainted .anim-pet-icon,
+.anim-corpse .anim-pet-icon {
+  filter: saturate(0.28) brightness(1.6);
 }
 
 .anim-pet-equipment {
   position: absolute;
   right: -0.3em;
   top: -0.15em;
-  width: 1.3em;
-  height: 1.3em;
+  width: 1.4em;
+  height: 1.4em;
 }
 
 .anim-pet-equipment-break {
@@ -411,58 +600,88 @@
   pointer-events: none;
 }
 
+/*
+ * The stat badges, checklist 18.
+ *
+ * Structure, not styling: one white plate carries the pair, the attack numeral
+ * sits inside a charcoal rock and the health numeral inside a red heart, both
+ * shapes keylined heavily in black and haloed in white, both numerals white
+ * with a black outline. Read off f11 t=30.45, where the pair is 32px tall on a
+ * 540 play area and the plate runs 10px past the shapes on each side.
+ */
 .anim-pet-stats {
+  position: relative;
   display: flex;
-  gap: 0.15rem;
+  align-items: center;
+  justify-content: center;
+  height: 2.1em;
+  margin-top: 0.06em;
+  padding: 0 0.4em;
+  border-radius: 0.42em;
+  /* The plate is shorter than the shapes standing on it, as in the reference. */
+  background:
+    linear-gradient(#fff, #fff) center / 100% 1.62em no-repeat;
 }
 
 .anim-pet-stat {
-  display: inline-flex;
+  position: relative;
+  height: 100%;
+  aspect-ratio: 1 / 1;
+  display: flex;
   align-items: center;
-  gap: 0.1em;
-  padding: 0 0.25em;
-  border-radius: 0.7em;
-  border: 1px solid #2b3240;
-  font-size: 0.6em;
+  justify-content: center;
+  font-size: 1.42em;
   font-weight: 700;
-  background: #d7dde6;
+  line-height: 1;
+  color: #fff;
+  background: center / contain no-repeat;
+
+  @include keyline(0.045em, #0d0d0d);
 }
 
-.anim-pet-stat img {
-  width: 0.9em;
-  height: 0.9em;
+.anim-pet-attack {
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'%3E%3Cpath d='M14 4 31 3 41 15 38 31 25 40 11 37 3 25 4 12Z' fill='%23ffffff' stroke='%23ffffff' stroke-width='8' stroke-linejoin='round'/%3E%3Cpath d='M14 4 31 3 41 15 38 31 25 40 11 37 3 25 4 12Z' fill='%2354585d' stroke='%230d0d0d' stroke-width='4.6' stroke-linejoin='round'/%3E%3Cpath d='M15 9 29 8 35 15' fill='none' stroke='%23767c83' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 }
 
 .anim-pet-health {
-  background: #f3b1b1;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'%3E%3Cpath d='M22 40C7 29 3 21 3 14.5 3 8 8 4 13 4c4 0 7.4 2.4 9 5.6C23.6 6.4 27 4 31 4c5 0 10 4 10 10.5C41 21 37 29 22 40Z' fill='%23ffffff' stroke='%23ffffff' stroke-width='8' stroke-linejoin='round'/%3E%3Cpath d='M22 40C7 29 3 21 3 14.5 3 8 8 4 13 4c4 0 7.4 2.4 9 5.6C23.6 6.4 27 4 31 4c5 0 10 4 10 10.5C41 21 37 29 22 40Z' fill='%23e51f26' stroke='%230d0d0d' stroke-width='4.6' stroke-linejoin='round'/%3E%3Cpath d='M22 34C11 25.6 8 19.6 8 15.2 8 11 11.4 8.4 14.6 8.4c2.8 0 5.2 1.8 6.4 4' fill='none' stroke='%23b3121a' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E");
 }
 
 .anim-pet-mana {
-  background: #b9d2f6;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'%3E%3Cpath d='M22 3 33 16l4 12-6 11H13L7 28l4-12Z' fill='%23ffffff' stroke='%23ffffff' stroke-width='8' stroke-linejoin='round'/%3E%3Cpath d='M22 3 33 16l4 12-6 11H13L7 28l4-12Z' fill='%232f6fd0' stroke='%230d0d0d' stroke-width='4.6' stroke-linejoin='round'/%3E%3C/svg%3E");
 }
 
-.anim-pet-source .anim-pet-art {
-  outline: 3px solid #4fd463;
-  outline-offset: -2px;
-  border-radius: 50%;
+/*
+ * The outlines, checklist 1 and 14. They trace the sprite's own silhouette
+ * rather than ringing the box it sits in: the reference wind-up is a red line
+ * hugging the pig and the otter (out/z_f01_clash.jpg and the crop kept as
+ * ref_faint.png), and a jump attacker hangs over its target inside a green one
+ * (f11 t=30.45). Four one-pixel drop shadows off the transparent sprite give
+ * exactly that line.
+ */
+.anim-pet-source .anim-pet-icon {
+  filter:
+    drop-shadow(0.09em 0 0 #35d34a) drop-shadow(-0.09em 0 0 #35d34a)
+    drop-shadow(0 0.09em 0 #35d34a) drop-shadow(0 -0.09em 0 #35d34a);
 }
 
-.anim-pet-hurt .anim-pet-art {
-  outline: 3px solid #e05353;
-  outline-offset: -2px;
-  border-radius: 50%;
+.anim-pet-hurt .anim-pet-icon,
+.anim-pet-windup .anim-pet-icon {
+  filter:
+    drop-shadow(0.09em 0 0 #ef2222) drop-shadow(-0.09em 0 0 #ef2222)
+    drop-shadow(0 0.09em 0 #ef2222) drop-shadow(0 -0.09em 0 #ef2222);
 }
 
-/* Checklist 1: the red outline is up before contact, not only inside it. */
-.anim-pet-windup .anim-pet-art {
-  outline: 3px solid #e05353;
-  outline-offset: -2px;
-  border-radius: 50%;
+/* A whited out corpse keeps the red line it died wearing. */
+.anim-corpse .anim-pet-icon {
+  filter:
+    saturate(0.28) brightness(1.6)
+    drop-shadow(0.09em 0 0 #ef2222) drop-shadow(-0.09em 0 0 #ef2222)
+    drop-shadow(0 0.09em 0 #ef2222) drop-shadow(0 -0.09em 0 #ef2222);
 }
 
-.anim-pet-levelup .anim-pet-level {
-  background: #ffcf3f;
-  color: #2b3240;
+.anim-pet-levelup .anim-pet-level-num {
+  color: #fff6c0;
 }
 
 /* ------------------------------------------------------- corpse, burst -- */
@@ -470,30 +689,33 @@
 .anim-corpse {
   position: absolute;
   z-index: 12;
-  width: 5.6em;
+  width: 5.2em;
   display: flex;
   flex-direction: column;
   align-items: center;
-  filter: grayscale(0.85);
 }
 
 .anim-corpse-art {
   position: relative;
-  width: 4em;
-  height: 4em;
+  width: 4.7em;
+  height: 4.7em;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.anim-corpse-smoke {
+/*
+ * The trail, checklist 3: a chain of fat clouds laid along the path the corpse
+ * flew, each link a little smaller and fainter than the one in front of it,
+ * which is what the reference leaves behind (f01 t=32.01 and t=37.39).
+ */
+.anim-corpse-puff {
   position: absolute;
-  left: -2.2em;
-  top: 1em;
-  width: 2.8em;
-  height: 1em;
-  border-radius: 0.5em;
-  background: linear-gradient(90deg, rgb(255 255 255 / 0%), rgb(255 255 255 / 85%));
+  z-index: 11;
+  width: 4.3em;
+  height: 3.4em;
+  pointer-events: none;
+  background: url("#{$cloud-svg}") center / 100% 100% no-repeat;
 }
 
 .anim-burst {
@@ -538,12 +760,7 @@
   width: 4.4em;
   height: 3.4em;
   border-radius: 0;
-  background:
-    radial-gradient(circle at 26% 62%, #fff 0 46%, rgb(255 255 255 / 0%) 48%),
-    radial-gradient(circle at 50% 74%, #fff 0 44%, rgb(255 255 255 / 0%) 46%),
-    radial-gradient(circle at 74% 62%, #fff 0 46%, rgb(255 255 255 / 0%) 48%),
-    radial-gradient(circle at 38% 34%, #fff 0 40%, rgb(255 255 255 / 0%) 42%),
-    radial-gradient(circle at 63% 32%, #fff 0 38%, rgb(255 255 255 / 0%) 40%);
+  background: url("#{$cloud-svg}") center / 100% 100% no-repeat;
   filter: drop-shadow(0 0 0.2em rgb(255 255 255 / 80%));
 }
 
@@ -585,30 +802,35 @@
   display: inline-flex;
   align-items: center;
   gap: 0.12rem;
-  font-weight: 800;
+  font-weight: 700;
   white-space: nowrap;
 }
 
+/*
+ * The damage numeral, checklist 2: the game's own face, red, with a heavy
+ * black outline, at the size the reference draws it. On f01 t=37.39 the "4"
+ * stands 32px tall on a 540 play area, so about 2.4 of this stage's scale
+ * unit, and the outline it carries is black rather than the white one that
+ * used to be here.
+ */
 .anim-popup-damage {
-  color: #d31414;
-  font-size: 1.9em;
-  text-shadow:
-    -1px 0 #fff,
-    1px 0 #fff,
-    0 -1px #fff,
-    0 1px #fff;
+  color: #e8232b;
+  font-size: 3em;
+  line-height: 1;
+
+  @include keyline(0.05em);
 }
 
 .anim-popup-merged {
-  font-size: 2.3em;
+  font-size: 3.5em;
 }
 
 .anim-popup-stat {
   padding: 0 0.3em;
   border-radius: 0.7em;
-  border: 1px solid #2b3240;
-  background: #d7dde6;
-  font-size: 0.9em;
+  border: 0.12em solid #101010;
+  background: #fff;
+  font-size: 0.95em;
 }
 
 .anim-popup-stat img {
@@ -619,12 +841,10 @@
 /* Checklist 14: mana lands as a large blue numeral, not as a grey chip. */
 .anim-popup-mana {
   color: #2f6fd0;
-  font-size: 2.1em;
-  text-shadow:
-    -1px 0 #fff,
-    1px 0 #fff,
-    0 -1px #fff,
-    0 1px #fff;
+  font-size: 2.4em;
+  line-height: 1;
+
+  @include keyline(0.05em);
 }
 
 .anim-popup-mana img {
@@ -644,38 +864,47 @@
   position: absolute;
   inset: 0;
   z-index: 45;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1.6em;
-  padding: 0.6rem 0;
   /*
-   * How dark the end screen goes, measured rather than picked. On the
-   * reference screen (outro-victory t=65.70) the field keeps about 23% of the
-   * light it had while the battle was on, and what is left is neutral, not
-   * blue: its forest band reads (3, 12, 3) against (37, 117, 27) in the lit
-   * frame. A near black veil at 85% lands on that, where the earlier
-   * blue-grey one at 82% left the field at 32% and tinted it.
+   * How dark the end screen goes, fitted per band rather than picked.
+   *
+   * On the reference end screen, sampled clear of the trophy row so the halos
+   * do not lift the reading, the field's bands come out at sky 23.5, forest
+   * 7.7, lane 16.0 and grass 7.3 against a lit 200.3, 94.0, 160.0 and 79.1
+   * (out/outro_victory_end.jpg against out/f11-jump-african-wild-dog_board.jpg).
+   * A least squares fit through those four pairs gives a multiplier of 0.110 on
+   * red, 0.104 on green and 0.099 on blue with no offset, so the veil is plain
+   * black at 89.5% and the little warmth left over is the lane's own. The
+   * earlier blue grey veil at 85% left every band about 2.7 times too bright
+   * and put more blue in the result than red.
+   *
+   * Note for anyone re-checking this: the calculator's screen does not draw the
+   * trophy row or the heart row, so a whole frame mean is not comparable with
+   * the reference's. Compare band by band, clear of the rows.
    */
-  background: rgb(6 8 11 / 85%);
+  background: rgb(0 0 0 / 89.5%);
   color: #fff;
 }
 
 .anim-outro-face {
-  flex: 0 0 auto;
+  position: absolute;
+  left: 50%;
+  /* The caption's centre sits at 0.667 of the play area in the reference. */
+  top: 66.7%;
+  transform-origin: center;
+  translate: -50% -50%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.2em;
 }
 
 .anim-outro-caption {
-  font-size: 2.4em;
-  font-weight: 800;
-  letter-spacing: 0.16em;
-  text-shadow: 0 0.06em 0 rgb(0 0 0 / 55%);
+  font-size: 1.45em;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.05em;
+
+  @include keyline(0.035em);
 }
 
 /* Down at the foot of the screen, clear of the board the caption sits over. */
@@ -691,27 +920,27 @@
 /* The two buttons wear the control bar's own tile, so the end screen reads as
    part of the same client rather than as a dialog dropped on top of it. */
 .anim-outro-action {
-  width: 4.6em;
-  padding: 0.3em 0.2em 0.4em;
-  background: rgb(56 104 138 / 85%);
+  width: 3.4em;
+  background: rgb(45 128 158 / 92%);
 }
 
 /* ------------------------------------------------------------ controls -- */
 
 /*
- * The game's own bar, checklist 17: five buttons at the top of the play area,
- * no playback rate. It lives inside the field so it fades in with the entrance
- * and leaves with the battle.
+ * The game's own bar, checklist 17: five tiles at the very top of the play
+ * area, no playback rate. Measured on f11 t=30.45, where each tile is 39 by 41
+ * of a 960 by 540 play area with 20px between them and the row's top edge 6px
+ * below the play area's, and the label rides inside the tile over the glyph.
  */
 .anim-controls {
   position: absolute;
   z-index: 35;
-  top: 9.6%;
+  top: 1.1%;
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translateX(-50%);
   display: flex;
   align-items: flex-start;
-  gap: 0.5em;
+  gap: 1.11em;
   transition: opacity 120ms linear;
 }
 
@@ -721,40 +950,45 @@
 
 /* One tile per control, label over glyph, the shape the real bar uses. */
 .anim-ctl {
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 2.9em;
-  padding: 0.15em 0.1em 0.25em;
-  border: none;
-  border-radius: 0.35em;
-  background: rgb(56 104 138 / 55%);
+  justify-content: flex-start;
+  gap: 0.06em;
+  width: 2.17em;
+  height: 2.28em;
+  padding: 0.14em 0.06em 0.1em;
+  border: 0.08em solid rgb(11 46 62 / 45%);
+  border-radius: 0.34em;
+  background: rgb(45 128 158 / 72%);
   color: #fff;
+  font-family: inherit;
 }
 
 .anim-ctl-label {
-  font-size: 0.5em;
-  font-weight: 800;
-  letter-spacing: 0.03em;
-  line-height: 1.1;
+  font-size: 0.6em;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* AUTOPLAY is the one word that has to be set down to fit its tile. */
+.anim-ctl-label-long {
+  font-size: 0.44em;
 }
 
 .anim-ctl-glyph {
-  font-size: 1.1em;
-  line-height: 1;
-  /*
-   * Checklist 16 and 17: every tile is the same blue and only the engaged
-   * state dims. The transport glyphs default to colour emoji presentation in
-   * Chrome, which drew FAST orange while its neighbours stayed white, so the
-   * bar is pinned to a text font and the markup carries U+FE0E as well.
-   */
-  font-family: 'Segoe UI Symbol', 'DejaVu Sans', 'Noto Sans Symbols 2', sans-serif;
-  font-variant-emoji: text;
+  width: 1.24em;
+  height: 1.24em;
+  fill: currentcolor;
+  color: #fff;
 }
 
 /* Engaged is a dimmed glyph, the treatment the real bar uses (checklist 16). */
 .anim-ctl-engaged {
-  opacity: 0.5;
+  opacity: 0.55;
 }
 
 /* ------------------------------------------------------ tools, not game -- */
@@ -765,6 +999,7 @@
   gap: 0.5rem;
   padding: 0 0.3rem 0.2rem;
   opacity: 0.55;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
 }
 
 .anim-tools:hover,
