@@ -17,6 +17,7 @@ import {
   SlideCue,
   StatPillCue,
   INTRO_BEATS,
+  JUMP_CONTACT_LIFT,
   TimelineSampler,
   TrumpetCounterFlashCue,
   TrumpetTokenCue,
@@ -31,6 +32,7 @@ import {
   pause,
   play,
   popupValueAt,
+  previousBoardStateMs,
   rewind,
   skip,
   parseSeedBoardMessage,
@@ -206,10 +208,20 @@ describe('battle animation director', () => {
       expect(target?.lift).toBe(0);
       expect(target?.lean).toBe(0);
 
+      /**
+       * The attacker hits from the air, checklist 14. On the reference contact
+       * frame (f11 t=30.45, clips/f11-jump-african-wild-dog/
+       * f_00862_0030453.jpg) the African Wild Dog hangs over the otter with its
+       * art centred at 0.472 of the play area against the 0.602 a standing pet
+       * sits at, half the arc's height, and the otter is still visible under
+       * it. A jumper planted in the slot would occlude its own target.
+       */
       const contact = sampler.frameAt(cue.contactMs + 1);
       const landed = contact.pets.find((pet) => pet.pet.id === cue.jumperId);
       expect(landed?.lean).toBe(1);
-      expect(landed?.lift).toBe(0);
+      expect(landed?.lift).toBe(JUMP_CONTACT_LIFT);
+      expect(JUMP_CONTACT_LIFT).toBeGreaterThan(0);
+      expect(contact.pets.find((pet) => pet.pet.id === cue.jumpTargetId)?.lift).toBe(0);
       expect(landed?.jumpTargetSlot).toBe(
         contact.pets.find((pet) => pet.pet.id === cue.jumpTargetId)?.slot,
       );
@@ -610,22 +622,49 @@ describe('battle animation director', () => {
       expect(knockOut.trigger).toBe('Knock out');
       expect(knockOut.uses).toBe('3 / battle');
       expect(knockOut.note).toBeNull();
-      expect(knockOut.body.map((segment) => segment.icon)).toEqual([
+      const whole = (parsed: { body: Array<{ text: string; tail: string }> }): string =>
+        parsed.body.map((segment) => segment.text + segment.tail).join('');
+      expect(knockOut.body.map((segment) => segment.icon).filter(Boolean)).toEqual([
         'attack-glyph',
         'heart',
       ]);
-      expect(knockOut.body.map((segment) => segment.text).join('')).toBe(
-        'Gain +3 attack and +3 health.',
-      );
+      expect(whole(knockOut)).toBe('Gain +3 attack and +3 health.');
+      // The glyph goes on the amount, and the amount is held on the glyph's own
+      // line so no icon ever wraps by itself.
+      expect(knockOut.body[0].text).toBe('Gain ');
+      expect(knockOut.body[0].tail).toBe('+3 ');
 
       const perk = parseBannerText(
         'Hurt: Gain Coconut perk. Works 1 time per turn.\nBlock damage, once.',
       );
       expect(perk.uses).toBe('1 / turn');
       expect(perk.note).toBe('Block damage, once.');
-      expect(perk.body.map((segment) => segment.text).join('')).toBe(
-        'Gain Coconut perk.',
+      expect(whole(perk)).toBe('Gain Coconut perk.');
+      // A perk is named rather than counted, so it keeps its glyph.
+      expect(perk.body.map((segment) => segment.icon).filter(Boolean)).toEqual([
+        'perk-icon',
+      ]);
+    });
+
+    /**
+     * The verb is not the stat. On the reference card f11 t=30.45 the rules
+     * read "Start of battle -> Jump attack the second enemy for 3 [rock]
+     * damage.", one rock, on the amount. Round 4 drew two, and the second one
+     * wrapped onto a line of its own under the card.
+     */
+    it('puts one glyph on the amount, not one on every stat word', () => {
+      const jump = parseBannerText(
+        'Start of battle: Jump attack the second enemy for 3 damage.',
       );
+      expect(jump.trigger).toBe('Start of battle');
+      const icons = jump.body.map((segment) => segment.icon).filter(Boolean);
+      expect(icons).toEqual(['attack-glyph']);
+      const carrier = jump.body.find((segment) => segment.icon != null);
+      expect(carrier?.text).toBe('Jump attack the second enemy for ');
+      expect(carrier?.tail).toBe('3 ');
+      expect(
+        jump.body.map((segment) => segment.text + segment.tail).join(''),
+      ).toBe('Jump attack the second enemy for 3 damage.');
     });
 
     it('parses every banner the fixtures actually raise', () => {
@@ -939,38 +978,79 @@ describe('battle animation director', () => {
       expect(outro.controls).toBe(0);
     });
 
-    it('steps back exactly one board state per press and stays playable', () => {
-      const boardAt = (timeMs: number) => sampler.frameAt(timeMs).board;
-      const sampler = new TimelineSampler(timeline);
-      const states = boardStateTimes(timeline);
-      expect(states.length).toBeGreaterThan(4);
-
-      let state = play(initialPlayback(), timeline);
-      state = advancePlayback(state, timeline, 6000);
-      // Whatever board is on screen, one press shows the one before it.
-      const showing = states.filter((at) => at <= state.timeMs).length - 1;
-      state = rewind(state, timeline);
-      expect(state.timeMs).toBe(states[showing - 1]);
-      expect(boardAt(state.timeMs)).toEqual(boardAt(states[showing - 1]));
-      // The real client freezes here with a dead bar; this one only stops.
-      expect(state.playing).toBe(false);
-      expect(advancePlayback(state, timeline, 5000).timeMs).toBe(state.timeMs);
-
-      // A second press walks back another state rather than sticking.
-      state = rewind(state, timeline);
-      expect(state.timeMs).toBe(states[showing - 2]);
-
-      // And PLAY picks the battle up from where the press landed.
-      const resumed = advancePlayback(play(state, timeline), timeline, 120);
-      expect(resumed.playing).toBe(true);
-      expect(resumed.timeMs).toBe(state.timeMs + 120);
+    /**
+     * REWIND restarts the whole animation, checklist 17.
+     *
+     * Measured on the reference strip rather than assumed: the press lands at
+     * t=21.9 and the very next frames are the entrance again, the screen black,
+     * then the field opening out of the shutter band at t=22.10 and the team
+     * banners back at t=22.81 (clips/ctl-rewind/,
+     * out/ctl-rewind_filmstrip.jpg frames 00 to 07). It is not a step back to
+     * the previous board and it does not park the transport.
+     */
+    /** The whole animation, entrance and end screen included, as it is played. */
+    const wholeTimeline = buildBattleTimeline(readGolden('f01-plain-trades'), {
+      initialBoard: seedFor('f01-plain-trades'),
     });
 
-    it('cannot rewind past the first board of the battle', () => {
-      const start = boardStateTimes(timeline)[0];
-      let state = { ...initialPlayback(), timeMs: start };
-      state = rewind(state, timeline);
-      expect(state.timeMs).toBe(start);
+    it('restarts from the first frame of the entrance, playing', () => {
+      const sampler = new TimelineSampler(wholeTimeline);
+      expect(wholeTimeline.introEndMs).toBeGreaterThan(0);
+      let state = play(initialPlayback(), wholeTimeline);
+      state = advancePlayback(state, wholeTimeline, wholeTimeline.introEndMs + 6000);
+      expect(state.timeMs).toBeGreaterThan(wholeTimeline.introEndMs);
+      expect(sampler.frameAt(state.timeMs).phase).toBe('battle');
+
+      state = rewind(state, wholeTimeline);
+      expect(state.timeMs).toBe(0);
+      expect(state.playing).toBe(true);
+      expect(state.finished).toBe(false);
+      expect(sampler.frameAt(state.timeMs).phase).toBe('intro');
+
+      // And the clock actually runs on from there rather than freezing.
+      const running = advancePlayback(state, wholeTimeline, 120);
+      expect(running.playing).toBe(true);
+      expect(running.timeMs).toBe(120);
+    });
+
+    it('restarts from the end screen too, so the outro is reachable again', () => {
+      const sampler = new TimelineSampler(wholeTimeline);
+      let state = {
+        ...initialPlayback(),
+        timeMs: wholeTimeline.durationMs,
+        finished: true,
+      };
+      expect(sampler.frameAt(state.timeMs).phase).toBe('outro');
+      state = rewind(state, wholeTimeline);
+      expect(state.timeMs).toBe(0);
+      expect(sampler.frameAt(state.timeMs).phase).toBe('intro');
+      expect(state.playing).toBe(true);
+      // Long enough to have run the battle out and be back on the end screen.
+      const replayed = advancePlayback(
+        state,
+        wholeTimeline,
+        wholeTimeline.durationMs + 1000,
+      );
+      expect(sampler.frameAt(replayed.timeMs).phase).toBe('outro');
+    });
+
+    it('buys one beat on a restart when AUTOPLAY is off', () => {
+      const state = rewind(
+        { ...initialPlayback(), timeMs: timeline.durationMs },
+        timeline,
+        false,
+      );
+      expect(state.timeMs).toBe(0);
+      expect(state.playing).toBe(true);
+      expect(state.stopAtMs).toBe(nextCheckpointMs(timeline, 0));
+      expect(rewind(initialPlayback(), timeline, true).stopAtMs).toBeNull();
+    });
+
+    it('leaves the board-state walk available for the scrubber', () => {
+      const states = boardStateTimes(timeline);
+      expect(states.length).toBeGreaterThan(4);
+      expect(previousBoardStateMs(timeline, states[3] + 5)).toBe(states[2]);
+      expect(previousBoardStateMs(timeline, states[0])).toBe(states[0]);
     });
 
     it('advances one beat per press with AUTOPLAY off, and runs on with it on', () => {
