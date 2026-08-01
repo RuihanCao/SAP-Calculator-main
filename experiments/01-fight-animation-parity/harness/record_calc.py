@@ -244,9 +244,15 @@ async def record_one(fid, base_url, seconds, fast, quality, swap=False):
             )
             if state is None or state["duration"] <= 0:
                 missing += 1
-                if missing > 8:
-                    print(f"  {fid}: no data-anim-* on the stage, recording to the deadline")
-                    break
+                if missing == 9:
+                    # Say it once, then keep recording. Breaking out here ended
+                    # the screencast about two seconds in and wrote a clip that
+                    # looked like a broken animation rather than like a stage
+                    # that is not publishing its clock.
+                    print(
+                        f"  {fid}: no data-anim-* on the stage, "
+                        f"recording to the {seconds:.0f}s deadline"
+                    )
                 continue
             missing = 0
             if state["done"]:

@@ -3,17 +3,23 @@
 
 The pass bar for the visual axis is a blind whole-frame judgement, so the pairs
 this writes are unlabelled by design: `pair_<n>_A.png` and `pair_<n>_B.png` with
-the side recorded only in `key.json`, which the critic does not get.
+the side recorded only in the key, which the critic does not get.
 
   side_by_side.py --pairs pairs.json --out /path/to/round
 
 `pairs.json` is a list of {"label", "real", "ours"} with paths relative to the
 reference and our own still roots.
+
+The key lands in a sibling `keys/` directory rather than inside the round, so a
+critic can be pointed at the round directory without the answer sitting in it.
+The randomisation is seeded from entropy unless `--seed` is given, so re-running
+a round does not reproduce the previous round's A/B assignment.
 """
 import argparse
 import json
 import os
 import random
+import secrets
 import sys
 
 from PIL import Image, ImageChops
@@ -34,20 +40,35 @@ def main():
     parser.add_argument("--pairs", required=True)
     parser.add_argument("--out", required=True)
     parser.add_argument("--width", type=int, default=960)
-    parser.add_argument("--seed", type=int, default=7)
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help="fix the A/B assignment, for reproducing a particular round",
+    )
     args = parser.parse_args()
 
     with open(args.pairs) as handle:
         pairs = json.load(handle)
     os.makedirs(args.out, exist_ok=True)
-    rng = random.Random(args.seed)
+    # A sibling of the round, not a member of it: `--out .../rounds/r2` puts the
+    # key at `.../rounds/keys/r2.json`, so handing over the round directory
+    # hands over the images and nothing else.
+    rounds_root = os.path.dirname(os.path.abspath(args.out.rstrip(os.sep)))
+    keys_dir = os.path.join(rounds_root, "keys")
+    os.makedirs(keys_dir, exist_ok=True)
+    key_path = os.path.join(
+        keys_dir, f"{os.path.basename(os.path.abspath(args.out.rstrip(os.sep)))}.json"
+    )
+    seed = args.seed if args.seed is not None else secrets.randbits(64)
+    rng = random.Random(seed)
     key = []
 
     for index, pair in enumerate(pairs):
         real = load(os.path.join(REF, pair["real"]), args.width)
         ours = load(os.path.join(OURS, pair["ours"]), args.width)
         # Which of A and B is the real client is decided per pair and written
-        # only into key.json, so the critic cannot learn the layout.
+        # only into the key, outside the round, so the critic cannot learn it.
         swap = rng.random() < 0.5
         a, b = (ours, real) if swap else (real, ours)
         a.save(os.path.join(args.out, f"pair_{index:02d}_A.png"))
@@ -79,9 +100,14 @@ def main():
             }
         )
 
-    with open(os.path.join(args.out, "key.json"), "w") as handle:
-        json.dump(key, handle, indent=1)
+    with open(key_path, "w") as handle:
+        json.dump({"seed": seed, "out": os.path.abspath(args.out), "pairs": key}, handle, indent=1)
+    # A key left behind by an older run would still answer the new round.
+    legacy = os.path.join(args.out, "key.json")
+    if os.path.exists(legacy):
+        os.remove(legacy)
     print(f"{len(pairs)} pairs -> {args.out}")
+    print(f"key (seed {seed}) -> {key_path}")
     return 0
 
 

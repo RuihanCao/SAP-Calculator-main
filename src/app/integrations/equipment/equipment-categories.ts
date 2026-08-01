@@ -123,11 +123,23 @@ export const AILMENT_CATEGORIES: { [key: string]: string[] } = {
   ],
 };
 
+/**
+ * Names are canonicalised on both sides of the comparison.
+ *
+ * Callers feed this whatever a log line carried, and a board log's perk name
+ * comes out of an `alt` attribute, so it can arrive padded or with a line break
+ * folded into the middle of it. Matching the raw string would silently answer
+ * "not an ailment" for `" Tasty"`, which is the same 404 this function exists to
+ * stop.
+ */
+const canonicalEquipmentName = (name: string): string =>
+  name.trim().replace(/\s+/g, ' ').toLowerCase();
+
 const AILMENT_NAMES = new Set(
   Object.values(AILMENT_CATEGORIES)
     .flat()
     .filter(Boolean)
-    .map((name) => name.toLowerCase()),
+    .map(canonicalEquipmentName),
 );
 
 /**
@@ -141,5 +153,5 @@ const AILMENT_NAMES = new Set(
  * first bell to `Food/<name>.png` and a 404.
  */
 export function isAilmentEquipmentName(name?: string | null): boolean {
-  return name ? AILMENT_NAMES.has(name.toLowerCase()) : false;
+  return name ? AILMENT_NAMES.has(canonicalEquipmentName(name)) : false;
 }

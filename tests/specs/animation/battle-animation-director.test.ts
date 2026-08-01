@@ -20,7 +20,6 @@ import {
   INTRO_BEATS,
   JUMP_ARC_LIFT,
   JUMP_CONTACT_LIFT,
-  OUTRO_BEATS,
   TimelineSampler,
   TrumpetCounterFlashCue,
   TrumpetTokenCue,
@@ -40,6 +39,7 @@ import {
   skip,
   parseSeedBoardMessage,
 } from '../../../src/app/ui/shell/simulation/battle-animation';
+import { isAilmentEquipmentName } from '../../../src/app/integrations/equipment/equipment-categories';
 import { listFixtureIds, loadFixture, readGolden } from '../../support/animation-event-fixtures';
 
 interface FixturePet {
@@ -1268,6 +1268,40 @@ describe('battle animation director', () => {
         '12:Otter',
       ]);
       expect(board?.player[0].health).toBe(10);
+    });
+
+    /**
+     * The perk name is the only thing the board log carries, and which art
+     * directory it resolves to depends entirely on the answer to "is this an
+     * ailment": `Ailments/Tasty.png` against `Food/Tasty.png`, one of which is
+     * a 404. That is the Tasty broken-image bug, so the seed board asks the
+     * catalogue rather than assuming.
+     */
+    it('marks a perk worn at the first bell as an ailment when it is one', () => {
+      const message =
+        'P1 <img src="c.png" class="log-pet-icon" alt="Pig">' +
+        '<img src="t.png" class="log-inline-icon" alt="Tasty">(4/10/0xp) | ' +
+        'O1 <img src="d.png" class="log-pet-icon" alt="Cow">' +
+        '<img src="m.png" class="log-inline-icon" alt="Melon">(3/4/0xp) ';
+      const board = parseSeedBoardMessage(message);
+      expect(board?.player[0].equipment).toBe('Tasty');
+      expect(board?.player[0].equipmentIsAilment).toBe(true);
+      expect(board?.opponent[0].equipment).toBe('Melon');
+      expect(board?.opponent[0].equipmentIsAilment).toBe(false);
+    });
+
+    /**
+     * The name comes out of an `alt` attribute, so it can arrive padded or with
+     * a folded line break in it. Comparing the raw string answered "not an
+     * ailment" and sent it back to the food directory.
+     */
+    it('reads an ailment name that arrives padded or with a folded break', () => {
+      expect(isAilmentEquipmentName('  Tasty ')).toBe(true);
+      expect(isAilmentEquipmentName('\n Weak\t')).toBe(true);
+      expect(isAilmentEquipmentName('tasty')).toBe(true);
+      expect(isAilmentEquipmentName('Melon')).toBe(false);
+      expect(isAilmentEquipmentName('   ')).toBe(false);
+      expect(isAilmentEquipmentName(null)).toBe(false);
     });
   });
 });

@@ -107,7 +107,7 @@ STAGE_STATE_JS = """() => {
 
 async def run_board(pw, board, base_url, shot_dir, seconds):
     label = board["id"]
-    problems = {"console": [], "http": [], "broken": {}}
+    problems = {"console": [], "http": [], "broken": {}, "drive": []}
     browser = await pw.chromium.launch(args=LAUNCH_ARGS)
     context = await browser.new_context(viewport={"width": 1280, "height": 800})
     page = await context.new_page()
@@ -144,13 +144,22 @@ async def run_board(pw, board, base_url, shot_dir, seconds):
         await page.dispatch_event(
             "app-battle-animation-stage [data-anim-control='play']", "click"
         )
+        # A board that never reaches the end of its own timeline inside the
+        # budget is a failure, not a pass. Letting this loop simply run out was
+        # the gate's own blind spot: a stage that hung, or one that never
+        # published a timeline at all, produced a clean board with no finding
+        # against it, which is exactly the shape of the bug the gate exists to
+        # catch.
         deadline = asyncio.get_event_loop().time() + seconds
         pressed_fast = False
+        finished = False
+        published = False
         while asyncio.get_event_loop().time() < deadline:
             await page.wait_for_timeout(300)
             await scan()
             state = await page.evaluate(STAGE_STATE_JS)
             if state and state["duration"] > 0:
+                published = True
                 # Halfway through, exercise the bar the way a person would.
                 if not pressed_fast and state["time"] > state["duration"] * 0.4:
                     pressed_fast = True
@@ -165,7 +174,20 @@ async def run_board(pw, board, base_url, shot_dir, seconds):
                     )
                     await scan()
                 if state["done"]:
+                    finished = True
                     break
+        if not published:
+            problems["drive"].append(
+                f"the stage never published a timeline within {seconds:.0f}s "
+                "(no data-anim-duration on the stage root)"
+            )
+        elif not finished:
+            last = await page.evaluate(STAGE_STATE_JS) or {}
+            problems["drive"].append(
+                f"playback never reached the end within {seconds:.0f}s "
+                f"(stopped at {last.get('time', 0) / 1000:.1f}s of "
+                f"{last.get('duration', 0) / 1000:.1f}s)"
+            )
         await page.wait_for_timeout(600)
         await scan()
         if shot_dir:
@@ -216,9 +238,13 @@ async def main_async(args):
     print("=" * 68)
     for label, problems in results:
         broken = list(problems["broken"].values())
-        bad = bool(broken or problems["console"] or problems["http"])
+        bad = bool(
+            broken or problems["console"] or problems["http"] or problems["drive"]
+        )
         failed += 1 if bad else 0
         print(f"{'FAIL' if bad else 'PASS'}  {label}")
+        for line in dict.fromkeys(problems["drive"]):
+            print(f"      {line}")
         for item in broken:
             print(f"      broken image  {item['alt']!r} [{item['cls']}] -> {item['src']}")
         for line in dict.fromkeys(problems["console"]):

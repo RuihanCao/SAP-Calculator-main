@@ -44,7 +44,14 @@ HOLDER_JS = """() => {
   // a critic reads as "this one is the reproduction" before looking at
   // anything else.
   const cmp = window.ng && window.ng.getComponent ? window.ng.getComponent(stage) : null;
-  if (cmp) { cmp.fullscreen = true; }
+  if (!cmp) {
+    // A production build strips window.ng, and without it neither the
+    // fullscreen switch below nor the seek in run() does anything. Both used to
+    // fail quietly and write stills of the inline pane parked at zero, which
+    // read as a rendering problem rather than as a harness one.
+    throw new Error('window.ng.getComponent is unavailable: run against a development build');
+  }
+  cmp.fullscreen = true;
   const holder = document.createElement('div');
   holder.id = 'anim01-holder';
   holder.style.cssText =
@@ -125,24 +132,35 @@ async def run(board, seconds, outdir, base_url):
         await page.wait_for_selector("text=Simulate", timeout=60000)
         await page.click("text=Simulate")
         await page.wait_for_selector("app-battle-animation-stage .anim-stage", timeout=60000)
-        await page.evaluate(HOLDER_JS)
+        try:
+            await page.evaluate(HOLDER_JS)
+        except Exception as exc:  # noqa: BLE001
+            await browser.close()
+            raise SystemExit(f"cannot prepare the stage for shooting: {exc}")
         await page.wait_for_timeout(500)
         cdp = await context.new_cdp_session(page)
 
         # Seek rather than play: the stage exposes its clock, so a still can be
         # taken at exactly the second a reference still was taken at.
         for at in seconds:
-            await page.evaluate(
+            seeked = await page.evaluate(
                 """(ms) => {
                   const el = document.querySelector('app-battle-animation-stage');
                   const cmp = window.ng && window.ng.getComponent
                     ? window.ng.getComponent(el)
                     : null;
-                  if (cmp) { cmp.onScrub(ms); }
-                  return !!cmp;
+                  if (!cmp) { return null; }
+                  cmp.onScrub(ms);
+                  const stage = el.querySelector('.anim-stage');
+                  return Number(stage ? stage.dataset.animTime : -1);
                 }""",
                 int(at * 1000),
             )
+            if seeked is None:
+                raise SystemExit(
+                    "cannot reach the stage component to seek; every still would "
+                    "be the same frame. Run against a development build."
+                )
             await page.wait_for_timeout(320)
             await shoot(page, cdp, os.path.join(outdir, f"o_{int(at * 1000):07d}.png"))
         await browser.close()

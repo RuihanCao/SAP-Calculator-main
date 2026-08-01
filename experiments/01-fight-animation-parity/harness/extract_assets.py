@@ -264,7 +264,21 @@ def main():
         return 0
 
     os.makedirs(args.out, exist_ok=True)
+    # The manifest is merged, not rewritten. Cutting one asset by name used to
+    # leave the file holding only that asset, which quietly stripped the
+    # provenance off the other ten while the art itself stayed on disk.
+    manifest_path = os.path.join(args.out, "manifest.json")
     manifest = {}
+    if os.path.exists(manifest_path):
+        try:
+            with open(manifest_path) as handle:
+                manifest = json.load(handle)
+        except (OSError, ValueError) as exc:
+            raise SystemExit(f"manifest at {manifest_path} is unreadable: {exc}")
+    # Entries for assets that are no longer produced would be provenance for art
+    # that is not there, so they go.
+    for stale in set(manifest) - set(ASSETS):
+        del manifest[stale]
     pieces = []
     for name, (still, box, options) in wanted.items():
         piece = cut(name, still, box, options)
@@ -280,8 +294,11 @@ def main():
         pieces.append((name, piece))
         print(f"{name:14s} {piece.size}  <- {still} css{box}")
 
-    with open(os.path.join(args.out, "manifest.json"), "w") as handle:
+    with open(manifest_path, "w") as handle:
         json.dump(manifest, handle, indent=1, sort_keys=True)
+    missing = sorted(set(ASSETS) - set(manifest))
+    if missing:
+        print(f"manifest has no provenance for: {', '.join(missing)}")
 
     if args.contact:
         pad = 12

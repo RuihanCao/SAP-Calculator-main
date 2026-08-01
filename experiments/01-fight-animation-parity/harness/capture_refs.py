@@ -94,6 +94,28 @@ def to_battle():
     return click("arena", wait=1200)
 
 
+def await_interception(timeout=90):
+    """Wait for the client to ask for the battle, and give up loudly.
+
+    Every mode below re-enters the arena and then waits for the driver to report
+    that it fulfilled `/api/battle/get`. Falling through that wait without a hit
+    means the client is showing something else entirely, and the stills that
+    follow are of that something else: the run that produced the `f11step` set
+    walked off the end screen and shot sixteen frames of an "abandon game?"
+    dialog. Better to stop than to write junk that looks like a capture.
+    """
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        time.sleep(2)
+        if ctl("status").get("hits"):
+            return True
+    raise SystemExit(
+        f"no battle interception within {timeout}s: the client is not on the "
+        "battle screen, so nothing worth cutting is being drawn. Take a shot "
+        "with ctl.py and look before re-running."
+    )
+
+
 def run_stepped(fixture, steps, outdir, enter):
     """One still per beat, with the replay held still between them.
 
@@ -112,11 +134,7 @@ def run_stepped(fixture, steps, outdir, enter):
         print(" arm:", ctl("arm", path=payload), flush=True)
     if enter:
         print(" enter:", to_battle(), flush=True)
-        deadline = time.time() + 90
-        while time.time() < deadline:
-            time.sleep(2)
-            if ctl("status").get("hits"):
-                break
+        await_interception()
         # Take the replay off autoplay while the entrance is still running: the
         # bar is live from about a second in, and waiting for the entrance to
         # finish lets a short battle run to the end screen, where these same
@@ -146,11 +164,7 @@ def run_pause_step(fixture, steps, outdir, enter, beat=0.35):
         print(" arm:", ctl("arm", path=payload), flush=True)
     if enter:
         print(" enter:", to_battle(), flush=True)
-        deadline = time.time() + 90
-        while time.time() < deadline:
-            time.sleep(2)
-            if ctl("status").get("hits"):
-                break
+        await_interception()
         time.sleep(1.2)
     press("pause", wait=500)
     for index in range(steps):
@@ -170,11 +184,7 @@ def run(fixture, seconds, interval, outdir, enter):
         print(" arm:", ctl("arm", path=payload), flush=True)
     if enter:
         print(" enter:", to_battle(), flush=True)
-        deadline = time.time() + 90
-        while time.time() < deadline:
-            time.sleep(2)
-            if ctl("status").get("hits"):
-                break
+        await_interception()
 
     t0 = time.time()
     index = 0
