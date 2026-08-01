@@ -496,3 +496,31 @@ f01 leaves the Swan alone, f02 leaves Pig 3/10 and Crocodile 8/1, f03 leaves Pig
 
 What was not done here: a full event-by-event alignment of the real animation against the fork sim log for all ten fixtures.
 That is W3's job and it needs the W1 event stream to compare against.
+
+## App integration overrides (Ruihan 2026-07-31)
+
+These are the places where the calculator's animation deliberately does not copy the real client, decided by Ruihan after using the live app.
+Everything not listed here still follows the reference frames.
+
+**The field is the game's own art, and it may be any biome.**
+The stage stands the boards on `assets/art/Public/Public/Background/FieldBattle.png`, which is the biome the reference replay clips are recorded on.
+It was identified by measuring, not by eye: in f01 t=29.36 the dirt lane runs from 0.556 to 0.707 of the play area's height, and that sheet is the one whose sky, blue mountains, dark forest band, lane and grass land in that order and proportion.
+The sheet is drawn at 123.8% of the field's height anchored at the top, and fitting the whole sheet against that reference frame over the columns no pet or panel covers independently returns 124.0%.
+A calculator run is not a shop run, so there is no biome to inherit, and a `Random field` box beside the button draws any of the pack's 40 battle sheets instead.
+The bands of the other 39 sheets are not all in the same places, so only the default is measured against the reference.
+
+**Both boards face each other, and the rule is the board and never the species.**
+The pack draws every pet looking left, so the near board is mirrored and the far board is left as drawn.
+Two clips settle it, because the same three pets swap sides between them: in f01 t=29.36 the cow, otter and worm are the opponent and are drawn as the art has them, and in outro-defeat t=39.07 the same three are the player and are mirrored.
+The flip is bound onto each pet's own image, so a pet standing still, lunging, jumping, flying off as a corpse and arriving as a summon all inherit it.
+
+**One press is the whole entry.**
+The `Battle animation` button hands the whole viewport to the stage, which starts itself at the first frame of the entrance.
+There is no scrubber, no skip-intro and no play button on the way in; the game's own control bar still arrives during the entrance the way the reference has it.
+EXIT on the end screen, or Escape, closes the fullscreen and puts the calculator back.
+
+**The end screen carries the outcome and the way out, not a shop run's score.**
+The real screen also flies in a row of ten trophies and a row of five hearts and then animates one of them.
+Those are a run's wins and lives, which a calculator does not have, so they are gone, and with them the large yellow face, whose only faithful form would be that screen's own art.
+What is left is the reference's own dimming of the field in place, the `VICTORY` or `DEFEAT` caption, and REWIND and EXIT.
+The dimming is measured: the real screen leaves the field at about 23% of the light it had during the battle, and neutral rather than blue.

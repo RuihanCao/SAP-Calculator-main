@@ -2,6 +2,9 @@
 
 ## Current
 
+W3 round 4 applied on feature/anim01-w2-director: Ruihan rejected four things after using the live app, and all four are in, the field is the game's own `FieldBattle` art with a random field option beside the button, both boards face each other the way the reference frames have them, one press opens a fullscreen animation that plays itself from the entrance, and the end screen is the outcome with REWIND and EXIT and no shop-run score.
+W3 round 4 also fixed two things the reference frames showed while checking those four: the entrance shutter closed out of the middle instead of squeezing the scene into a band from the edges, and the end screen kept 32% of the field's light where the real one keeps 23%.
+
 W3 round 3 applied on feature/anim01-w2-director: the critic scored round 2 at 13/16, and all sixteen fixes it asked for are in, headed by the level-up reaching the pet's own stat pills, damage numerals riding with the pet rather than with its slot, and REWIND becoming a real step back.
 
 W3 round 2 applied on feature/anim01-w2-director: the parity critic scored round 1 at 2/16, and the seventeen fixes it asked for are in, headed by an outcome driven clash cadence that makes the per-hit popup merge actually fire.

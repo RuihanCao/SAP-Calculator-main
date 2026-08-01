@@ -61,3 +61,7 @@ W2 additionally implements the full control set (play, stop, skip, rewind, speed
 Prose-parsing replacement rationale (checked on a question from Ruihan): the text parsing exists because the worker boundary strips class instances, not because of gh-pages deployment; plain-data events cross the same boundary fine.
 The old text-parsing path stays behind a fallback flag until W3 parity passes, then gets deleted.
 Scope split confirmed: this repo does battle animation only; shop animation is a separate play-web (SAP-PPO) line.
+
+## Amendment 2026-07-31 (Ruihan review of the live app, round 4)
+
+The animation opens fullscreen from one press and plays itself, it stands on the pack's own background art with a random field option, both boards face each other as the reference frames have them, and the end screen drops the trophy and heart rows for REWIND and EXIT, all recorded in CHECKLIST.md under App integration overrides.
