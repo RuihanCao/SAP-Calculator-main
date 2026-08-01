@@ -899,7 +899,12 @@ $cloud-svg: "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/20
 }
 
 .anim-outro-caption {
-  font-size: 1.45em;
+  /*
+   * Sized off the reference caption, which stands 33px tall and runs 179px
+   * wide on a 720 play area (out/outro_victory_end.jpg, scaled from its 40 by
+   * 217 at 960 by 600). At 1.45 ours came out 25 by 138.
+   */
+  font-size: 1.9em;
   font-weight: 700;
   line-height: 1;
   letter-spacing: 0.05em;

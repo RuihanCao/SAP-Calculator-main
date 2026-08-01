@@ -525,9 +525,13 @@ describe('Round 5, measured against the reference frames', () => {
     it('sets the caption where the reference sets it', () => {
       const face = styles.slice(styles.indexOf('.anim-outro-face {'));
       expect(face).toMatch(/top:\s*66\.7%/);
-      const caption = styles.slice(styles.indexOf('.anim-outro-caption {'));
+      const from = styles.indexOf('.anim-outro-caption {');
+      const caption = styles.slice(from, styles.indexOf('}', from));
       expect(caption).toMatch(/letter-spacing:\s*0\.05em/);
       expect(caption).toMatch(/@include keyline\(/);
+      // The reference caption stands 33px tall and runs 179px wide on a 720
+      // play area; at the old 1.45 scale units ours came out 25 by 138.
+      expect(caption).toMatch(/font-size:\s*1\.9em/);
     });
   });
 
