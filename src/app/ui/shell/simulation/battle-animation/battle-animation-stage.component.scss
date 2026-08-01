@@ -490,6 +490,25 @@ $cloud-svg: "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/20
 }
 
 /*
+ * The contact whiteout, checklist 1. `brightness(0) invert(1)` keeps the
+ * sprite's alpha and throws its colour away, which is a flat white silhouette
+ * with the art's own hard edge, exactly what the reference contact frame
+ * carries (clips/f01-plain-trades/f_00882_0031156.jpg, where the pig and the
+ * otter are both painted out to white with their red lines still on them).
+ */
+.anim-pet-whiteout {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 4.7em;
+  height: 4.7em;
+  object-fit: contain;
+  margin: -2.35em 0 0 -2.35em;
+  pointer-events: none;
+  filter: brightness(0) invert(1);
+}
+
+/*
  * Facing lives in facing.ts and is bound onto the pet's own image, so the one
  * rule covers a pet standing still, lunging, jumping, flying off as a corpse
  * and arriving as a summon. The measurements it is derived from are cited
@@ -777,19 +796,29 @@ $cloud-svg: "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/20
   background: radial-gradient(circle, #fff 0 36%, rgb(185 210 246 / 70%) 60%, rgb(185 210 246 / 0%) 74%);
 }
 
+/*
+ * The bloom that hangs between the two combatants at a contact frame.
+ *
+ * It is not the whole of the flash: the sprites themselves are painted out in
+ * white too (.anim-pet-whiteout). What the bloom has to do is close the gap
+ * between them, which on the reference contact frame is white right across
+ * (clips/f01-plain-trades/f_00882_0031156.jpg). Contact leaves the two pets
+ * 12% of the play area apart, and the bloom is sized and its solid core pushed
+ * out to cover that.
+ */
 .anim-flash {
   position: absolute;
   z-index: 18;
-  width: 9em;
-  height: 9em;
+  width: 11em;
+  height: 11em;
   border-radius: 50%;
   background: radial-gradient(
     circle,
     #fff 0%,
-    #fff 22%,
-    rgb(255 255 255 / 70%) 40%,
-    rgb(255 250 220 / 35%) 56%,
-    rgb(255 255 255 / 0%) 72%
+    #fff 30%,
+    rgb(255 255 255 / 70%) 48%,
+    rgb(255 250 220 / 35%) 62%,
+    rgb(255 255 255 / 0%) 78%
   );
 }
 

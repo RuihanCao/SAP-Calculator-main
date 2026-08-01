@@ -8,6 +8,7 @@ import {
   OPPONENT_BOARD_FACING,
   PLAYER_BOARD_FACING,
   SPRITE_SHEET_FACING,
+  OUTRO_BEATS,
   TimelineSampler,
   backgroundUrl,
   boardFacing,
@@ -101,15 +102,16 @@ describe('App integration overrides, round 4', () => {
     /**
      * The flip is bound onto the pet's own image, so a pet standing still, one
      * lunging, one jumping and one flying off as a corpse all inherit it. The
-     * two places a pet's art is drawn both have to carry the binding, or one
-     * of them faces the wrong way.
+     * three places a pet's art is drawn all have to carry the binding, or one
+     * of them faces the wrong way: the sprite, the white copy of it a contact
+     * frame lays over the top, and the corpse.
      */
     it('binds the facing on every drawing of a pet', () => {
       const bindings = stageTemplate.match(
         /\[style\.transform\]="iconTransform\([^"]+\)"/g,
       );
       expect(bindings).not.toBeNull();
-      expect(bindings?.length).toBe(2);
+      expect(bindings?.length).toBe(3);
       expect(stageTemplate).toContain('iconTransform(pet.pet.side)');
       expect(stageTemplate).toContain('iconTransform(corpse.side)');
       // And the flip is not also hard-coded in the stylesheet, which would
@@ -521,6 +523,50 @@ describe('Round 5, measured against the reference frames', () => {
       expect(lane[0]).toBeGreaterThan(lane[2]);
     });
 
+    /**
+     * How long the veil takes, item 5. Sampled on the sky band of
+     * clips/outro-victory, which nothing on the end screen covers, the
+     * reference leaves 157 at t=53.50 s and settles at 16 by t=54.58 s, and
+     * crosses 90% to 10% of that fall between f_01907_0053613 and
+     * f_01926_0054246, so 0.633 s. Round 5's linear 0.7 s crossed the same two
+     * marks in 0.568 s, a visibly quicker screen. A squared ease-out over 1.0 s
+     * crosses them in 0.633 s and takes the same second the reference does end
+     * to end.
+     */
+    it('brings the veil down over a second, quickest at the top of the fall', () => {
+      expect(OUTRO_BEATS.dimFadeMs).toBe(1000);
+      const timeline = buildBattleTimeline(readGolden('f01-plain-trades'), {
+        initialBoard: seedFor('f01-plain-trades'),
+      });
+      const sampler = new TimelineSampler(timeline);
+      const dimAt = (ms: number): number =>
+        sampler.frameAt(timeline.battleEndMs + ms).outro?.dim ?? 0;
+      expect(dimAt(OUTRO_BEATS.dimMs)).toBe(0);
+      expect(dimAt(OUTRO_BEATS.dimMs + OUTRO_BEATS.dimFadeMs)).toBe(1);
+      let tenth: number | null = null;
+      let ninth: number | null = null;
+      for (let ms = 0; ms <= 3000; ms += 1) {
+        const dim = dimAt(ms);
+        if (tenth === null && dim >= 0.1) {
+          tenth = ms;
+        }
+        if (ninth === null && dim >= 0.9) {
+          ninth = ms;
+        }
+      }
+      expect(tenth).not.toBeNull();
+      expect(ninth).not.toBeNull();
+      const crossing = (ninth as number) - (tenth as number);
+      expect(crossing).toBeGreaterThanOrEqual(615);
+      expect(crossing).toBeLessThanOrEqual(650);
+      // eased, not a straight line: half way through the fade it is already
+      // three quarters down, which is what the reference sampling shows.
+      expect(dimAt(OUTRO_BEATS.dimMs + OUTRO_BEATS.dimFadeMs / 2)).toBeCloseTo(
+        0.75,
+        2,
+      );
+    });
+
     /** Item 17: the caption's centre is at 0.667 of the play area. */
     it('sets the caption where the reference sets it', () => {
       const face = styles.slice(styles.indexOf('.anim-outro-face {'));
@@ -584,6 +630,35 @@ describe('Round 5, measured against the reference frames', () => {
       const corpse = ruleAt('.anim-corpse .anim-pet-icon {', true);
       expect((corpse.match(/drop-shadow/g) ?? []).length).toBe(4);
       expect(corpse).toContain('brightness(1.6)');
+    });
+  });
+
+  describe('the contact flash, item 9', () => {
+    /**
+     * The reference contact frame is not a glow floating between two pets that
+     * keep their colour: both sprites are painted out in flat white along
+     * their own silhouettes, with the red wind-up line still on them
+     * (clips/f01-plain-trades/f_00882_0031156.jpg). `brightness(0) invert(1)`
+     * over a copy of the sprite is that, and it is the art's own alpha, so the
+     * edge is as hard as the art's. A gradient or a blur here would be the
+     * soft glow again.
+     */
+    it('paints the sprite out in white rather than only glowing between them', () => {
+      const from = styles.indexOf('.anim-pet-whiteout {');
+      expect(from).toBeGreaterThan(-1);
+      const rule = styles.slice(from, styles.indexOf('}', from));
+      expect(rule).toContain('brightness(0) invert(1)');
+      expect(rule).not.toContain('radial-gradient');
+      expect(rule).not.toContain('blur(');
+      expect(rule).toMatch(/width:\s*4\.7em/);
+      expect(stageTemplate).toContain('class="anim-pet-whiteout"');
+      expect(stageTemplate).toContain('[style.opacity]="pet.impactFlash"');
+      // and the bloom between them still closes the 12% gap contact leaves
+      const bloom = styles.slice(
+        styles.indexOf('.anim-flash {'),
+        styles.indexOf('}', styles.indexOf('.anim-flash {')),
+      );
+      expect(bloom).toMatch(/width:\s*11em/);
     });
   });
 

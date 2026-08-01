@@ -16,8 +16,11 @@ import {
   ProjectileCue,
   SlideCue,
   StatPillCue,
+  CLASH_WHITEOUT_MS,
   INTRO_BEATS,
+  JUMP_ARC_LIFT,
   JUMP_CONTACT_LIFT,
+  OUTRO_BEATS,
   TimelineSampler,
   TrumpetCounterFlashCue,
   TrumpetTokenCue,
@@ -191,6 +194,51 @@ describe('battle animation director', () => {
       expect(frame.pets.filter((pet) => pet.outline === 'windup')).toHaveLength(2);
     });
 
+    /**
+     * The contact frame itself, checklist 1. The reference does not only put a
+     * glow between the two pets: it paints the two sprites out in white along
+     * their own silhouettes. Measured on the contact band of
+     * clips/f01-plain-trades, the near-white pixel count runs 85 through the
+     * wind-up (f_00880_0031086), 6985 on the contact frame (f_00882_0031156),
+     * 1855 on the next one (f_00883_0031228) and 130 by f_00884_0031277.
+     */
+    it('paints both combatants out in white on the contact frame', () => {
+      const timeline = timelineFor('f01-plain-trades');
+      const clash = cuesOfKind<ClashCue>(timeline, 'clash')[1];
+      const sampler = new TimelineSampler(timeline);
+      const ids = clash.hits.map((hit) => hit.sourceId).sort();
+      expect(ids).toHaveLength(2);
+      const flashOf = (frame: ReturnType<TimelineSampler['frameAt']>, id: number) =>
+        frame.pets.find((pet) => pet.pet.id === id)?.impactFlash;
+
+      // nothing before contact, however deep into the wind-up
+      const windup = sampler.frameAt(clash.contactMs - 40);
+      for (const id of ids) {
+        expect(flashOf(windup, id)).toBe(0);
+      }
+
+      // full white on the contact frame, on both of them and on nobody else
+      const contact = sampler.frameAt(clash.contactMs);
+      for (const id of ids) {
+        expect(flashOf(contact, id)).toBe(1);
+      }
+      expect(
+        contact.pets
+          .filter((pet) => pet.impactFlash > 0)
+          .map((pet) => pet.pet.id)
+          .sort(),
+      ).toEqual(ids);
+
+      // it fades rather than cutting, and it is over inside two frames
+      const half = sampler.frameAt(clash.contactMs + CLASH_WHITEOUT_MS / 2);
+      for (const id of ids) {
+        expect(flashOf(half, id)).toBeCloseTo(0.5, 2);
+      }
+      expect(CLASH_WHITEOUT_MS).toBeLessThanOrEqual(140);
+      const done = sampler.frameAt(clash.contactMs + CLASH_WHITEOUT_MS);
+      expect(done.pets.every((pet) => pet.impactFlash === 0)).toBe(true);
+    });
+
     it('sends only the attacker on a jump, to the target slot and back', () => {
       const timeline = timelineFor('f11-jump-african-wild-dog');
       const jump = cuesOfKind<ClashCue>(timeline, 'clash').find((cue) => cue.jump);
@@ -203,7 +251,18 @@ describe('battle animation director', () => {
       const apex = sampler.frameAt((cue.startMs + cue.contactMs) / 2);
       const flyer = apex.pets.find((pet) => pet.pet.id === cue.jumperId);
       const target = apex.pets.find((pet) => pet.pet.id === cue.jumpTargetId);
-      expect(flyer?.lift).toBeGreaterThan(0.8);
+      /**
+       * The height of the arc, read off the apex frame rather than doubled out
+       * of the contact one. Tracking the attacker's green outline through
+       * clips/f11-jump-african-wild-dog: standing at 0.599 of the play area
+       * (f_00830_0029371), apex 0.250 (f_00849_0029941), hitting from 0.465
+       * (f_00862_0030453). So the arc rises 0.349 of the play area and the
+       * contact hangs 0.134 up it, which is 1.34 and 0.515 of the 0.26 a
+       * move's arc rises, and the contact is two fifths of the arc, not half.
+       */
+      expect(flyer?.lift).toBeCloseTo(JUMP_ARC_LIFT, 5);
+      expect(JUMP_ARC_LIFT).toBeCloseTo(1.34, 5);
+      expect(JUMP_CONTACT_LIFT / JUMP_ARC_LIFT).toBeCloseTo(0.384, 2);
       // The target never leaves its slot, checklist 14.
       expect(target?.lift).toBe(0);
       expect(target?.lean).toBe(0);
@@ -237,6 +296,17 @@ describe('battle animation director', () => {
       // The flash is at the target's slot and both numbers are in that frame.
       expect(contact.flash?.aSlot).toBe(contact.flash?.bSlot);
       expect(contact.flash?.aSlot).toBe(landed?.jumpTargetSlot);
+      // A jump contact whites the pair out the way a trade's does: on
+      // clips/f11-jump-african-wild-dog the band round the target's slot goes
+      // from 5.7% near-white to 30.9% on f_00856_0030173 and back under 10%
+      // two frames later.
+      const struck = sampler.frameAt(cue.contactMs);
+      expect(
+        struck.pets
+          .filter((pet) => pet.impactFlash > 0)
+          .map((pet) => pet.pet.id)
+          .sort(),
+      ).toEqual([cue.jumperId, cue.jumpTargetId].sort());
       expect(contact.popups.filter((popup) => popup.kind === 'damage')).toHaveLength(2);
 
       const back = sampler.frameAt((cue.returnStartMs + cue.endMs) / 2);

@@ -54,6 +54,11 @@ export interface PetView extends PetAnchor {
   xpBurst: number;
   leveledUp: boolean;
   fainted: boolean;
+  /**
+   * 0..1 of the hard white contact flash painted over the sprite itself,
+   * along its own silhouette, at a clash's contact frame.
+   */
+  impactFlash: number;
 }
 
 export interface CorpseView {
@@ -215,23 +220,80 @@ const progressOf = (cue: AnimationCue, timeMs: number): number => {
 const isActive = (cue: AnimationCue, timeMs: number): boolean =>
   timeMs >= cue.startMs && timeMs < cue.endMs;
 
+/** Paint the pets a contact frame lands on out in white, then let it fade. */
+const whiteout = (
+  into: Map<number, number>,
+  timeMs: number,
+  contactMs: number,
+  petIds: readonly number[],
+): void => {
+  if (timeMs < contactMs || timeMs >= contactMs + CLASH_WHITEOUT_MS) {
+    return;
+  }
+  const value = 1 - (timeMs - contactMs) / CLASH_WHITEOUT_MS;
+  for (const petId of petIds) {
+    into.set(petId, Math.max(into.get(petId) ?? 0, value));
+  }
+};
+
 const easeOut = (p: number): number => 1 - Math.pow(1 - p, 3);
+/**
+ * The veil's own curve: quickest at the top of the fall, with a long tail.
+ *
+ * Read off clips/outro-victory, sampling the sky band the caption and the
+ * buttons never cover. It leaves 157 at t=53.50 s and settles at 16 by
+ * t=54.58 s, and it is 55% of the way down by t=53.89, which a straight line
+ * would not be. Squared ease-out through those points puts the 90% to 10%
+ * crossing at 0.633 of the fade, the same 0.633 s the reference takes.
+ */
+const easeOutQuad = (p: number): number => 1 - (1 - p) * (1 - p);
 const easeInOut = (p: number): number =>
   p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
 /** Height of an arc at progress p, 0 at both ends and 1 in the middle. */
 const arc = (p: number): number => 4 * p * (1 - p);
 
 /**
+ * How high a jump arcs, as a multiple of the arc a move flies.
+ *
+ * The attacker's own green outline tracks it: the outline is a translation of
+ * the sprite, so the rise between two frames is free of whatever the art does
+ * inside its card. Through clips/f11-jump-african-wild-dog the African Wild
+ * Dog stands with that outline centred at 0.599 of the play area
+ * (f_00830_0029371), tops out at 0.250 (f_00849_0029941) and hangs at 0.465
+ * while it hits (f_00862_0030453). So the arc rises 0.349 of the play area and
+ * the contact hangs 0.134 up it. A move's arc is LIFT_Y = 0.26 of the play
+ * area, which makes a jump 1.34 of one and its contact 0.515 of one.
+ *
+ * Round 5 had only the contact frame and took it for half the arc. The apex
+ * frame says the contact is closer to two fifths of it, and that the arc is a
+ * third taller than a move's.
+ */
+export const JUMP_ARC_LIFT = 1.34;
+
+/**
  * How high a jump attacker hangs while it is hitting, checklist 14.
  *
  * It does not land. On the reference contact frame (f11 t=30.45,
  * clips/f11-jump-african-wild-dog/f_00862_0030453.jpg) the African Wild Dog is
- * over the otter with its art centred at 0.472 of the play area, against the
- * 0.602 a standing pet sits at, which is half the arc's full height, and the
- * target stays visible under it rather than being occluded by a pet planted in
- * its slot.
+ * over the otter with its outline centred at 0.465 of the play area, against
+ * the 0.599 a standing pet sits at, and the target stays visible under it
+ * rather than being occluded by a pet planted in its slot.
  */
-export const JUMP_CONTACT_LIFT = 0.5;
+export const JUMP_CONTACT_LIFT = 0.515;
+
+/**
+ * How long a combatant is painted out in white at a contact frame.
+ *
+ * The reference flashes the two sprites themselves, hard edged along their own
+ * silhouettes, and not only the soft bloom that hangs between them. In the
+ * contact band of clips/f01-plain-trades the near-white pixel count sits at 85
+ * through the wind-up (f_00880_0031086), goes to 6985 on the contact frame
+ * (f_00882_0031156), is still 1855 on the next one (f_00883_0031228) and is
+ * back to 130 by f_00884_0031277. A jump contact does the same at the target's
+ * slot: 5.7% of that band to 30.9% on f_00856_0030173 of
+ * clips/f11-jump-african-wild-dog, back under 10% two frames later.
+ */
+export const CLASH_WHITEOUT_MS = 130;
 
 const rampAt = (timeMs: number, startMs: number, spanMs: number): number =>
   clamp01((timeMs - startMs) / Math.max(1, spanMs));
@@ -348,6 +410,7 @@ export class TimelineSampler {
     const sourceOutlines = new Set<number>();
     const hurtOutlines = new Set<number>();
     const windupOutlines = new Set<number>();
+    const whiteoutByPet = new Map<number, number>();
     const revealByPet = new Map<number, number>();
     const fastIconByPet = new Map<number, AnimationPayloadKind | null>();
     const equipmentBreaking = new Set<number>();
@@ -627,7 +690,7 @@ export class TimelineSampler {
         if (timeMs < contact) {
           const p = rampAt(timeMs, clash.startMs, contact - clash.startMs);
           travel = easeInOut(p);
-          lift = arc(p);
+          lift = arc(p) * JUMP_ARC_LIFT;
         } else if (timeMs < clash.returnStartMs) {
           travel = 1;
           lift = JUMP_CONTACT_LIFT;
@@ -640,9 +703,13 @@ export class TimelineSampler {
           travel = 1 - easeInOut(p);
           // The way home leaves from the height it was hanging at, so there is
           // no drop to the ground between the hit and the jump back.
-          lift = Math.max(arc(p), JUMP_CONTACT_LIFT * (1 - p));
+          lift = Math.max(arc(p) * JUMP_ARC_LIFT, JUMP_CONTACT_LIFT * (1 - p));
         }
         jumpByPet.set(clash.jumperId, { travel, lift, targetSlot, targetSide });
+        whiteout(whiteoutByPet, timeMs, contact, [
+          clash.jumperId,
+          clash.jumpTargetId,
+        ]);
         const flashProgress = rampAt(timeMs, contact, 220);
         if (timeMs >= contact && flashProgress < 1) {
           // The contact frame is at the target's slot, not at the midline.
@@ -673,6 +740,12 @@ export class TimelineSampler {
             };
           }
         }
+        whiteout(
+          whiteoutByPet,
+          timeMs,
+          contact,
+          clash.hits.map((hit) => hit.sourceId),
+        );
         for (const hit of clash.hits) {
           const attacker = hit.sourceId;
           const existing = leanByPet.get(attacker) ?? 0;
@@ -723,6 +796,7 @@ export class TimelineSampler {
         xpBurst: xpBurstByPet.get(pet.id) ?? 0,
         leveledUp: leveledUp.has(pet.id),
         fainted: pet.fainted,
+        impactFlash: whiteoutByPet.get(pet.id) ?? 0,
       });
     }
 
@@ -816,7 +890,7 @@ export const sampleOutro = (
   winner: AnimationSide | 'draw' | null,
 ): OutroView => ({
   winner,
-  dim: rampAt(elapsedMs, OUTRO_BEATS.dimMs, 700),
+  dim: easeOutQuad(rampAt(elapsedMs, OUTRO_BEATS.dimMs, OUTRO_BEATS.dimFadeMs)),
   face: rampAt(elapsedMs, OUTRO_BEATS.faceMs, 500),
 });
 

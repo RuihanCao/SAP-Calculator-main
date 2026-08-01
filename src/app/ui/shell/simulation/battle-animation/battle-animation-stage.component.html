@@ -182,6 +182,17 @@
         <div class="anim-pet-art">
           <img class="anim-pet-icon" *ngIf="petIcon(pet.pet.name) as icon" [src]="icon" [alt]="pet.pet.name"
             [style.transform]="iconTransform(pet.pet.side)" />
+          <!--
+            The contact whiteout, checklist 1: at the frame a clash lands the
+            reference paints both combatants out in white along their own
+            silhouettes, so a second copy of the sprite is laid over the first
+            and knocked to flat white. It is the sprite's own alpha, so the
+            edge is as hard as the art's, and the red line the icon under it
+            carries still shows around it.
+          -->
+          <img class="anim-pet-whiteout" *ngIf="pet.impactFlash > 0 && petIcon(pet.pet.name) as icon" [src]="icon"
+            [style.opacity]="pet.impactFlash" [style.transform]="iconTransform(pet.pet.side)" alt=""
+            aria-hidden="true" />
           <img class="anim-pet-equipment" *ngIf="equipmentIcon(pet.pet) as icon" [src]="icon"
             [class.anim-pet-equipment-break]="pet.equipmentBreaking"
             [class.anim-pet-equipment-gain]="pet.equipmentGaining" [alt]="pet.pet.equipment || ''" />

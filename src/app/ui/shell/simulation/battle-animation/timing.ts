@@ -248,6 +248,16 @@ export const CONTROLS_LEAD_MS = INTRO_BEATS.totalMs - INTRO_BEATS.controlsMs;
  */
 export const OUTRO_BEATS = {
   dimMs: 300,
+  /**
+   * How long the veil takes to come down.
+   *
+   * The reference end screen fades over about 1.1 s and is 90% to 10% of the
+   * way down in 0.633 s of that (clips/outro-victory, the sky band, from
+   * f_01907_0053613 to f_01926_0054246). A linear 0.7 s crossed the same two
+   * marks in 0.568 s and was visibly the quicker screen. A squared ease-out
+   * over 1.0 s crosses them in 0.633 s.
+   */
+  dimFadeMs: 1000,
   rowsMs: 2090,
   /**
    * The caption and the two buttons are the whole of this screen, so they do
