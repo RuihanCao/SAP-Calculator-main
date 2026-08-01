@@ -22,11 +22,17 @@ import {
 import { Log } from 'app/domain/interfaces/log.interface';
 import { getEquipmentIconPath, getPetIconPath } from 'app/runtime/asset-catalog';
 import {
+  DEFAULT_BATTLE_BACKGROUND,
+  backgroundUrl,
+  pickBackground,
+} from './backgrounds';
+import {
   AnimationBoardPet,
   AnimationBoardState,
   buildSeedBoard,
 } from './board-state';
 import { AnimationTimeline } from './cues';
+import { facingTransform } from './facing';
 import { buildBattleTimeline } from './director';
 import {
   CorpseView,
@@ -115,7 +121,13 @@ const FRONT_OFFSET_X = 8;
  * flash between them and do not overlap, checklist 1.
  */
 const CLASH_GAP_X = 6;
-const GROUND_Y = 66;
+/**
+ * Where a pet's card ends, which is the bottom of its stat pills. Measured on
+ * the reference frame f01 t=29.42: the pills' lower edge is at 0.737 of the
+ * play area, which stands the sprite on the dirt lane with its head over the
+ * bushes behind it, exactly as the real game composes the board.
+ */
+const GROUND_Y = 73;
 const LIFT_Y = 26;
 /**
  * The banner hangs below the control bar, which sits at 9.6% of the field.
@@ -153,9 +165,31 @@ export class BattleAnimationStageComponent
   @Input({ required: true }) events: ReadonlyArray<AnimationEvent> = [];
   @Input() logs: ReadonlyArray<Log> = [];
   @Input() speed = 1;
+  /**
+   * Play the moment the battle is loaded, from the first frame of the
+   * entrance. The fullscreen presentation is opened this way, so one press of
+   * the calculator's battle animation button is the whole entry: the shutter,
+   * the line-up, then the battle, with nothing to press in between.
+   */
   @Input() autoPlay = false;
+  /**
+   * The stage is the whole screen rather than a pane in the calculator. It
+   * drops the tools that are ours and not the game's, and it offers the way
+   * back out on the end screen.
+   */
+  @Input() fullscreen = false;
+  /**
+   * Fight on a biome drawn from the pack instead of the replay's own one. A
+   * calculator run is not a shop run, so there is no biome to inherit, and the
+   * roll is taken once per battle rather than once per frame.
+   */
+  @Input() randomBackground = false;
 
   @Output() legacyRequested = new EventEmitter<void>();
+  @Output() exitRequested = new EventEmitter<void>();
+
+  /** The biome this battle is fought on, rolled when the battle is built. */
+  backgroundName = DEFAULT_BATTLE_BACKGROUND;
 
   normalTimeline: AnimationTimeline | null = null;
   fastTimeline: AnimationTimeline | null = null;
@@ -300,16 +334,6 @@ export class BattleAnimationStageComponent
     this.syncLoop();
   }
 
-  /** Skips the entrance, which the real game also lets you cut through. */
-  skipIntro(): void {
-    const timeline = this.timeline;
-    if (!timeline || this.playback.timeMs >= timeline.introEndMs) {
-      return;
-    }
-    this.playback = seek(this.playback, timeline, timeline.introEndMs);
-    this.render();
-  }
-
   toggleFast(): void {
     const from = this.timeline;
     this.fast = !this.fast;
@@ -339,6 +363,28 @@ export class BattleAnimationStageComponent
 
   useLegacy(): void {
     this.legacyRequested.emit();
+  }
+
+  /** Leaves the fullscreen animation, which puts the calculator back. */
+  onExit(): void {
+    this.stopLoop();
+    this.exitRequested.emit();
+  }
+
+  // ---------------------------------------------------------------- paint --
+
+  /** The battlefield art this battle is fought on. */
+  get fieldBackground(): string {
+    return backgroundUrl(this.backgroundName);
+  }
+
+  /**
+   * Which way this board's art looks, applied on the pet's own image so that a
+   * pet standing still, lunging, jumping, flying off as a corpse and arriving
+   * as a summon all face the same way.
+   */
+  iconTransform(side: AnimationSide): string {
+    return facingTransform(side);
   }
 
   // ------------------------------------------------------------- geometry --
@@ -526,8 +572,6 @@ export class BattleAnimationStageComponent
   }
 
   readonly sides: AnimationSide[] = ['player', 'opponent'];
-  readonly trophySlots = Array.from({ length: 10 }, (_, index) => index);
-  readonly heartSlots = Array.from({ length: 5 }, (_, index) => index);
   /** Shards a consumed melon scatters around the pet, checklist 10. */
   readonly shardSlots = Array.from({ length: 6 }, (_, index) => index);
   readonly attackIcon = ATTACK_ICON;
@@ -555,6 +599,7 @@ export class BattleAnimationStageComponent
       this.cdr.markForCheck();
       return;
     }
+    this.backgroundName = pickBackground(this.randomBackground);
     const initialBoard = this.resolveSeedBoard(events);
     this.normalTimeline = buildBattleTimeline(events, { initialBoard, mode: 'normal' });
     this.fastTimeline = buildBattleTimeline(events, { initialBoard, mode: 'fast' });

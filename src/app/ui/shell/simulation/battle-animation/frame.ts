@@ -163,12 +163,17 @@ export interface IntroView {
   controls: number;
 }
 
+/**
+ * The end screen, checklist 18, as the calculator shows it. The real game's
+ * screen also flies in a trophy row and a heart row and then animates one of
+ * them, which is a shop run's score and has no meaning here, so this carries
+ * only the two things the tool's own end screen draws: the field dimming and
+ * the outcome caption with the way out under it.
+ */
 export interface OutroView {
   winner: AnimationSide | 'draw' | null;
   dim: number;
-  rows: number;
   face: number;
-  award: number;
 }
 
 export interface FrameView {
@@ -798,9 +803,7 @@ export const sampleOutro = (
 ): OutroView => ({
   winner,
   dim: rampAt(elapsedMs, OUTRO_BEATS.dimMs, 700),
-  rows: rampAt(elapsedMs, OUTRO_BEATS.rowsMs, 600),
   face: rampAt(elapsedMs, OUTRO_BEATS.faceMs, 500),
-  award: rampAt(elapsedMs, OUTRO_BEATS.awardMs, 700),
 });
 
 export const createTimelineSampler = (

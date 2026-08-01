@@ -12,6 +12,25 @@
   gap: 0.35rem;
 }
 
+/*
+ * The battlefield is the game's own Field battle art, the same sheet the
+ * reference clips are recorded on: sky and clouds, mountains, the forest band,
+ * the dirt lane the pets stand on, then grass.
+ *
+ * The framing is measured off the reference frame rather than guessed. In f01
+ * at t=29.36 (clips/f01-plain-trades/f_00829_0029361.jpg) the lane runs from
+ * 0.556 to 0.707 of the play area's height, and in the sheet itself the lane
+ * runs from 0.448 to 0.560 of the image. One scale carries both edges: 123.8%
+ * of the field's height, anchored at the top, which also puts the pets' feet
+ * on the lane where the real game puts them. Fitting the whole sheet against
+ * that reference frame instead, over the columns no pet or panel covers,
+ * independently returns a best scale of 124.0%, so the two readings agree to
+ * about one pixel. The width is stretched to the field because every band is
+ * horizontal.
+ *
+ * The image itself is bound from the component, because the biome is either
+ * the replay's own one or a random draw from the pack.
+ */
 .anim-field {
   position: relative;
   flex: 1 1 auto;
@@ -22,25 +41,22 @@
   /* Set from the component: one em is the whole stage's scale unit. */
   font-size: 14px;
   color: #1b2430;
+  background-color: #6edcff;
+  background-image: url('/assets/art/Public/Public/Background/FieldBattle.png');
+  background-repeat: no-repeat;
+  background-position: top center;
+  background-size: 100% 123.8%;
+  image-rendering: auto;
 }
 
-.anim-sky,
-.anim-ground {
-  position: absolute;
-  left: 0;
-  right: 0;
+/* Fullscreen is the game's screen and nothing else: no rounded card edge. */
+.anim-stage-fullscreen {
+  gap: 0;
+  background: #000;
 }
 
-.anim-sky {
-  top: 0;
-  height: 62%;
-  background: linear-gradient(#8fd6ff 0%, #bfe9ff 70%, #d8f2c4 100%);
-}
-
-.anim-ground {
-  top: 62%;
-  bottom: 0;
-  background: linear-gradient(#e7cf8d 0%, #7fc45a 22%, #61ad46 100%);
+.anim-stage-fullscreen .anim-field {
+  border-radius: 0;
 }
 
 /* ------------------------------------------------------------ entrance -- */
@@ -80,18 +96,6 @@
   left: 50%;
   top: 34%;
   background: #ffcf3f;
-}
-
-.anim-skip-intro {
-  position: absolute;
-  right: 0.4rem;
-  bottom: 0.4rem;
-  z-index: 42;
-  border: 1px solid #2b3240;
-  border-radius: 0.3rem;
-  background: rgb(255 255 255 / 85%);
-  font-size: 0.65rem;
-  padding: 0.1rem 0.4rem;
 }
 
 /* -------------------------------------------------------------- banner -- */
@@ -284,9 +288,12 @@
   object-fit: contain;
 }
 
-.anim-pet-opponent .anim-pet-icon {
-  transform: scaleX(-1);
-}
+/*
+ * Facing lives in facing.ts and is bound onto the pet's own image, so the one
+ * rule covers a pet standing still, lunging, jumping, flying off as a corpse
+ * and arriving as a summon. The measurements it is derived from are cited
+ * there.
+ */
 
 .anim-pet-cross {
   position: absolute;
@@ -632,42 +639,15 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  gap: 1.6em;
   padding: 0.6rem 0;
-  background: rgb(12 16 22 / 78%);
+  background: rgb(12 16 22 / 82%);
   color: #fff;
 }
 
-.anim-outro-row {
-  flex: 0 0 auto;
-  display: flex;
-  gap: 0.25rem;
-  font-size: 1.5em;
-}
-
-.anim-outro-trophy,
-.anim-outro-heart {
-  filter: grayscale(1);
-  opacity: 0.7;
-}
-
-.anim-outro-trophy-filled {
-  filter: none;
-  text-shadow: 0 0 8px #ffcf3f;
-}
-
-.anim-outro-heart {
-  filter: none;
-  color: #e05353;
-}
-
-.anim-outro-heart-lost {
-  color: #6b7280;
-  text-decoration: line-through;
-}
-
 .anim-outro-face {
-  flex: 1 1 auto;
+  flex: 0 0 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -675,15 +655,29 @@
   gap: 0.2em;
 }
 
-.anim-outro-emoji {
-  font-size: 8em;
-  line-height: 1;
-}
-
 .anim-outro-caption {
-  font-size: 1.6em;
+  font-size: 2.4em;
   font-weight: 800;
   letter-spacing: 0.16em;
+  text-shadow: 0 0.06em 0 rgb(0 0 0 / 55%);
+}
+
+/* Down at the foot of the screen, clear of the board the caption sits over. */
+.anim-outro-actions {
+  position: absolute;
+  left: 50%;
+  bottom: 8%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 1.2em;
+}
+
+/* The two buttons wear the control bar's own tile, so the end screen reads as
+   part of the same client rather than as a dialog dropped on top of it. */
+.anim-outro-action {
+  width: 4.6em;
+  padding: 0.3em 0.2em 0.4em;
+  background: rgb(56 104 138 / 85%);
 }
 
 /* ------------------------------------------------------------ controls -- */

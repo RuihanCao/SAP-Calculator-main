@@ -1,8 +1,10 @@
-<div class="anim-stage" *ngIf="frame as view; else noEvents">
+<div class="anim-stage" *ngIf="frame as view; else noEvents" [class.anim-stage-fullscreen]="fullscreen">
+  <!-- The field is the game's own battle background art, so the sky band, the
+       forest, the dirt lane the pets stand on and the grass below it are the
+       real asset rather than a drawn gradient. -->
   <div class="anim-field" #field [style.font-size.px]="fieldFontPx"
+    [style.background-image]="fieldBackground"
     [class.anim-field-intro]="view.phase === 'intro'">
-    <div class="anim-sky"></div>
-    <div class="anim-ground"></div>
 
     <!-- the replay control bar, checklist 17 and 18. It rides with the play
          area: it fades in near the end of the entrance and goes when the
@@ -54,7 +56,6 @@
         [style.transform]="'translateX(' + (40 - 40 * intro.opponentBoard) + '%)'">
         Opponent
       </div>
-      <button type="button" class="anim-skip-intro" (click)="skipIntro()">Skip intro</button>
     </ng-container>
 
     <!-- trigger banner, checklist 0, 11 and 15 -->
@@ -116,7 +117,8 @@
           [style.transform]="'translate(-50%, -50%) scale(' + (0.3 + pet.xpBurst * 2.4) + ')'"></span>
       </div>
       <div class="anim-pet-art">
-        <img class="anim-pet-icon" *ngIf="petIcon(pet.pet.name) as icon" [src]="icon" [alt]="pet.pet.name" />
+        <img class="anim-pet-icon" *ngIf="petIcon(pet.pet.name) as icon" [src]="icon" [alt]="pet.pet.name"
+          [style.transform]="iconTransform(pet.pet.side)" />
         <span class="anim-pet-cross" *ngIf="pet.fainted" aria-hidden="true">&#10006;</span>
         <img class="anim-pet-equipment" *ngIf="equipmentIcon(pet.pet) as icon" [src]="icon"
           [class.anim-pet-equipment-break]="pet.equipmentBreaking"
@@ -143,10 +145,13 @@
 
     <!-- corpses in flight and their star bursts, checklist 3 -->
     <div class="anim-corpse" *ngFor="let corpse of view.corpses; trackBy: trackByCorpse"
-      [ngStyle]="corpseStyle(corpse)">
+      [ngStyle]="corpseStyle(corpse)"
+      [class.anim-pet-player]="corpse.side === 'player'"
+      [class.anim-pet-opponent]="corpse.side === 'opponent'">
       <div class="anim-pet-level">Lv{{ corpse.level }}</div>
       <div class="anim-corpse-art">
-        <img class="anim-pet-icon" *ngIf="petIcon(corpse.name) as icon" [src]="icon" [alt]="corpse.name" />
+        <img class="anim-pet-icon" *ngIf="petIcon(corpse.name) as icon" [src]="icon" [alt]="corpse.name"
+          [style.transform]="iconTransform(corpse.side)" />
         <span class="anim-corpse-smoke"></span>
       </div>
       <div class="anim-pet-stats">
@@ -192,31 +197,40 @@
       <span>{{ popup.text }}</span>
     </div>
 
-    <!-- end screens, checklist 18 -->
+    <!--
+      End screen, checklist 18 and the app-integration override: the field dims
+      in place and carries the outcome, but the game's own trophy row and heart
+      row are a shop-run's score and this is a calculator, so the screen offers
+      the two things there are to do here instead, go back or leave.
+    -->
     <div class="anim-outro" *ngIf="view.outro as outro" [style.opacity]="outro.dim">
-      <div class="anim-outro-row anim-outro-trophies">
-        <span class="anim-outro-trophy" *ngFor="let trophy of trophySlots; let i = index"
-          [style.opacity]="outro.rows"
-          [class.anim-outro-trophy-filled]="outro.winner === 'player' && i === 0 && outro.award > 0">&#127942;</span>
-      </div>
       <div class="anim-outro-face" [style.opacity]="outro.face"
         [style.transform]="'scale(' + (0.5 + outro.face * 0.5) + ')'">
-        <span class="anim-outro-emoji">{{ outro.winner === 'player' ? '&#128512;' : '&#128531;' }}</span>
         <span class="anim-outro-caption">
           {{ outro.winner === 'player' ? 'VICTORY' : outro.winner === 'draw' ? 'DRAW' : 'DEFEAT' }}
         </span>
       </div>
-      <div class="anim-outro-row anim-outro-hearts">
-        <span class="anim-outro-heart" *ngFor="let heart of heartSlots; let i = index" [style.opacity]="outro.rows"
-          [class.anim-outro-heart-lost]="outro.winner === 'opponent' && i === heartSlots.length - 1 && outro.award > 0">
-          &#10084;
-        </span>
+      <div class="anim-outro-actions" [style.opacity]="outro.face">
+        <button type="button" class="anim-ctl anim-outro-action" data-anim-outro="rewind"
+          (click)="onRewind()">
+          <span class="anim-ctl-label">REWIND</span>
+          <span class="anim-ctl-glyph" aria-hidden="true">&#9198;&#65038;</span>
+        </button>
+        <button type="button" class="anim-ctl anim-outro-action" data-anim-outro="exit"
+          *ngIf="fullscreen" (click)="onExit()">
+          <span class="anim-ctl-label">EXIT</span>
+          <span class="anim-ctl-glyph" aria-hidden="true">&#10005;&#65038;</span>
+        </button>
       </div>
     </div>
   </div>
 
-  <!-- tools, not part of the game's own bar -->
-  <div class="anim-tools">
+  <!--
+    Tools, not part of the game's own bar. The fullscreen presentation is the
+    game's screen and nothing else, so the scrubber and the legacy switch are
+    only offered on the calculator's own inline pane.
+  -->
+  <div class="anim-tools" *ngIf="!fullscreen">
     <button type="button" class="anim-tool" (click)="onRestart()">RESTART</button>
     <input class="form-range anim-scrub" type="range" [min]="0" [max]="timeline?.durationMs || 0" [step]="50"
       [value]="playback.timeMs" (input)="onScrub($any($event.target).value)" aria-label="Animation position" />

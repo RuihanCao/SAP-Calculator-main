@@ -238,7 +238,14 @@ export const INTRO_BEATS = {
 /** Checklist 18: the bar is up this long before the first wind-up. */
 export const CONTROLS_LEAD_MS = INTRO_BEATS.totalMs - INTRO_BEATS.controlsMs;
 
-/** The end screens, checklist 18. Offsets from the battle's last beat. */
+/**
+ * The end screens, checklist 18. Offsets from the battle's last beat.
+ *
+ * `rowsMs` and `awardMs` are the real game's trophy and heart rows flying in
+ * and then one of them animating. The calculator's own end screen does not
+ * draw a shop run's score, so nothing samples them any more, and they are kept
+ * because the rest of the screen is paced against them.
+ */
 export const OUTRO_BEATS = {
   dimMs: 950,
   rowsMs: 2090,
