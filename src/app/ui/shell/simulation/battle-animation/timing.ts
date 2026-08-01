@@ -247,9 +247,15 @@ export const CONTROLS_LEAD_MS = INTRO_BEATS.totalMs - INTRO_BEATS.controlsMs;
  * because the rest of the screen is paced against them.
  */
 export const OUTRO_BEATS = {
-  dimMs: 950,
+  dimMs: 300,
   rowsMs: 2090,
-  faceMs: 3140,
+  /**
+   * The caption and the two buttons are the whole of this screen, so they do
+   * not wait for the beat the real game spends flying a trophy row in first:
+   * the dim is complete by 1.0 s and the caption is up by 1.4 s, where the
+   * earlier pacing left the screen empty until past 3.6 s.
+   */
+  faceMs: 900,
   awardMs: 4300,
   settledMs: 5460,
   totalMs: 6200,
