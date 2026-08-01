@@ -11,6 +11,12 @@ import { AnimationPayloadKind } from 'app/domain/interfaces/animation-event.inte
  */
 export interface BannerSegment {
   text: string;
+  /**
+   * The last word of the run, kept apart so it and the glyph can be held on
+   * one line. Without it a glyph at the end of a line wraps on its own and the
+   * card shows a stray icon under the rules, which the real card never does.
+   */
+  tail: string;
   /** Glyph drawn after the words, when the words name something with an icon. */
   icon: AnimationPayloadKind | null;
 }
@@ -25,43 +31,82 @@ export interface BannerText {
   note: string | null;
 }
 
-const GLYPHS: Array<[RegExp, AnimationPayloadKind]> = [
-  [/^attacks?$/i, 'attack-glyph'],
-  [/^damage$/i, 'attack-glyph'],
-  [/^health$/i, 'heart'],
-  [/^mana$/i, 'mana-potion'],
-  [/^experience$/i, 'xp-book'],
-  [/^xp$/i, 'xp-book'],
-  [/^trumpets?$/i, 'trumpet'],
-  [/^perks?$/i, 'perk-icon'],
+/**
+ * The words that carry a glyph, and whether an amount has to stand in front of
+ * the word for it to do so.
+ *
+ * The reference card puts the glyph on the amount: "for 3 [rock] damage" and
+ * "Give it +1 [rock] attack until next turn" (f11 t=30.45 and f04 t=12.63).
+ * That is also what keeps the verb in "Jump attack the second enemy" from
+ * pulling a second rock onto the same card, which is what round 4 drew. A perk
+ * is not an amount, so it is named rather than counted.
+ */
+const GLYPHS: Array<[RegExp, AnimationPayloadKind, boolean]> = [
+  [/^attacks?$/i, 'attack-glyph', true],
+  [/^damage$/i, 'attack-glyph', true],
+  [/^health$/i, 'heart', true],
+  [/^mana$/i, 'mana-potion', true],
+  [/^experience$/i, 'xp-book', true],
+  [/^xp$/i, 'xp-book', true],
+  [/^trumpets?$/i, 'trumpet', true],
+  [/^perks?$/i, 'perk-icon', false],
 ];
 
 const USES = /\s*Works\s+(\d+)\s+times?\s+per\s+(battle|turn)\.?/i;
 
-const glyphFor = (word: string): AnimationPayloadKind | null => {
-  for (const [pattern, payload] of GLYPHS) {
-    if (pattern.test(word)) {
+const glyphFor = (word: string, amountBefore: boolean): AnimationPayloadKind | null => {
+  for (const [pattern, payload, needsAmount] of GLYPHS) {
+    if (pattern.test(word) && (amountBefore || !needsAmount)) {
       return payload;
     }
   }
   return null;
 };
 
-/** Splits the rules into runs of words, each run followed by at most one glyph. */
+/** `3`, `+1`, `-2`: the amount a glyph belongs to. */
+const AMOUNT = /^[+-]?\d+$/;
+
+/** Splits a run into everything but its last word, and that last word. */
+const splitTail = (run: string): { text: string; tail: string } => {
+  const at = run.replace(/\s+$/, '').lastIndexOf(' ');
+  return at < 0
+    ? { text: '', tail: run }
+    : { text: run.slice(0, at + 1), tail: run.slice(at + 1) };
+};
+
+/**
+ * Splits the rules into runs of words, each run followed by at most one glyph.
+ *
+ * The glyph goes on the amount, not on the noun: the reference card reads
+ * "for 3 [rock] damage" and "Give it +1 [rock] attack until next turn" (f11
+ * t=30.45 and f04 t=12.63), so a word that names a stat only pulls its glyph in
+ * when a number is standing in front of it. Without that rule the verb in
+ * "Jump attack the second enemy" took one too, and the card drew two.
+ */
 const toSegments = (text: string): BannerSegment[] => {
   const segments: BannerSegment[] = [];
+  const tokens = text.split(/(\s+)/);
   let pending = '';
-  for (const token of text.split(/(\s+)/)) {
+  let previousWord: string | null = null;
+  for (const token of tokens) {
     const bare = token.replace(/[^A-Za-z]/g, '');
-    const icon = bare ? glyphFor(bare) : null;
-    pending += token;
+    const isSpace = /^\s+$/.test(token);
+    const icon = bare
+      ? glyphFor(bare, previousWord != null && AMOUNT.test(previousWord))
+      : null;
     if (icon) {
-      segments.push({ text: pending, icon });
-      pending = '';
+      // The glyph sits between the amount and the word it belongs to.
+      segments.push({ ...splitTail(pending), icon });
+      pending = token;
+    } else {
+      pending += token;
+    }
+    if (!isSpace) {
+      previousWord = token.replace(/[^A-Za-z0-9+-]/g, '') || null;
     }
   }
   if (pending.trim().length > 0 || segments.length === 0) {
-    segments.push({ text: pending, icon: null });
+    segments.push({ text: pending, tail: '', icon: null });
   }
   return segments;
 };
