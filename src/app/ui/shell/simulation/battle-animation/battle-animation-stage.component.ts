@@ -75,12 +75,23 @@ const drawnIcon = (body: string): string =>
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">${body}</svg>`,
   );
 
+/**
+ * The attack payload is a rock, not a fist.
+ *
+ * Read off the reference toast in f11 at t=30.45
+ * (clips/f11-jump-african-wild-dog/f_00862_0030453.jpg, cropped as
+ * `toast.png`): "Jump attack the second enemy for 3 [rock] damage" carries a
+ * blue-grey irregular polygon with a heavy black keyline, the same silhouette
+ * the attack stat badge wears in charcoal. The earlier fist was a mis-crop of
+ * the text-map sheet and collapsed into a grey blob at projectile size.
+ */
+const ROCK_PATH =
+  'M9.4 4.6 21.5 3l7.4 6.9-1.3 12.4-8.2 6.9-9.8-1.6L4 20.2l1.1-11z';
+
 const ATTACK_GLYPH = drawnIcon(
-  '<path d="M6 18c0-3 1.6-4.6 3.6-4.6.7 0 1.3.2 1.8.5V10c0-2 1.4-3.4 3.2-3.4S18 8 18 10v2.2' +
-    'c.5-.4 1.1-.6 1.8-.6 1.9 0 3.2 1.5 3.2 3.5v1c.5-.4 1-.6 1.7-.6 1.8 0 3.1 1.5 3.1 3.6v3.4' +
-    'c0 4.4-3.4 7.5-8 7.5h-3.3C11.5 30 6 26.5 6 21.5z" fill="#9aa1a9" stroke="#141a21" ' +
-    'stroke-width="2.4" stroke-linejoin="round"/>' +
-    '<path d="M11.4 20.5h11.4" fill="none" stroke="#141a21" stroke-width="1.8" stroke-linecap="round"/>',
+  `<path d="${ROCK_PATH}" fill="#93a7bb" stroke="#12161c" stroke-width="3" stroke-linejoin="round"/>` +
+    `<path d="M11.5 8.6 19 7.4l3.7 3.6" fill="none" stroke="#c3d3e0" stroke-width="2.2" ` +
+    'stroke-linecap="round" stroke-linejoin="round"/>',
 );
 
 const XP_BOOK = drawnIcon(
@@ -107,37 +118,71 @@ const MANA_ICON = PAYLOAD_ICONS['mana-potion'];
 const XP_ICON = PAYLOAD_ICONS['xp-book'];
 const TRUMPET_ICON = PAYLOAD_ICONS.trumpet;
 
-/** Field geometry, in percent of the stage box. */
-const MIDLINE_X = 50;
-const SLOT_GAP_X = 8.6;
 /**
- * Where each side's front pet stands. The real game draws two groups of five
- * with an empty midline between them, so the front pair is about 16% of the
- * field apart and the boards read as two teams rather than one row.
+ * Field geometry, in percent of the play area.
+ *
+ * The play area is the 16:9 box inside the black bars, so a percentage here
+ * means the same thing it means on the reference recording, which is a 960 by
+ * 600 viewport carrying a 960 by 540 play area (rows 30 to 569 of every frame
+ * in clips/, measured on f11 t=30.45).
  */
-const FRONT_OFFSET_X = 8;
+const MIDLINE_X = 50;
+/**
+ * Slot pitch, measured on the reference board of f11 t=30.45: the opponent's
+ * three pets stand at x=537, 625 and 720 of 960, so one slot is 90px, 9.4% of
+ * the play area's width.
+ */
+const SLOT_GAP_X = 9.4;
+/**
+ * Where each side's front pet stands. On the same frame the opponent's front
+ * pet is at x=537, 5.9% right of the midline, and the player's second pet is
+ * at x=327, 16.3% left of it, which puts the player's front at 6.9% left. The
+ * midpoint of the two readings is used, so the boards are symmetric.
+ */
+const FRONT_OFFSET_X = 6.4;
 /**
  * How close to the midline a clashing pet gets. The two sprites meet with the
  * flash between them and do not overlap, checklist 1.
  */
 const CLASH_GAP_X = 6;
 /**
- * Where a pet's card ends, which is the bottom of its stat pills. Measured on
- * the reference frame f01 t=29.42: the pills' lower edge is at 0.737 of the
- * play area, which stands the sprite on the dirt lane with its head over the
- * bushes behind it, exactly as the real game composes the board.
+ * Where a pet's card ends, which is the bottom of its stat badges. Measured on
+ * the reference frame f11 t=30.45: the player pig's badges end at y=432 of a
+ * play area running 30 to 569, so 0.744 of it. That stands the sprite on the
+ * dirt lane with its head over the bushes behind it, exactly as the real game
+ * composes the board.
  */
-const GROUND_Y = 73;
+const GROUND_Y = 74.4;
 const LIFT_Y = 26;
 /**
- * The banner hangs below the control bar, which sits at 9.6% of the field.
- * It may never cover the bar or the trumpet counters beside it (checklist 17),
- * so it is anchored with a clear gap under them.
+ * The ability toast. On the same reference frame the plate runs x=264 to 565
+ * and y=141 to 258, so its centre is 43.4% across and 20.7% down the play
+ * area, which hangs it clear under the control bar and over the near board.
  */
-const BANNER_ANCHOR: Point = { x: 34, y: 32 };
-/** Where a corpse flies to before it bursts, in percent of the stage. */
+const BANNER_ANCHOR: Point = { x: 43.4, y: 31.4 };
+/**
+ * Where a corpse flies to before it bursts, in percent of the play area.
+ *
+ * It leaves over its own board, not across the field: the player's pig corpse
+ * is up and to the left at f01 t=32.01
+ * (clips/f01-plain-trades/f_00905_0032006.jpg) and the opponent's is up and to
+ * the right at t=37.39 (f_01070_0037391.jpg), so the sign follows the side.
+ */
 const CORPSE_EXIT_DX = 22;
 const CORPSE_EXIT_DY = 56;
+/**
+ * The other player's avatar, standing at the field's right in every reference
+ * battle frame. It is `Mascot/TurtleBattle.png` from the pack, which matches
+ * the reference figure part for part: cream bucket hat, purple hair, cream
+ * shirt, green shorts, turtle shell on the back, green boots.
+ *
+ * Placement measured on f11 t=30.45, where the sprite's cream runs x=853 to
+ * 923 and y=210 to 333 against the same cream in the asset, which fixes the
+ * scale at 0.278 and so the drawn box at 85 by 132 of a 960 by 540 play area.
+ */
+const MASCOT_SPRITE = '/assets/art/Public/Public/Mascot/TurtleBattle.png';
+/** How many cloud links the corpse trail is drawn as. */
+const CORPSE_TRAIL_LINKS = 7;
 const COUNTER_ANCHOR: Record<AnimationSide, Point> = {
   player: { x: 12, y: 12 },
   opponent: { x: 88, y: 12 },
@@ -184,6 +229,15 @@ export class BattleAnimationStageComponent
    * roll is taken once per battle rather than once per frame.
    */
   @Input() randomBackground = false;
+  /**
+   * The names on the entrance banners. The real client puts the two teams'
+   * names there, blue on the near side and orange on the far side (f11
+   * t=22.16, out/f11-jump-african-wild-dog_board.jpg), so the calculator's own
+   * team name is carried through when there is one and the sides fall back to
+   * what they are otherwise.
+   */
+  @Input() playerTeamName = '';
+  @Input() opponentTeamName = '';
 
   @Output() legacyRequested = new EventEmitter<void>();
   @Output() exitRequested = new EventEmitter<void>();
@@ -250,8 +304,11 @@ export class BattleAnimationStageComponent
       return;
     }
     this.resizeObserver = new ResizeObserver((entries) => {
+      // The reference play area is 540 tall and everything on it was measured
+      // against a 30th of that, so the unit follows the play area's height with
+      // only enough of a clamp to keep a collapsed pane from dividing by zero.
       const height = entries[0]?.contentRect.height ?? 0;
-      const next = Math.max(9, Math.min(26, Math.round(height / 30)));
+      const next = Math.max(6, Math.min(96, Math.round(height / 30)));
       if (next !== this.fieldFontPx) {
         this.fieldFontPx = next;
         this.cdr.detectChanges();
@@ -305,13 +362,17 @@ export class BattleAnimationStageComponent
     return this.frame?.controls ?? 1;
   }
 
-  /** Checklist 17: one board state back, and still playable afterwards. */
+  /**
+   * Checklist 17. REWIND restarts the battle from the top of the entrance and
+   * keeps playing, which is what the reference strip does, so it is also the
+   * way off the end screen.
+   */
   onRewind(): void {
     const timeline = this.timeline;
     if (!timeline) {
       return;
     }
-    this.playback = rewind(this.playback, timeline);
+    this.playback = rewind(this.playback, timeline, this.autoplay);
     this.render();
     this.syncLoop();
   }
@@ -442,16 +503,48 @@ export class BattleAnimationStageComponent
     };
   }
 
+  /** Away from the midline, over its own board, and turning as it goes. */
+  private corpseExitSign(side: AnimationSide): number {
+    return side === 'player' ? -1 : 1;
+  }
+
   corpseStyle(view: CorpseView): Record<string, string> {
+    const sign = this.corpseExitSign(view.side);
     const from = this.slotX(view.side, view.slot);
-    const x = from + CORPSE_EXIT_DX * view.progress;
+    const x = from + sign * CORPSE_EXIT_DX * view.progress;
     const y = GROUND_Y - CORPSE_EXIT_DY * view.progress;
     return {
       left: `${x}%`,
       top: `${y}%`,
       opacity: `${1 - Math.max(0, view.progress - 0.8) * 5}`,
-      transform: `translate(-50%, -100%) rotate(${view.progress * 90}deg)`,
+      transform: `translate(-50%, -100%) rotate(${sign * view.progress * 90}deg)`,
     };
+  }
+
+  /**
+   * The puff chain a corpse leaves behind it, checklist 3. The reference trail
+   * is a row of fat overlapping clouds laid along the flight path rather than
+   * a wisp trailing off the sprite (f01 t=32.01 and t=37.39), so each link is
+   * placed at its own fraction of the path and fades with age.
+   */
+  corpseTrail(view: CorpseView): Array<{ index: number; style: Record<string, string> }> {
+    const sign = this.corpseExitSign(view.side);
+    const from = this.slotX(view.side, view.slot);
+    const links: Array<{ index: number; style: Record<string, string> }> = [];
+    for (let index = 0; index < CORPSE_TRAIL_LINKS; index += 1) {
+      const at = (view.progress * index) / CORPSE_TRAIL_LINKS;
+      const age = 1 - index / CORPSE_TRAIL_LINKS;
+      links.push({
+        index,
+        style: {
+          left: `${from + sign * CORPSE_EXIT_DX * at}%`,
+          top: `${GROUND_Y - 6 - CORPSE_EXIT_DY * at}%`,
+          opacity: `${(0.35 + 0.65 * (1 - age)) * (1 - Math.max(0, view.progress - 0.8) * 5)}`,
+          transform: `translate(-50%, -50%) scale(${0.62 + 0.38 * (1 - age)})`,
+        },
+      });
+    }
+    return links;
   }
 
   projectileStyle(view: ProjectileView): Record<string, string> {
@@ -496,7 +589,7 @@ export class BattleAnimationStageComponent
   /** Where a corpse group leaves the screen, which is where it bursts. */
   burstStyle(side: AnimationSide, slot: number): Record<string, string> {
     return this.pointStyle(
-      this.slotX(side, slot) + CORPSE_EXIT_DX,
+      this.slotX(side, slot) + this.corpseExitSign(side) * CORPSE_EXIT_DX,
       GROUND_Y - CORPSE_EXIT_DY,
     );
   }
@@ -571,6 +664,20 @@ export class BattleAnimationStageComponent
     }
   }
 
+  /** The two banner names, with the sides' own labels as the fallback. */
+  get playerBannerName(): string {
+    return this.playerTeamName.trim() || 'Player';
+  }
+
+  get opponentBannerName(): string {
+    return this.opponentTeamName.trim() || 'Opponent';
+  }
+
+  readonly mascotSprite = MASCOT_SPRITE;
+  readonly corpseTrailLinks = Array.from(
+    { length: CORPSE_TRAIL_LINKS },
+    (_, index) => index,
+  );
   readonly sides: AnimationSide[] = ['player', 'opponent'];
   /** Shards a consumed melon scatters around the pet, checklist 10. */
   readonly shardSlots = Array.from({ length: 6 }, (_, index) => index);
@@ -581,6 +688,7 @@ export class BattleAnimationStageComponent
   readonly trumpetIcon = TRUMPET_ICON;
 
   trackByIndex = (index: number): number => index;
+  trackByIndexed = (_: number, link: { index: number }): number => link.index;
   trackByPetId = (_: number, view: PetView): number => view.pet.id;
   trackById = (_: number, view: { id: string }): string => view.id;
   trackByCorpse = (_: number, view: CorpseView): number => view.petId;
