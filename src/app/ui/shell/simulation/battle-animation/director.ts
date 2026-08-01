@@ -481,6 +481,19 @@ export const buildBattleTimeline = (
           attackerIds: clash.hits.map((hit) => hit.source.id),
         });
         if (clash.jump) {
+          // A jump attack is an ability, and the pet performing one wears the
+          // green source outline for the whole of it: on the reference contact
+          // frame the African Wild Dog is outlined green over the Otter, not
+          // red like an ordinary clashing front pet
+          // (f11 t=30.45, clips/f11-jump-african-wild-dog/f_00862_0030453.jpg).
+          push<OutlineCue>({
+            kind: 'sourceOutline',
+            startMs,
+            endMs,
+            seq: event.seq,
+            group: event.group,
+            petId: clash.hits[0].source.id,
+          });
           // The attacker lands back in its own slot in a white puff.
           push({
             kind: 'impactPuff',

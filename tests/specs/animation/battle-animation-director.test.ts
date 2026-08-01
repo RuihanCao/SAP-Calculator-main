@@ -222,6 +222,15 @@ describe('battle animation director', () => {
       expect(landed?.lift).toBe(JUMP_CONTACT_LIFT);
       expect(JUMP_CONTACT_LIFT).toBeGreaterThan(0);
       expect(contact.pets.find((pet) => pet.pet.id === cue.jumpTargetId)?.lift).toBe(0);
+      // A jump attack is an ability, so its attacker wears the green source
+      // outline for the whole of it, not the red one an ordinary front pet
+      // takes and not the red one its own counter damage would give it.
+      expect(landed?.outline).toBe('source');
+      expect(
+        sampler.frameAt((cue.startMs + cue.contactMs) / 2).pets.find(
+          (pet) => pet.pet.id === cue.jumperId,
+        )?.outline,
+      ).toBe('source');
       expect(landed?.jumpTargetSlot).toBe(
         contact.pets.find((pet) => pet.pet.id === cue.jumpTargetId)?.slot,
       );
