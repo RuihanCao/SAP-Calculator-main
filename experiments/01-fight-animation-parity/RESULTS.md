@@ -4,14 +4,16 @@
 
 All 16 fixtures PASS event-sequence parity against the real client, confirmed by a fresh-context critic on round-3 footage plus live re-recordings.
 Trajectory across the W3 loop: 2/16 (round 1) -> 13/16 (round 2) -> 16/16 (round 3).
-FAST mode, intro, victory and defeat outros, and the control bar (REWIND working step-back, SKIP abandon semantics, AUTOPLAY toggle) confirmed against the checklist.
+FAST mode, victory and defeat outros, and the control bar (REWIND working step-back, SKIP abandon semantics, AUTOPLAY toggle) confirmed against the checklist.
+The entrance was built and confirmed too, then cut in W-A on Ruihan's call; see PR #4 below.
 
 ## What was built (PR chain, merge bottom-up)
 
 PR #1 (W0): injection+recording harness, 16 deterministic fixtures, CHECKLIST.md grammar with per-class citations, COVERAGE.md over the 17 event classes.
 PR #2 (W1): structured AnimationEvent stream from the engine (16-type union, plain data through the worker), golden event tests, 9 codex review findings all confirmed and fixed with mutation-checked regression specs.
 PR #3 (W2+W3): event-driven renderer (director/timeline/sampler/playback, banner cards, payload-icon projectiles, merge-while-visible popups, corpse groups with FLIP push-forward, staged summons, two-stage transform, jump and move arcs, trumpet counter, FAST second grammar, intro/outro, full control bar), plus the three W3 fix rounds.
-The old prose-parsing renderer stays reachable via ?legacyAnimation=1 until Ruihan retires it.
+PR #4 (W-A): the calculator's own screen is the original again — the inline pane is the prose-parsing renderer unconditionally, the `?legacyAnimation=1` switch and the legacy-view toggle are gone, and the event-driven stage renders only fullscreen.
+The same PR cuts the entrance segment: the fullscreen animation opens on the battle's first frame with the control bar up, and REWIND returns to it.
 
 ## Evidence qualifiers (honest state)
 

@@ -3,9 +3,13 @@
 
 This is the app-integration probe: nothing is reparented and nothing is
 dispatched past the UI, the way in is the button a person presses. The steps
-are the five screens Ruihan asked to see: the calculator, the fullscreen
-entrance, the battle, the end screen with its two buttons, and the calculator
-again after EXIT.
+are the screens Ruihan asked to see: the calculator, the frame the fullscreen
+animation opens on, the battle under way, the end screen with its two buttons,
+and the calculator again after EXIT.
+
+There is no entrance to walk through any more: W-A cut it, so the press lands
+straight on the battle with the control bar up. `probe_ui_restore.py` is the
+probe that holds that to account frame by frame; this one is the wider walk.
 
 Usage:
   probe_entry_flow.py [fixture] [--out DIR] [--url http://127.0.0.1:4200]
@@ -72,11 +76,10 @@ async def probe(fid, base_url, outdir, random_background=False):
         await page.click(OPEN_BUTTON)
         await page.wait_for_selector(f".battle-animation-fullscreen {STAGE} .anim-field",
                                      timeout=30000)
-        await page.wait_for_timeout(1500)
-        await shoot(page, "03-fullscreen-intro")
+        await shoot(page, "03-fullscreen-opening")
 
-        # The entrance is 9.03 s, so this is the battle itself, already running.
-        await page.wait_for_timeout(11000)
+        # Far enough in that the first trades have resolved.
+        await page.wait_for_timeout(6000)
         await shoot(page, "04-battle")
 
         # Wait for the end screen: the outro's own buttons are the signal.

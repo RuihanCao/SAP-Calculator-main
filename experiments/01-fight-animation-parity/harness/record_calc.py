@@ -106,6 +106,12 @@ def swap_boards(fixture):
     return swapped
 
 
+STAGE = "app-battle-animation-stage"
+FULLSCREEN = f".battle-animation-fullscreen {STAGE}"
+OPEN_BUTTON = "[data-battle-animation='open']"
+OUTRO_EXIT = "[data-anim-outro='exit']"
+
+
 async def record_one(fid, base_url, seconds, fast, quality, swap=False):
     from playwright.async_api import async_playwright
 
@@ -132,39 +138,26 @@ async def record_one(fid, base_url, seconds, fast, quality, swap=False):
         # Run the battle, which is what fills the animation with events.
         await page.wait_for_selector("text=Simulate", timeout=60000)
         await page.click("text=Simulate")
-        await page.wait_for_selector("app-battle-animation-stage .anim-stage", timeout=60000)
 
-        # The stage lives in a small split pane in the app. For the recording it
-        # is moved into a full viewport holder, so the clip frames the animation
-        # the same way the reference clips frame the real game. Nothing about
-        # the component changes: it is the same live element, just reparented.
-        await page.evaluate(
-            """() => {
-              const stage = document.querySelector('app-battle-animation-stage');
-              const holder = document.createElement('div');
-              holder.id = 'anim01-holder';
-              holder.style.cssText =
-                'position:fixed;inset:0;z-index:99999;background:#0d1117;display:flex';
-              document.body.appendChild(holder);
-              holder.appendChild(stage);
-              stage.style.cssText = 'flex:1 1 auto;height:100vh';
-              document.documentElement.style.overflow = 'hidden';
-            }"""
-        )
-        await page.wait_for_timeout(400)
+        # The recording is of the app's own fullscreen presentation, opened by
+        # the button a person presses. It was a reparented split pane until
+        # W-A; the stage no longer renders inline at all, and the fullscreen is
+        # already the whole viewport, so the holder hack is gone with it.
+        await page.wait_for_selector(OPEN_BUTTON, timeout=60000)
+        await page.click(OPEN_BUTTON)
+        await page.wait_for_selector(f"{FULLSCREEN} .anim-stage", timeout=60000)
 
         # The bar's buttons carry stable data attributes, because the labels
         # are not unique any more: AUTOPLAY contains PLAY. The presses are
-        # dispatched rather than clicked because the bar is deliberately inert
-        # until it has faded in, which is a second into the entrance
-        # (checklist 17), and the recording starts before that.
+        # dispatched rather than clicked so a bar that has not settled yet
+        # cannot swallow one.
         if fast:
             await page.dispatch_event(
-                "app-battle-animation-stage [data-anim-control='fast']", "click"
+                f"{FULLSCREEN} [data-anim-control='fast']", "click"
             )
             await page.wait_for_timeout(150)
 
-        shot = await page.locator("app-battle-animation-stage .anim-field").screenshot()
+        shot = await page.locator(f"{FULLSCREEN} .anim-field").screenshot()
         with open(os.path.join(outdir, "_board.png"), "wb") as handle:
             handle.write(shot)
 
@@ -200,18 +193,14 @@ async def record_one(fid, base_url, seconds, fast, quality, swap=False):
             },
         )
 
-        await page.dispatch_event(
-            "app-battle-animation-stage [data-anim-control='play']", "click"
-        )
+        # The fullscreen presentation plays itself, so there is no PLAY to
+        # press. It is also the game's screen and nothing else, which means no
+        # clock to read: the end is the outro's own EXIT button arriving, which
+        # is the same signal probe_entry_flow.py waits on.
         deadline = time.time() + seconds
         while time.time() < deadline:
             await page.wait_for_timeout(250)
-            label = await page.locator("app-battle-animation-stage .anim-clock").inner_text()
-            try:
-                now, total = [float(part.strip().rstrip("s")) for part in label.split("/")]
-            except ValueError:
-                continue
-            if total > 0 and now >= total - 0.05:
+            if await page.locator(f"{FULLSCREEN} {OUTRO_EXIT}").count():
                 await page.wait_for_timeout(700)
                 break
 

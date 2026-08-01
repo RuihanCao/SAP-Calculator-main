@@ -32,7 +32,9 @@ Then set `ANIM01_GAME_URL` for `driver.py`.
 | `sim_config.js` | fixture spec to fork `SimulationConfig` |
 | `check_fixtures.sh` | runs `sim_notes.js` over every fixture, writes `expected/<id>.txt` |
 | `run_fixture.py` | drives the game to the battle for one fixture and records it |
-| `record_calc.py` | the mirror of `run_fixture.py` for our own app: loads a fixture through the share-state URL, plays the event driven animation and screencasts it |
+| `record_calc.py` | the mirror of `run_fixture.py` for our own app: loads a fixture through the share-state URL, opens the fullscreen animation with its own button and screencasts it |
+| `probe_ui_restore.py` | W-A: the calculator screen, the frame the fullscreen animation lands on, and the frame REWIND lands on, with the control bar's opacity read out of the DOM at each rung |
+| `probe_ui_baseline_diff.py` | W-A: the same flow on two servers, ours and `master`, with the per-pixel difference written out, so "the main screen is the original plus one button" can be looked at |
 | `controls_probe.py` | same entry, plus a timed script of replay-control presses, for the speed mode and the stop/skip/rewind grammar |
 | `make_clip.py` | frame directory to webm clip plus filmstrip contact sheet |
 | `crop_strip.py` | one screen region over a time window, upscaled, for reading a widget frame by frame |
@@ -77,8 +79,30 @@ done
 ```
 
 The fixture boards are loaded through the app's own `?c=<json>` share state, so nothing in the app is special cased for the recording.
-For the clip the stage element is reparented into a full viewport holder, which frames the animation the way the reference clips frame the real game; it is the same live component, only moved.
+The clip is of the app's own fullscreen presentation, opened by pressing `Battle animation`, which is already the whole viewport.
+Until W-A the stage also rendered inline and was reparented into a holder to frame it that way; it no longer renders inline at all, so the holder and the `.anim-clock` read that went with it are gone, and the recorder stops on the end screen's own EXIT button instead.
 Clips and filmstrips land in `/root/autodl-tmp/sap-data/anim01/calc/`, alongside the real game's under `.../anim01/out/`.
+
+## Checking the W-A restore (the main screen, and the cut entrance)
+
+Two servers, ours and the original, then the two probes:
+
+```bash
+# ours; :4200 and :4202 belong to other worktrees
+node ./node_modules/@angular/cli/bin/ng serve --host 127.0.0.1 --port 4201 \
+  --proxy-config config/proxy.conf.js
+
+# the original, from a detached master worktree with node_modules symlinked in
+git worktree add --detach /root/autodl-tmp/sap-data/anim01/w3a-baseline master
+(cd /root/autodl-tmp/sap-data/anim01/w3a-baseline && npx ng serve --host 127.0.0.1 --port 4203)
+
+export PLAYWRIGHT_BROWSERS_PATH=/root/autodl-tmp/ms-playwright
+/root/workspace/.venv-sap/bin/python probe_ui_restore.py --url http://127.0.0.1:4201
+/root/workspace/.venv-sap/bin/python probe_ui_baseline_diff.py \
+  --baseline http://127.0.0.1:4203 --branch http://127.0.0.1:4201
+```
+
+`probe_ui_baseline_diff.py` writes a heatmap per pair. Read the **pane** diff, not the full-page one: the calculator picks its board art per page load, so a full-page diff lights up over the board whichever two loads are compared, including the original against itself. Diff the original against itself once if that needs proving.
 
 ## Interception: route fulfilment, not the page hook
 

@@ -514,10 +514,16 @@ The pack draws every pet looking left, so the near board is mirrored and the far
 Two clips settle it, because the same three pets swap sides between them: in f01 t=29.36 the cow, otter and worm are the opponent and are drawn as the art has them, and in outro-defeat t=39.07 the same three are the player and are mirrored.
 The flip is bound onto each pet's own image, so a pet standing still, lunging, jumping, flying off as a corpse and arriving as a summon all inherit it.
 
-**One press is the whole entry.**
-The `Battle animation` button hands the whole viewport to the stage, which starts itself at the first frame of the entrance.
-There is no scrubber, no skip-intro and no play button on the way in; the game's own control bar still arrives during the entrance the way the reference has it.
+**One press is the whole entry, and the entrance is not part of it.**
+The `Battle animation` button hands the whole viewport to the stage, which starts itself on the battle's own first frame with the game's control bar already up.
+The reference's entrance, measured in item 18 above, is deliberately not reproduced: Ruihan cut it in W-A, so there is no shutter, no team-name plates and no VS plaque, and REWIND restarts on that same controls-visible frame rather than replaying an opening.
+Item 18's measurements stay recorded here as ground truth about the real client; they are no longer a parity target for ours.
+There is no scrubber, no skip-intro and no play button on the way in.
 EXIT on the end screen, or Escape, closes the fullscreen and puts the calculator back.
+
+**The calculator's own screen is the original one.**
+The inline pane under `Fight Animation + Logs` is the original prose-parsing renderer, unconditionally.
+The event-driven stage is only ever the fullscreen presentation, so the main screen's only change from the original is the `Battle animation` button and its `Random field` box.
 
 **The end screen carries the outcome and the way out, not a shop run's score.**
 The real screen also flies in a row of ten trophies and a row of five hearts and then animates one of them.

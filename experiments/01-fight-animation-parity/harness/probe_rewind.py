@@ -3,7 +3,7 @@
 
 Round 4 froze: after the press every later frame was bit identical to the one
 before it and the end screen never came. The reference restarts the whole
-animation from the entrance and keeps playing (clips/ctl-rewind/, frames 00 to
+animation and keeps playing (clips/ctl-rewind/, frames 00 to
 07 of out/ctl-rewind_filmstrip.jpg), so this probe presses the button and then
 shoots a ladder of frames, hashing each one, and states plainly whether the
 picture moved and whether the outro was reached again.
@@ -87,7 +87,14 @@ async def run(fid, base_url, outdir):
             }
 
         # 1. The bar's own REWIND, pressed mid battle.
-        await page.wait_for_timeout(14000)
+        #
+        # Mid battle is now early: W-A cut the 9 s entrance, so f01 reaches its
+        # end screen around 9.6 s from the press that opens it, and the old
+        # 14 s wait landed on the outro veil, which swallowed the click.
+        # Waiting on the bar to exist and then giving it a few beats keeps this
+        # honest for a longer fixture too.
+        await page.wait_for_selector(BAR_REWIND, timeout=30000)
+        await page.wait_for_timeout(4000)
         before = await shoot("bar-00-before")
         await page.click(BAR_REWIND)
         result = await ladder("bar")
