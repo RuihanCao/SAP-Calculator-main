@@ -17,9 +17,9 @@ import {
   SlideCue,
   StatPillCue,
 } from './cues';
-import { INTRO_BEATS, OUTRO_BEATS } from './timing';
+import { OUTRO_BEATS } from './timing';
 
-export type AnimationPhaseName = 'intro' | 'battle' | 'outro';
+export type AnimationPhaseName = 'battle' | 'outro';
 
 /**
  * Where a pet is on screen this frame, as opposed to which slot it owns.
@@ -156,18 +156,6 @@ export interface TrumpetTokenView {
   progress: number;
 }
 
-export interface IntroView {
-  /** 1 while the shutter covers the field. */
-  shutter: number;
-  fieldOpen: number;
-  playerCard: number;
-  playerBoard: number;
-  vsCard: number;
-  opponentBoard: number;
-  cardsVisible: boolean;
-  controls: number;
-}
-
 /**
  * The end screen, checklist 18, as the calculator shows it. The real game's
  * screen also flies in a trophy row and a heart row and then animates one of
@@ -196,12 +184,10 @@ export interface FrameView {
   banner: BannerView | null;
   trumpets: Record<AnimationSide, TrumpetCounterView>;
   trumpetTokens: TrumpetTokenView[];
-  intro: IntroView | null;
   outro: OutroView | null;
   /**
-   * 0..1 opacity of the replay control bar. It fades in near the end of the
-   * entrance and goes when the battle ends, exactly as the real one does
-   * (checklist 17 and 18).
+   * 0..1 opacity of the replay control bar. It is up from the battle's first
+   * frame and goes when the battle ends (checklist 17).
    */
   controls: number;
 }
@@ -394,11 +380,7 @@ export class TimelineSampler {
     const active = this.activeCues(timeMs);
 
     const phase: AnimationPhaseName =
-      timeMs < timeline.introEndMs
-        ? 'intro'
-        : timeMs >= timeline.battleEndMs
-          ? 'outro'
-          : 'battle';
+      timeMs >= timeline.battleEndMs ? 'outro' : 'battle';
 
     const slideByPet = new Map<number, SlideCue>();
     const moveByPet = new Map<number, MoveArcCue>();
@@ -848,42 +830,14 @@ export class TimelineSampler {
       banner,
       trumpets,
       trumpetTokens,
-      intro: phase === 'intro' ? sampleIntro(timeMs) : null,
       outro:
         phase === 'outro'
           ? sampleOutro(timeMs - timeline.battleEndMs, timeline.winner)
           : null,
-      controls:
-        phase === 'intro'
-          ? rampAt(timeMs, INTRO_BEATS.controlsMs, 400)
-          : phase === 'outro'
-            ? 0
-            : 1,
+      controls: phase === 'outro' ? 0 : 1,
     };
   }
 }
-
-export const sampleIntro = (timeMs: number): IntroView => ({
-  shutter:
-    timeMs < INTRO_BEATS.shutterOpenMs
-      ? rampAt(timeMs, INTRO_BEATS.shutterCloseMs, INTRO_BEATS.shutterCloseEndMs)
-      : 1 - rampAt(timeMs, INTRO_BEATS.shutterOpenMs, 600),
-  fieldOpen: rampAt(timeMs, INTRO_BEATS.shutterOpenMs, 600),
-  playerCard: rampAt(timeMs, INTRO_BEATS.playerCardMs, 500),
-  playerBoard: rampAt(
-    timeMs,
-    INTRO_BEATS.playerBoardMs,
-    INTRO_BEATS.playerBoardSettledMs - INTRO_BEATS.playerBoardMs,
-  ),
-  vsCard: rampAt(timeMs, INTRO_BEATS.vsCardMs, 400),
-  opponentBoard: rampAt(
-    timeMs,
-    INTRO_BEATS.opponentBoardMs,
-    INTRO_BEATS.opponentBoardSettledMs - INTRO_BEATS.opponentBoardMs,
-  ),
-  cardsVisible: timeMs < INTRO_BEATS.cardsClearMs,
-  controls: rampAt(timeMs, INTRO_BEATS.controlsMs, 400),
-});
 
 export const sampleOutro = (
   elapsedMs: number,

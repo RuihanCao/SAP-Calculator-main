@@ -24,7 +24,7 @@ import {
   DamagePopupCue,
   OutlineCue,
 } from './cues';
-import { AnimationMode, INTRO_BEATS, OUTRO_BEATS, getBeats } from './timing';
+import { AnimationMode, OUTRO_BEATS, getBeats } from './timing';
 
 /** One cue without its id, distributed over the union so a literal type checks. */
 type CueDraft<T> = T extends AnimationCue ? Omit<T, 'id'> : never;
@@ -33,8 +33,6 @@ export interface DirectorOptions {
   mode?: AnimationMode;
   /** The board the stream starts from; the stream itself never states it. */
   initialBoard: AnimationBoardState;
-  /** The entrance, checklist 18. Off for tests that only read battle beats. */
-  includeIntro?: boolean;
   includeOutro?: boolean;
 }
 
@@ -83,15 +81,16 @@ export const buildBattleTimeline = (
 ): AnimationTimeline => {
   const mode = options.mode ?? 'normal';
   const beats = getBeats(mode);
-  const includeIntro = options.includeIntro !== false;
   const includeOutro = options.includeOutro !== false;
-  const introEndMs = includeIntro ? INTRO_BEATS.totalMs : 0;
 
   const cues: AnimationCue[] = [];
   const steps: AnimationStep[] = [];
   const board = cloneBoard(options.initialBoard);
 
-  let cursor = introEndMs;
+  // The timeline opens on the battle itself. There is no entrance segment in
+  // front of it, so the first frame is already the board with the control bar
+  // up, which is where the animation starts and where REWIND comes back to.
+  let cursor = 0;
   /** Contact frame of the last clash, which the next one keeps its distance from. */
   let lastClashContactMs: number | null = null;
   let winner: AnimationTimeline['winner'] = null;
@@ -448,13 +447,13 @@ export const buildBattleTimeline = (
         const cadenceFloorMs =
           lastClashContactMs != null
             ? lastClashContactMs + beats.clashCadenceMs
-            : introEndMs;
+            : 0;
         const contactMs = clash.jump
           ? Math.max(cursor + beats.jumpOutMs, cadenceFloorMs)
           : Math.max(cursor + beats.clashLeadMs, cadenceFloorMs);
         const startMs = clash.jump
           ? contactMs - beats.jumpOutMs
-          : Math.max(introEndMs, contactMs - beats.clashWindupMs);
+          : Math.max(0, contactMs - beats.clashWindupMs);
         const returnStartMs = clash.jump
           ? contactMs + beats.jumpHoldMs
           : contactMs;
@@ -957,7 +956,6 @@ export const buildBattleTimeline = (
 
   return {
     mode,
-    introEndMs,
     battleEndMs,
     durationMs,
     steps,
@@ -989,7 +987,7 @@ const BOARD_CHANGING: ReadonlySet<AnimationStepKind> = new Set<AnimationStepKind
  * screen, which is what a step back has to show.
  */
 export const boardStateTimes = (timeline: AnimationTimeline): number[] => {
-  const times: number[] = [timeline.introEndMs];
+  const times: number[] = [0];
   for (const step of timeline.steps) {
     if (!BOARD_CHANGING.has(step.kind)) {
       continue;
@@ -1003,7 +1001,7 @@ export const boardStateTimes = (timeline: AnimationTimeline): number[] => {
 
 /** Beats the controls step through: every step that changes the board. */
 export const checkpointTimes = (timeline: AnimationTimeline): number[] => {
-  const times: number[] = [timeline.introEndMs];
+  const times: number[] = [0];
   const boardChanging = BOARD_CHANGING;
   for (const step of timeline.steps) {
     if (!boardChanging.has(step.kind)) {

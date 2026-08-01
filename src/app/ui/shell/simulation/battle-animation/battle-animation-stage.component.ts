@@ -211,10 +211,10 @@ export class BattleAnimationStageComponent
   @Input() logs: ReadonlyArray<Log> = [];
   @Input() speed = 1;
   /**
-   * Play the moment the battle is loaded, from the first frame of the
-   * entrance. The fullscreen presentation is opened this way, so one press of
-   * the calculator's battle animation button is the whole entry: the shutter,
-   * the line-up, then the battle, with nothing to press in between.
+   * Play the moment the battle is loaded, from the battle's own first frame.
+   * The fullscreen presentation is opened this way, so one press of the
+   * calculator's battle animation button is the whole entry: the board is
+   * there, the control bar is up, and the fight is already running.
    */
   @Input() autoPlay = false;
   /**
@@ -229,17 +229,7 @@ export class BattleAnimationStageComponent
    * roll is taken once per battle rather than once per frame.
    */
   @Input() randomBackground = false;
-  /**
-   * The names on the entrance banners. The real client puts the two teams'
-   * names there, blue on the near side and orange on the far side (f11
-   * t=22.16, out/f11-jump-african-wild-dog_board.jpg), so the calculator's own
-   * team name is carried through when there is one and the sides fall back to
-   * what they are otherwise.
-   */
-  @Input() playerTeamName = '';
-  @Input() opponentTeamName = '';
 
-  @Output() legacyRequested = new EventEmitter<void>();
   @Output() exitRequested = new EventEmitter<void>();
 
   /** The biome this battle is fought on, rolled when the battle is built. */
@@ -357,15 +347,11 @@ export class BattleAnimationStageComponent
     this.render();
   }
 
-  /** 0..1, so the bar arrives with the entrance and goes when the battle does. */
-  get controlsOpacity(): number {
-    return this.frame?.controls ?? 1;
-  }
-
   /**
-   * Checklist 17. REWIND restarts the battle from the top of the entrance and
-   * keeps playing, which is what the reference strip does, so it is also the
-   * way off the end screen.
+   * Checklist 17. REWIND restarts the battle from its first frame and keeps
+   * playing, which is what the reference strip does, so it is also the way off
+   * the end screen. There is no entrance to sit through on the way back: the
+   * restart lands on the same controls-visible frame the animation opens on.
    */
   onRewind(): void {
     const timeline = this.timeline;
@@ -422,10 +408,6 @@ export class BattleAnimationStageComponent
     this.render();
   }
 
-  useLegacy(): void {
-    this.legacyRequested.emit();
-  }
-
   /** Leaves the fullscreen animation, which puts the calculator back. */
   onExit(): void {
     this.stopLoop();
@@ -475,30 +457,14 @@ export class BattleAnimationStageComponent
 
   petStyle(view: PetView): Record<string, string> {
     const point = this.anchorPoint(view);
-    let x = point.x;
-    let y = point.y;
-    let entrance = 1;
-    const intro = this.frame?.intro;
-    if (intro) {
-      // The line-up of checklist 18: the player board slides in from the left,
-      // the opponent board is delivered from the top right.
-      if (view.pet.side === 'player') {
-        entrance = intro.playerBoard;
-        x -= (1 - entrance) * 55;
-      } else {
-        entrance = intro.opponentBoard;
-        x += (1 - entrance) * 45;
-        y -= (1 - entrance) * 35;
-      }
-    }
     return {
-      left: `${x}%`,
-      top: `${y}%`,
+      left: `${point.x}%`,
+      top: `${point.y}%`,
       // A pet that has left its slot paints over the ones it is passing or
       // landing on, or a jump attacker disappears behind its target at the
       // contact frame (checklist 14).
       'z-index': `${view.lean > 0 || view.lift > 0 ? 14 : 10}`,
-      opacity: `${(0.25 + 0.75 * view.reveal) * (entrance > 0 ? 1 : 0)}`,
+      opacity: `${0.25 + 0.75 * view.reveal}`,
       transform: `translate(-50%, -100%) scale(${0.7 + 0.3 * view.reveal})`,
     };
   }
@@ -662,15 +628,6 @@ export class BattleAnimationStageComponent
       default:
         return ATTACK_ICON;
     }
-  }
-
-  /** The two banner names, with the sides' own labels as the fallback. */
-  get playerBannerName(): string {
-    return this.playerTeamName.trim() || 'Player';
-  }
-
-  get opponentBannerName(): string {
-    return this.opponentTeamName.trim() || 'Opponent';
   }
 
   readonly mascotSprite = MASCOT_SPRITE;

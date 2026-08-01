@@ -19,6 +19,7 @@ import {
   mirrorsSprite,
   pickBackground,
   play,
+  rewind,
 } from '../../../src/app/ui/shell/simulation/battle-animation';
 import { loadFixture, readGolden } from '../../support/animation-event-fixtures';
 
@@ -214,11 +215,12 @@ describe('App integration overrides, round 4', () => {
     });
 
     /**
-     * Autostart means the entrance, not the battle: a fresh playback that is
-     * told to play sits at the first millisecond, which the sampler still
-     * calls the entrance.
+     * Autostart means the battle: a fresh playback that is told to play sits at
+     * the first millisecond, and with the entrance cut that millisecond is
+     * already the battle with the control bar up. It is also exactly where
+     * REWIND comes back to, so the two land on the same frame.
      */
-    it('starts at the first frame of the entrance', () => {
+    it('starts on the battle first frame, with the control bar up', () => {
       const timeline = buildBattleTimeline(readGolden('f01-plain-trades'), {
         initialBoard: seedFor('f01-plain-trades'),
       });
@@ -226,8 +228,10 @@ describe('App integration overrides, round 4', () => {
       expect(started.timeMs).toBe(0);
       expect(started.playing).toBe(true);
       const sampler = new TimelineSampler(timeline);
-      expect(sampler.frameAt(started.timeMs).phase).toBe('intro');
-      expect(timeline.introEndMs).toBeGreaterThan(0);
+      const opening = sampler.frameAt(started.timeMs);
+      expect(opening.phase).toBe('battle');
+      expect(opening.controls).toBe(1);
+      expect(rewind(initialPlayback(), timeline).timeMs).toBe(started.timeMs);
     });
 
     it('shows no scrubber and no skip-intro button on the game screen', () => {
@@ -275,10 +279,12 @@ describe('Round 5, measured against the reference frames', () => {
       expect(stageTemplate).toContain('class="anim-stage-box"');
     });
 
-    /** Item 16: the shutter is the screen going black, so it is black. */
-    it('closes the shutter to pure black', () => {
-      const shutter = styles.slice(styles.indexOf('.anim-shutter {'));
-      expect(shutter.slice(0, 200)).toMatch(/background:\s*#000\s*;/);
+    /**
+     * Item 16. The letterbox is the only black on the stage now that the
+     * shutter is gone, and the field itself is the game's own art rather than
+     * the drawn slate gradient it started as.
+     */
+    it('leaves no drawn field behind the background art', () => {
       expect(styles).not.toContain('#10151c');
     });
   });
@@ -418,32 +424,17 @@ describe('Round 5, measured against the reference frames', () => {
     });
   });
 
-  describe('the entrance banners, item 12', () => {
+  describe('no entrance, item 12', () => {
     /**
-     * One centred row over the near board, not three cards scattered across
-     * the forest. On out/f11-jump-african-wild-dog_board.jpg the near plate
-     * runs x=186 to 528 of 1280, the VS plate x=598 to 691 and the far plate
-     * x=720 to 1187, all on one baseline centred 34.6% down the play area.
+     * The entrance was cut: the shutter, the team-name plates and the VS
+     * plaque are gone from the stage entirely, not merely skipped, so nothing
+     * can put them back on screen between the press and the battle.
      */
-    it('lays the two names and the VS plaque out as one adjacent row', () => {
-      expect(stageTemplate).toContain('class="anim-intro-row"');
-      expect(stageTemplate).toContain('{{ playerBannerName }}');
-      expect(stageTemplate).toContain('{{ opponentBannerName }}');
-      expect(stageTemplate).not.toContain('>Your team<');
-      const row = styles.slice(styles.indexOf('.anim-intro-row {'));
-      expect(row).toMatch(/left:\s*50%/);
-      expect(row).toMatch(/top:\s*34\.6%/);
-      expect(row.slice(0, 400)).toContain('display: flex');
-      // Blue near, orange far, black VS, all on white plates with a keyline.
-      expect(styles).toMatch(/\.anim-intro-player\s*\{[^}]*color:\s*#23a6e6/);
-      expect(styles).toMatch(/\.anim-intro-opponent\s*\{[^}]*color:\s*#f2661f/);
-      expect(styles).toMatch(/\.anim-intro-vs\s*\{[^}]*color:\s*#101010/);
-      expect(styles).toMatch(/\.anim-intro-card\s*\{[^}]*background:\s*#fff/);
-      expect(styles).toMatch(/\.anim-intro-card\s*\{[^}]*border:[^;]*#101010/);
-    });
-
-    it('carries the calculator s own team name through, and falls back', () => {
-      expect(shellTemplate).toContain('[playerTeamName]="app.teamName"');
+    it('draws no shutter and no team-name plates at all', () => {
+      expect(stageTemplate).not.toContain('anim-shutter');
+      expect(stageTemplate).not.toContain('anim-intro');
+      expect(styles).not.toContain('.anim-shutter');
+      expect(styles).not.toContain('.anim-intro');
     });
   });
 
@@ -458,7 +449,7 @@ describe('Round 5, measured against the reference frames', () => {
     it('draws every glyph rather than borrowing a font character', () => {
       const bar = stageTemplate.slice(
         stageTemplate.indexOf('<div class="anim-controls"'),
-        stageTemplate.indexOf('<!-- entrance'),
+        stageTemplate.indexOf('<!-- trigger banner'),
       );
       expect((bar.match(/<svg class="anim-ctl-glyph"/g) ?? []).length).toBe(5);
       expect(bar).not.toMatch(/&#9\d\d\d;/);

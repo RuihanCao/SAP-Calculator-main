@@ -12,8 +12,7 @@
          forest, the dirt lane the pets stand on and the grass below it are the
          real asset rather than a drawn gradient. -->
     <div class="anim-field" #field [style.font-size.px]="fieldFontPx"
-      [style.background-image]="fieldBackground"
-      [class.anim-field-intro]="view.phase === 'intro'">
+      [style.background-image]="fieldBackground">
 
       <!--
         The other player's avatar, standing at the field's right in every
@@ -22,9 +21,9 @@
       -->
       <img class="anim-mascot" [src]="mascotSprite" alt="" aria-hidden="true" />
 
-      <!-- the replay control bar, checklist 17 and 18. It rides with the play
-           area: it fades in near the end of the entrance and goes when the
-           battle ends, and it never shows a playback rate. -->
+      <!-- the replay control bar, checklist 17. It rides with the play area: it
+           is up from the battle's first frame and goes when the battle ends,
+           and it never shows a playback rate. -->
       <div class="anim-controls" [style.opacity]="view.controls"
         [class.anim-controls-gone]="view.controls === 0">
         <button type="button" class="anim-ctl" data-anim-control="rewind" (click)="onRewind()">
@@ -75,44 +74,6 @@
           </svg>
         </button>
       </div>
-
-      <!-- entrance, checklist 18 -->
-      <ng-container *ngIf="view.intro as intro">
-        <!--
-          The shutter, checklist 18. The real game squeezes the scene into a
-          horizontal band as black closes in from the top and the bottom, and
-          the battlefield opens back out of that band the same way, so it is two
-          bars rather than one rectangle growing out of the middle. Read off
-          outro-defeat: the shop is already a middle band at t=36.46
-          (clips/outro-defeat/f_01274_0036456.jpg), the screen is black at
-          t=36.83, and the empty field opens as a middle band at t=37.14.
-        -->
-        <div class="anim-shutter anim-shutter-top" [style.height.%]="intro.shutter * 50"></div>
-        <div class="anim-shutter anim-shutter-bottom" [style.height.%]="intro.shutter * 50"></div>
-        <!--
-          The two team names and the VS plaque, checklist 18. They are one
-          centred row over the near board, not three cards scattered across the
-          forest: on f11 t=22.16 the near plate runs x=186 to 528 of 1280, the
-          VS plate x=598 to 691 and the far plate x=720 to 1187, all on the same
-          baseline (out/f11-jump-african-wild-dog_board.jpg). The near name is
-          blue, the far one orange, the VS black on white, every plate white
-          with a heavy black keyline.
-        -->
-        <div class="anim-intro-row" *ngIf="intro.cardsVisible">
-          <div class="anim-intro-card anim-intro-player" [style.opacity]="intro.playerCard"
-            [style.transform]="'translateX(' + (-26 + 26 * intro.playerCard) + '%)'">
-            {{ playerBannerName }}
-          </div>
-          <div class="anim-intro-card anim-intro-vs" [style.opacity]="intro.vsCard"
-            [style.transform]="'scale(' + (0.4 + 0.6 * intro.vsCard) + ')'">
-            VS
-          </div>
-          <div class="anim-intro-card anim-intro-opponent" [style.opacity]="intro.opponentBoard"
-            [style.transform]="'translateX(' + (26 - 26 * intro.opponentBoard) + '%)'">
-            {{ opponentBannerName }}
-          </div>
-        </div>
-      </ng-container>
 
       <!-- trigger banner, checklist 0, 11 and 15 -->
       <div class="anim-banner" *ngIf="view.banner as banner" [ngStyle]="bannerStyle()"
@@ -315,15 +276,14 @@
 
   <!--
     Tools, not part of the game's own bar. The fullscreen presentation is the
-    game's screen and nothing else, so the scrubber and the legacy switch are
-    only offered on the calculator's own inline pane.
+    game's screen and nothing else, so the scrubber is only offered when the
+    stage is embedded rather than given the whole viewport.
   -->
   <div class="anim-tools" *ngIf="!fullscreen">
     <button type="button" class="anim-tool" (click)="onRestart()">RESTART</button>
     <input class="form-range anim-scrub" type="range" [min]="0" [max]="timeline?.durationMs || 0" [step]="50"
       [value]="playback.timeMs" (input)="onScrub($any($event.target).value)" aria-label="Animation position" />
     <span class="anim-clock">{{ (playback.timeMs / 1000).toFixed(1) }}s / {{ ((timeline?.durationMs || 0) / 1000).toFixed(1) }}s</span>
-    <button type="button" class="anim-tool anim-legacy" (click)="useLegacy()">Legacy view</button>
   </div>
 </div>
 

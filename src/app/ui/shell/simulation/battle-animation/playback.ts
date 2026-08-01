@@ -147,12 +147,14 @@ export const skip = (
  * REWIND, checklist 17.
  *
  * Measured off the reference rather than guessed at. On `ctl-rewind` the press
- * lands at t=21.9 and the very next frames are the entrance again: the screen
- * is black, the field opens out of the shutter band at t=22.10, the team
- * banners come back at t=22.81, and the battle runs on from its first beat
+ * lands at t=21.9 and the battle runs on again from its first beat
  * (clips/ctl-rewind/, out/ctl-rewind_filmstrip.jpg frames 00 to 07). So REWIND
- * is not a step back, it is a restart from the top of the entrance, and it
- * keeps playing rather than parking the transport.
+ * is not a step back, it is a restart, and it keeps playing rather than parking
+ * the transport.
+ *
+ * The reference restarts through its entrance; ours has none, so the restart
+ * lands on the same controls-visible first frame the animation opens on and
+ * never replays a shutter.
  *
  * `autoplay` is carried through for the same reason PLAY carries it: with the
  * toggle off the restart buys one beat and stops on the first board state.
@@ -215,8 +217,8 @@ export const remapTimeAcrossTimelines = (
   to: AnimationTimeline,
   timeMs: number,
 ): number => {
-  if (timeMs <= from.introEndMs) {
-    return Math.min(timeMs, to.introEndMs);
+  if (timeMs <= 0) {
+    return 0;
   }
   if (timeMs >= from.battleEndMs) {
     return to.battleEndMs + (timeMs - from.battleEndMs);
@@ -229,5 +231,5 @@ export const remapTimeAcrossTimelines = (
     stepIndex = step.index;
   }
   const target = to.steps[stepIndex];
-  return target ? target.startMs : to.introEndMs;
+  return target ? target.startMs : 0;
 };

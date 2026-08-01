@@ -213,32 +213,6 @@ export const getBeats = (mode: AnimationMode): AnimationBeats => {
 };
 
 /**
- * The entrance, checklist 18. Offsets are milliseconds from the shutter
- * starting to close, and they are the clip's own timings rebased to zero.
- *
- * `totalMs` is where the battle's own beats begin, so the control bar fading in
- * at `controlsMs` is on screen 1.5 s before the first wind-up and not a moment
- * of the entrance before that.
- */
-export const INTRO_BEATS = {
-  shutterCloseMs: 0,
-  shutterCloseEndMs: 700,
-  shutterOpenMs: 1360,
-  playerCardMs: 1360,
-  playerBoardMs: 2110,
-  playerBoardSettledMs: 2850,
-  vsCardMs: 3570,
-  opponentBoardMs: 4310,
-  opponentBoardSettledMs: 6030,
-  cardsClearMs: 6830,
-  controlsMs: 7530,
-  totalMs: 9030,
-} as const;
-
-/** Checklist 18: the bar is up this long before the first wind-up. */
-export const CONTROLS_LEAD_MS = INTRO_BEATS.totalMs - INTRO_BEATS.controlsMs;
-
-/**
  * The end screens, checklist 18. Offsets from the battle's last beat.
  *
  * `rowsMs` and `awardMs` are the real game's trophy and heart rows flying in

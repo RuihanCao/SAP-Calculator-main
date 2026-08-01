@@ -17,7 +17,6 @@ import {
   SlideCue,
   StatPillCue,
   CLASH_WHITEOUT_MS,
-  INTRO_BEATS,
   JUMP_ARC_LIFT,
   JUMP_CONTACT_LIFT,
   OUTRO_BEATS,
@@ -75,7 +74,6 @@ const timelineFor = (
   buildBattleTimeline(readGolden(id), {
     initialBoard: seedFor(id),
     mode,
-    includeIntro: false,
     includeOutro: false,
   });
 
@@ -395,7 +393,6 @@ describe('battle animation director', () => {
           [{ name: 'Pig', attack: 4, health: 10 }],
           [{ name: 'Cow', attack: 3, health: 12 }],
         ),
-        includeIntro: false,
         includeOutro: false,
       });
       const popups = cuesOfKind<DamagePopupCue>(timeline, 'damagePopup');
@@ -984,36 +981,35 @@ describe('battle animation director', () => {
     });
   });
 
-  describe('entrance and end screen, checklist 18', () => {
-    it('wraps the battle in the entrance and the end screen', () => {
+  describe('no entrance, and the end screen, checklist 18', () => {
+    /**
+     * The animation opens on the battle. Ruihan cut the entrance segment, so
+     * there is nothing in front of the first beat: no shutter closing over the
+     * field, no line-up, and the first frame the viewer is given is already the
+     * board with the control bar on it.
+     */
+    it('opens on the battle itself and closes on the end screen', () => {
       const timeline = buildBattleTimeline(readGolden('f01-plain-trades'), {
         initialBoard: seedFor('f01-plain-trades'),
       });
-      expect(timeline.introEndMs).toBe(9030);
-      for (const cue of timeline.cues) {
-        expect(cue.startMs).toBeGreaterThanOrEqual(timeline.introEndMs);
-      }
       const sampler = new TimelineSampler(timeline);
-      expect(sampler.frameAt(100).phase).toBe('intro');
-      expect(sampler.frameAt(timeline.introEndMs + 10).phase).toBe('battle');
+      expect(sampler.frameAt(0).phase).toBe('battle');
+      expect(Math.min(...timeline.cues.map((cue) => cue.startMs))).toBeLessThan(
+        1000,
+      );
       const outro = sampler.frameAt(timeline.battleEndMs + 3200);
       expect(outro.phase).toBe('outro');
       expect(outro.outro?.winner).toBe('player');
       expect(outro.outro?.face).toBeGreaterThan(0);
     });
 
-    it('brings the control bar in 1.5 s before the first wind-up and takes it away at the end', () => {
+    it('has the control bar up from the first frame and takes it away at the end', () => {
       const timeline = buildBattleTimeline(readGolden('f01-plain-trades'), {
         initialBoard: seedFor('f01-plain-trades'),
       });
       const sampler = new TimelineSampler(timeline);
-      // Checklist 17: the bar is not on screen from the first frame.
-      expect(sampler.frameAt(0).controls).toBe(0);
-      expect(sampler.frameAt(INTRO_BEATS.controlsMs - 10).controls).toBe(0);
-      expect(sampler.frameAt(INTRO_BEATS.controlsMs + 400).controls).toBe(1);
-      const windup = cuesOfKind<ClashCue>(timeline, 'clash')[0].startMs;
-      expect(windup - INTRO_BEATS.controlsMs).toBeGreaterThanOrEqual(1400);
-      expect(windup - INTRO_BEATS.controlsMs).toBeLessThanOrEqual(1700);
+      // The bar is the first thing on screen, not something that fades in.
+      expect(sampler.frameAt(0).controls).toBe(1);
       expect(sampler.frameAt(timeline.battleEndMs - 10).controls).toBe(1);
       // And it goes the moment the battle ends.
       expect(sampler.frameAt(timeline.battleEndMs + 10).controls).toBe(0);
@@ -1061,30 +1057,32 @@ describe('battle animation director', () => {
      * REWIND restarts the whole animation, checklist 17.
      *
      * Measured on the reference strip rather than assumed: the press lands at
-     * t=21.9 and the very next frames are the entrance again, the screen black,
-     * then the field opening out of the shutter band at t=22.10 and the team
-     * banners back at t=22.81 (clips/ctl-rewind/,
+     * t=21.9 and the battle runs again from its first beat (clips/ctl-rewind/,
      * out/ctl-rewind_filmstrip.jpg frames 00 to 07). It is not a step back to
      * the previous board and it does not park the transport.
+     *
+     * The reference restarts through its entrance. Ours has none, so the press
+     * lands on the same controls-visible first frame the animation opened on,
+     * and no shutter is ever replayed.
      */
-    /** The whole animation, entrance and end screen included, as it is played. */
+    /** The whole animation, end screen included, as it is played. */
     const wholeTimeline = buildBattleTimeline(readGolden('f01-plain-trades'), {
       initialBoard: seedFor('f01-plain-trades'),
     });
 
-    it('restarts from the first frame of the entrance, playing', () => {
+    it('restarts from the battle first frame, controls up, playing', () => {
       const sampler = new TimelineSampler(wholeTimeline);
-      expect(wholeTimeline.introEndMs).toBeGreaterThan(0);
       let state = play(initialPlayback(), wholeTimeline);
-      state = advancePlayback(state, wholeTimeline, wholeTimeline.introEndMs + 6000);
-      expect(state.timeMs).toBeGreaterThan(wholeTimeline.introEndMs);
+      state = advancePlayback(state, wholeTimeline, 6000);
+      expect(state.timeMs).toBeGreaterThan(0);
       expect(sampler.frameAt(state.timeMs).phase).toBe('battle');
 
       state = rewind(state, wholeTimeline);
       expect(state.timeMs).toBe(0);
       expect(state.playing).toBe(true);
       expect(state.finished).toBe(false);
-      expect(sampler.frameAt(state.timeMs).phase).toBe('intro');
+      expect(sampler.frameAt(state.timeMs).phase).toBe('battle');
+      expect(sampler.frameAt(state.timeMs).controls).toBe(1);
 
       // And the clock actually runs on from there rather than freezing.
       const running = advancePlayback(state, wholeTimeline, 120);
@@ -1102,7 +1100,8 @@ describe('battle animation director', () => {
       expect(sampler.frameAt(state.timeMs).phase).toBe('outro');
       state = rewind(state, wholeTimeline);
       expect(state.timeMs).toBe(0);
-      expect(sampler.frameAt(state.timeMs).phase).toBe('intro');
+      expect(sampler.frameAt(state.timeMs).phase).toBe('battle');
+      expect(sampler.frameAt(state.timeMs).controls).toBe(1);
       expect(state.playing).toBe(true);
       // Long enough to have run the battle out and be back on the end screen.
       const replayed = advancePlayback(

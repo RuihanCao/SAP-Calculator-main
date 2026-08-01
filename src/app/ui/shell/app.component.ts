@@ -218,12 +218,6 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 
   showBattleAnalysis = false;
   showRandomOverrides = true;
-  /**
-   * The event driven renderer is the default. The prose parsing one stays
-   * reachable behind `?legacyAnimation=1` and the Legacy view button until the
-   * W3 parity loop signs the new one off (exp01 PLAN, W2).
-   */
-  useLegacyFightAnimation = false;
   fightAnimationFrames: FightAnimationFrame[] = [];
   fightAnimationTimeline: FightAnimationTimeline | null = null;
   fightAnimationFrameIndex = -1;
@@ -362,7 +356,6 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly printFormGroup = () => printFormGroupImpl(this);
 
   ngOnInit(): void {
-    this.loadFightAnimationPreference();
     this.loadThemePreference();
     this.loadSoundPreference();
     this.isLoadedFromUrl = this.loadStateFromUrl(true);
@@ -747,19 +740,6 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   }
   get viewBattleEvents(): AnimationEvent[] {
     return this.viewBattle?.events ?? [];
-  }
-
-  setLegacyFightAnimation(useLegacy: boolean): void {
-    this.useLegacyFightAnimation = useLegacy;
-    this.cdr.markForCheck();
-  }
-
-  private loadFightAnimationPreference(): void {
-    if (typeof window === 'undefined') {
-      return;
-    }
-    const params = new URLSearchParams(window.location.search);
-    this.useLegacyFightAnimation = params.get('legacyAnimation') === '1';
   }
 
   get currentFightAnimationFrame(): FightAnimationFrame | null {

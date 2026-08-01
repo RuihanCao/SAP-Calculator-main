@@ -312,8 +312,6 @@ export interface AnimationStep {
 
 export interface AnimationTimeline {
   mode: 'normal' | 'fast';
-  /** Battle beats start here, after the entrance (checklist 18). */
-  introEndMs: number;
   /** Battle beats end here; the end screen runs from it. */
   battleEndMs: number;
   durationMs: number;
