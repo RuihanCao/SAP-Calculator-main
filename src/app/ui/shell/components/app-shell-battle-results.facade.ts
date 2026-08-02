@@ -1,5 +1,7 @@
 import { FormGroup } from '@angular/forms';
 import { Battle } from 'app/domain/interfaces/battle.interface';
+import { AnimationEvent } from 'app/domain/interfaces/animation-event.interface';
+import { Log } from 'app/domain/interfaces/log.interface';
 import {
   BattleDiffRow,
   BattleDiffScope,
@@ -34,6 +36,8 @@ export interface AppShellBattleResultsFacade {
   }>;
   logEventFilter: BattleLogEventFilter;
   setViewBattleLogFilter: (filter: BattleLogEventFilter) => void;
+  viewBattleEvents: AnimationEvent[];
+  viewBattleLogs: Log[];
   currentFightAnimationRenderFrame: FightAnimationRenderFrameModel | null;
   currentFightAnimationLogRow: BattleLogRow | null;
   currentFightAnimationIsHeavyImpactFrame: boolean;
@@ -119,6 +123,12 @@ export function createAppShellBattleResultsFacade(
       return app.logEventFilter;
     },
     setViewBattleLogFilter: (filter) => app.setViewBattleLogFilter(filter),
+    get viewBattleEvents() {
+      return app.viewBattleEvents;
+    },
+    get viewBattleLogs() {
+      return app.viewBattleLogs;
+    },
     get currentFightAnimationRenderFrame() {
       return app.currentFightAnimationRenderFrame;
     },

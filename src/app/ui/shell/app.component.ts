@@ -7,6 +7,7 @@ import { CdkDragDrop, DragDropModule, DragStartDelay } from '@angular/cdk/drag-d
 import { Modal } from 'bootstrap';
 import { Player } from 'app/domain/entities/player.class';
 import { Battle } from 'app/domain/interfaces/battle.interface';
+import { AnimationEvent } from 'app/domain/interfaces/animation-event.interface';
 import { Log } from 'app/domain/interfaces/log.interface';
 import {
   RandomDecisionCapture,
@@ -737,6 +738,10 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   get logs() {
     return this.logService.getLogs();
   }
+  get viewBattleEvents(): AnimationEvent[] {
+    return this.viewBattle?.events ?? [];
+  }
+
   get currentFightAnimationFrame(): FightAnimationFrame | null {
     if (
       this.fightAnimationFrameIndex < 0 ||

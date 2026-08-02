@@ -2902,3 +2902,58 @@
   background-color: rgba(220, 53, 69, 0.12);
 }
 
+
+/*
+ * The fullscreen battle animation. It is the whole viewport with nothing of
+ * the calculator around it, black behind the field so a stage that does not
+ * match the screen's aspect letterboxes the way the game does.
+ */
+.battle-animation-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  background: #000;
+}
+
+.battle-animation-fullscreen app-battle-animation-stage {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+}
+
+/*
+ * The random field box. The app's own theme leaves a bare checkbox as a pale
+ * circle on a pale panel, which reads as nothing at all, so the box is drawn
+ * here: a bordered tile that fills and takes a tick when it is on.
+ */
+.battle-animation-background-pick .form-check-input {
+  appearance: none;
+  width: 1rem;
+  height: 1rem;
+  margin-top: 0;
+  border: 2px solid #2b3240;
+  border-radius: 0.25rem;
+  background: #fff;
+  cursor: pointer;
+}
+
+.battle-animation-background-pick .form-check-input:checked {
+  background: #2b6fdc;
+  border-color: #2b6fdc;
+}
+
+.battle-animation-background-pick .form-check-input:checked::after {
+  content: '';
+  display: block;
+  width: 0.25rem;
+  height: 0.55rem;
+  margin: -0.06rem auto 0;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.battle-animation-background-pick .form-check-label {
+  cursor: pointer;
+}

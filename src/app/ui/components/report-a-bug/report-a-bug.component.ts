@@ -7,7 +7,12 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
+import { environment } from 'environments/environment';
 import { buildShareableLink } from '../../shell/state/app.component.share';
+import {
+  BUG_REPORT_FAILURE_MESSAGE,
+  resolveBugReportEndpoint,
+} from './report-a-bug.endpoint';
 
 @Component({
   selector: 'app-report-a-bug',
@@ -39,6 +44,12 @@ export class ReportABugComponent implements OnInit {
       return;
     }
 
+    const endpoint = resolveBugReportEndpoint(environment.bugReportEndpoint);
+    if (!endpoint) {
+      this.errorMessage = BUG_REPORT_FAILURE_MESSAGE;
+      return;
+    }
+
     // Reuse the app's canonical share-link format (#c= compact payload).
     let shareableLink: string;
     try {
@@ -59,7 +70,7 @@ export class ReportABugComponent implements OnInit {
     const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
     this.http
       .post(
-        'https://formspree.io/f/mgvzngzp',
+        endpoint,
         {
           name: 'SAP CALC',
           message: message,
@@ -73,8 +84,7 @@ export class ReportABugComponent implements OnInit {
         },
         (error) => {
           console.error('Error submitting bug report:', error);
-          this.errorMessage =
-            'Failed to submit bug report. Please try again or contact the developer directly.';
+          this.errorMessage = BUG_REPORT_FAILURE_MESSAGE;
         },
       );
   }
