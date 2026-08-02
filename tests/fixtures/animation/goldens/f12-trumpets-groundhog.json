@@ -1,0 +1,561 @@
+[
+  {
+    "type": "phase",
+    "group": null,
+    "phase": "before-battle",
+    "turn": null,
+    "seq": 0
+  },
+  {
+    "type": "phase",
+    "group": null,
+    "phase": "start-of-battle",
+    "turn": null,
+    "seq": 1
+  },
+  {
+    "type": "phase",
+    "group": null,
+    "phase": "after-start-of-battle",
+    "turn": null,
+    "seq": 2
+  },
+  {
+    "type": "phase",
+    "group": null,
+    "phase": "turn",
+    "turn": 1,
+    "seq": 3
+  },
+  {
+    "type": "clash",
+    "group": null,
+    "jump": false,
+    "hits": [
+      {
+        "source": {
+          "id": 1,
+          "name": "Groundhog",
+          "side": "player",
+          "index": 0,
+          "level": 1,
+          "attack": 2,
+          "health": 3
+        },
+        "target": {
+          "id": 11,
+          "name": "Cow",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 5,
+          "health": 8
+        },
+        "damage": 2,
+        "blocked": false
+      },
+      {
+        "source": {
+          "id": 11,
+          "name": "Cow",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 5,
+          "health": 8
+        },
+        "target": {
+          "id": 1,
+          "name": "Groundhog",
+          "side": "player",
+          "index": 0,
+          "level": 1,
+          "attack": 2,
+          "health": -2
+        },
+        "damage": 5,
+        "blocked": false
+      }
+    ],
+    "seq": 4
+  },
+  {
+    "type": "faint",
+    "group": null,
+    "pet": {
+      "id": 1,
+      "name": "Groundhog",
+      "side": "player",
+      "index": 0,
+      "level": 1,
+      "attack": 2,
+      "health": -2
+    },
+    "killedBy": {
+      "id": 11,
+      "name": "Cow",
+      "side": "opponent",
+      "index": 0,
+      "level": 1,
+      "attack": 5,
+      "health": 8
+    },
+    "seq": 5
+  },
+  {
+    "type": "abilityTrigger",
+    "group": 0,
+    "actor": {
+      "kind": "pet",
+      "pet": {
+        "id": 1,
+        "name": "Groundhog",
+        "side": "player",
+        "index": 0,
+        "level": 1,
+        "attack": 2,
+        "health": -2
+      }
+    },
+    "abilitySource": "pet",
+    "trigger": "Faint",
+    "triggers": [
+      "Faint"
+    ],
+    "abilityName": "GroundhogAbility",
+    "level": 1,
+    "text": "Faint: Gain +1 trumpet.",
+    "triggeredBy": {
+      "id": 1,
+      "name": "Groundhog",
+      "side": "player",
+      "index": 0,
+      "level": 1,
+      "attack": 2,
+      "health": -2
+    },
+    "seq": 6
+  },
+  {
+    "type": "projectile",
+    "group": 0,
+    "source": {
+      "kind": "pet",
+      "pet": {
+        "id": 1,
+        "name": "Groundhog",
+        "side": "player",
+        "index": 0,
+        "level": 1,
+        "attack": 2,
+        "health": -2
+      }
+    },
+    "payload": "trumpet",
+    "targets": [],
+    "seq": 7
+  },
+  {
+    "type": "statChange",
+    "group": 0,
+    "kind": "trumpet-gain",
+    "target": null,
+    "side": "player",
+    "amount": 1,
+    "total": 1,
+    "levelFrom": null,
+    "levelTo": null,
+    "seq": 8
+  },
+  {
+    "type": "corpseLaunchGroup",
+    "group": null,
+    "pets": [
+      {
+        "id": 1,
+        "name": "Groundhog",
+        "side": "player",
+        "index": 0,
+        "level": 1,
+        "attack": 2,
+        "health": -2
+      }
+    ],
+    "seq": 9
+  },
+  {
+    "type": "phase",
+    "group": null,
+    "phase": "turn",
+    "turn": 2,
+    "seq": 10
+  },
+  {
+    "type": "pushForward",
+    "group": null,
+    "side": "player",
+    "moves": [
+      {
+        "pet": {
+          "id": 2,
+          "name": "Duck",
+          "side": "player",
+          "index": 0,
+          "level": 1,
+          "attack": 4,
+          "health": 20
+        },
+        "from": 1,
+        "to": 0
+      },
+      {
+        "pet": {
+          "id": 3,
+          "name": "Pig",
+          "side": "player",
+          "index": 1,
+          "level": 1,
+          "attack": 4,
+          "health": 16
+        },
+        "from": 2,
+        "to": 1
+      }
+    ],
+    "seq": 11
+  },
+  {
+    "type": "clash",
+    "group": null,
+    "jump": false,
+    "hits": [
+      {
+        "source": {
+          "id": 2,
+          "name": "Duck",
+          "side": "player",
+          "index": 0,
+          "level": 1,
+          "attack": 4,
+          "health": 20
+        },
+        "target": {
+          "id": 11,
+          "name": "Cow",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 5,
+          "health": 4
+        },
+        "damage": 4,
+        "blocked": false
+      },
+      {
+        "source": {
+          "id": 11,
+          "name": "Cow",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 5,
+          "health": 4
+        },
+        "target": {
+          "id": 2,
+          "name": "Duck",
+          "side": "player",
+          "index": 0,
+          "level": 1,
+          "attack": 4,
+          "health": 15
+        },
+        "damage": 5,
+        "blocked": false
+      }
+    ],
+    "seq": 12
+  },
+  {
+    "type": "phase",
+    "group": null,
+    "phase": "turn",
+    "turn": 3,
+    "seq": 13
+  },
+  {
+    "type": "clash",
+    "group": null,
+    "jump": false,
+    "hits": [
+      {
+        "source": {
+          "id": 2,
+          "name": "Duck",
+          "side": "player",
+          "index": 0,
+          "level": 1,
+          "attack": 4,
+          "health": 15
+        },
+        "target": {
+          "id": 11,
+          "name": "Cow",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 5,
+          "health": 0
+        },
+        "damage": 4,
+        "blocked": false
+      },
+      {
+        "source": {
+          "id": 11,
+          "name": "Cow",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 5,
+          "health": 0
+        },
+        "target": {
+          "id": 2,
+          "name": "Duck",
+          "side": "player",
+          "index": 0,
+          "level": 1,
+          "attack": 4,
+          "health": 10
+        },
+        "damage": 5,
+        "blocked": false
+      }
+    ],
+    "seq": 14
+  },
+  {
+    "type": "faint",
+    "group": null,
+    "pet": {
+      "id": 11,
+      "name": "Cow",
+      "side": "opponent",
+      "index": 0,
+      "level": 1,
+      "attack": 5,
+      "health": 0
+    },
+    "killedBy": {
+      "id": 2,
+      "name": "Duck",
+      "side": "player",
+      "index": 0,
+      "level": 1,
+      "attack": 4,
+      "health": 10
+    },
+    "seq": 15
+  },
+  {
+    "type": "corpseLaunchGroup",
+    "group": null,
+    "pets": [
+      {
+        "id": 11,
+        "name": "Cow",
+        "side": "opponent",
+        "index": 0,
+        "level": 1,
+        "attack": 5,
+        "health": 0
+      }
+    ],
+    "seq": 16
+  },
+  {
+    "type": "phase",
+    "group": null,
+    "phase": "turn",
+    "turn": 4,
+    "seq": 17
+  },
+  {
+    "type": "pushForward",
+    "group": null,
+    "side": "opponent",
+    "moves": [
+      {
+        "pet": {
+          "id": 12,
+          "name": "Otter",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 2,
+          "health": 8
+        },
+        "from": 1,
+        "to": 0
+      }
+    ],
+    "seq": 18
+  },
+  {
+    "type": "clash",
+    "group": null,
+    "jump": false,
+    "hits": [
+      {
+        "source": {
+          "id": 2,
+          "name": "Duck",
+          "side": "player",
+          "index": 0,
+          "level": 1,
+          "attack": 4,
+          "health": 10
+        },
+        "target": {
+          "id": 12,
+          "name": "Otter",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 2,
+          "health": 4
+        },
+        "damage": 4,
+        "blocked": false
+      },
+      {
+        "source": {
+          "id": 12,
+          "name": "Otter",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 2,
+          "health": 4
+        },
+        "target": {
+          "id": 2,
+          "name": "Duck",
+          "side": "player",
+          "index": 0,
+          "level": 1,
+          "attack": 4,
+          "health": 8
+        },
+        "damage": 2,
+        "blocked": false
+      }
+    ],
+    "seq": 19
+  },
+  {
+    "type": "phase",
+    "group": null,
+    "phase": "turn",
+    "turn": 5,
+    "seq": 20
+  },
+  {
+    "type": "clash",
+    "group": null,
+    "jump": false,
+    "hits": [
+      {
+        "source": {
+          "id": 2,
+          "name": "Duck",
+          "side": "player",
+          "index": 0,
+          "level": 1,
+          "attack": 4,
+          "health": 8
+        },
+        "target": {
+          "id": 12,
+          "name": "Otter",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 2,
+          "health": 0
+        },
+        "damage": 4,
+        "blocked": false
+      },
+      {
+        "source": {
+          "id": 12,
+          "name": "Otter",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 2,
+          "health": 0
+        },
+        "target": {
+          "id": 2,
+          "name": "Duck",
+          "side": "player",
+          "index": 0,
+          "level": 1,
+          "attack": 4,
+          "health": 6
+        },
+        "damage": 2,
+        "blocked": false
+      }
+    ],
+    "seq": 21
+  },
+  {
+    "type": "faint",
+    "group": null,
+    "pet": {
+      "id": 12,
+      "name": "Otter",
+      "side": "opponent",
+      "index": 0,
+      "level": 1,
+      "attack": 2,
+      "health": 0
+    },
+    "killedBy": {
+      "id": 2,
+      "name": "Duck",
+      "side": "player",
+      "index": 0,
+      "level": 1,
+      "attack": 4,
+      "health": 6
+    },
+    "seq": 22
+  },
+  {
+    "type": "corpseLaunchGroup",
+    "group": null,
+    "pets": [
+      {
+        "id": 12,
+        "name": "Otter",
+        "side": "opponent",
+        "index": 0,
+        "level": 1,
+        "attack": 2,
+        "health": 0
+      }
+    ],
+    "seq": 23
+  },
+  {
+    "type": "outcome",
+    "group": null,
+    "winner": "player",
+    "seq": 24
+  }
+]

@@ -122,6 +122,7 @@ export const summonPet = (
     }
     player.setPet(4, spawnPet);
   }
+  player.animation.recordSummon(spawnPet, position, summoner);
   abilityService.triggerSummonEvents(spawnPet);
 
   return { success: true, randomEvent: false };
@@ -169,7 +170,9 @@ export const transformPet = (
     newPet.parent = targetPlayer as Player;
   }
 
-  targetPlayer.setPet(resolveTransformSlot(), newPet);
+  const transformSlot = resolveTransformSlot();
+  targetPlayer.setPet(transformSlot, newPet);
+  targetPlayer.animation.recordTransform(originalPet, newPet, transformSlot);
   const isPlayer = targetPlayer === gameService.gameApi.player;
   if (isPlayer) {
     gameService.gameApi.playerTransformationAmount++;

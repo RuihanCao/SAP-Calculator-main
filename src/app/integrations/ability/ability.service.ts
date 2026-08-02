@@ -134,6 +134,7 @@ export class AbilityService extends AbilityEventTriggers {
     this.abilityQueueService.addEventToQueue({
       priority: Number.MAX_SAFE_INTEGER,
       callback: () => {
+        this.logService.animation.recordFaint(pet, pet.killedBy ?? null);
         this.logService.createLog({
           message: `${pet.name} fainted.`,
           type: 'death',

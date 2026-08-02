@@ -1,0 +1,40 @@
+{
+ "id": "f03-faint-chain",
+ "title": "Hedgehog faint AoE chains into two more faints",
+ "covers": [
+  "faint trigger chain",
+  "AoE damage",
+  "cascading faints"
+ ],
+ "turn": 11,
+ "player": [
+  {
+   "pet": "Hedgehog",
+   "attack": 4,
+   "health": 2
+  },
+  {
+   "pet": "Pig",
+   "attack": 5,
+   "health": 12
+  }
+ ],
+ "opponent": [
+  {
+   "pet": "Cow",
+   "attack": 4,
+   "health": 7
+  },
+  {
+   "pet": "Otter",
+   "attack": 2,
+   "health": 2
+  },
+  {
+   "pet": "Worm",
+   "attack": 1,
+   "health": 10
+  }
+ ],
+ "notes": "Hedgehog dies on the first clash, its faint deals 2 to ALL pets, which kills the already-damaged Cow and the 2hp Otter."
+}

@@ -1,0 +1,37 @@
+{
+ "id": "f14-xp-pug",
+ "title": "Pug gives the friend ahead 2 experience, which levels it up mid battle",
+ "covers": [
+  "xp change",
+  "level up during battle"
+ ],
+ "turn": 11,
+ "playerPack": "Star",
+ "opponentPack": "Turtle",
+ "player": [
+  {
+   "pet": "Pig",
+   "attack": 4,
+   "health": 14
+  },
+  {
+   "pet": "Pug",
+   "attack": 3,
+   "health": 9,
+   "level": 2
+  }
+ ],
+ "opponent": [
+  {
+   "pet": "Cow",
+   "attack": 3,
+   "health": 9
+  },
+  {
+   "pet": "Otter",
+   "attack": 2,
+   "health": 8
+  }
+ ],
+ "notes": "The only fixture that produces an xp log. Pug at level 2 gives 2 experience, which takes the level 1 Pig straight to level 2, so the xp change and the level-up are both on screen."
+}

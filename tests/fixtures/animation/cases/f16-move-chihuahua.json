@@ -1,0 +1,21 @@
+{
+ "id": "f16-move-chihuahua",
+ "title": "Chihuahua pushes the healthiest enemy one space forward",
+ "covers": [
+  "move, reposition by a pet ability",
+  "start of battle trigger"
+ ],
+ "turn": 11,
+ "playerPack": "Star",
+ "opponentPack": "Turtle",
+ "player": [
+  {"pet": "Pig", "attack": 9, "health": 20},
+  {"pet": "Chihuahua", "attack": 4, "health": 5}
+ ],
+ "opponent": [
+  {"pet": "Otter", "attack": 2, "health": 6},
+  {"pet": "Worm", "attack": 1, "health": 4},
+  {"pet": "Cow", "attack": 3, "health": 16}
+ ],
+ "notes": "The reposition case with a pet as the source instead of a toy. Chihuahua at level 1 pushes the enemy with the most health one space forward at the start of battle, so the Cow and the Worm swap places while the Otter stays in front. Healths are unique so the target is not a random pick, and one space rather than a push to the front is what tells a reposition apart from the post-death shift forward."
+}

@@ -72,6 +72,7 @@ export const resetJumpedFlags = (player: Player): void => {
 };
 
 export const createDeathLog = (pet: Pet, logService: LogService): void => {
+  logService.animation.recordFaint(pet, pet.killedBy ?? null);
   logService.createLog({
     message: `${pet.name} fainted.`,
     type: 'death',
@@ -127,8 +128,10 @@ export const removeDeadPets = (
     { pet: player.pet4, index: 4 },
   ];
 
+  player.animation.beginCorpseGroup();
   for (const slot of petSlots) {
     if (slot.pet && !slot.pet.alive) {
+      player.animation.recordCorpse(slot.pet);
       slot.pet.removed = true;
       switch (slot.index) {
         case 0:
@@ -151,6 +154,7 @@ export const removeDeadPets = (
       petRemoved = true;
     }
   }
+  player.animation.endCorpseGroup();
 
   return petRemoved;
 };

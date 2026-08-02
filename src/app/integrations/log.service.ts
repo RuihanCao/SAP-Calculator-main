@@ -1,9 +1,15 @@
 import { Injectable } from '@angular/core';
 import { Log } from 'app/domain/interfaces/log.interface';
+import { AnimationEvent } from 'app/domain/interfaces/animation-event.interface';
+import {
+  AnimationEventRecorder,
+  AnimationPlayerLike,
+} from 'app/domain/animation/animation-event-recorder';
 import {
   getAllEquipmentNames,
   getAllPetNames,
   getAllToyNames,
+  getAbilityBannerText,
 } from 'app/runtime/asset-catalog';
 import { Pet } from 'app/domain/entities/pet.class';
 import { Player } from 'app/domain/entities/player.class';
@@ -22,6 +28,11 @@ import { buildBoardStateMessage } from './log/log-board-render';
 })
 export class LogService {
   private logs: Log[] = [];
+  /**
+   * Structured animation event stream for the battle currently being logged.
+   * Additive: it runs alongside `logs` and never changes what is logged.
+   */
+  readonly animation = new AnimationEventRecorder();
   private petNameRegex: RegExp;
   private toyNameRegex: RegExp;
   private equipmentNameRegex: RegExp;
@@ -52,12 +63,32 @@ export class LogService {
     this.ailmentNames = new Set(
       Object.values(AILMENT_CATEGORIES).flat().filter(Boolean),
     );
+    this.animation.setTextResolver(getAbilityBannerText);
+  }
+
+  getAnimationEvents(): AnimationEvent[] {
+    return this.animation.getEvents();
+  }
+
+  beginAnimationCapture(
+    player: AnimationPlayerLike | null | undefined,
+    opponent: AnimationPlayerLike | null | undefined,
+  ): void {
+    if (!this.enabled) {
+      return;
+    }
+    this.animation.beginCapture(player, opponent);
+  }
+
+  endAnimationCapture(): void {
+    this.animation.endCapture();
   }
 
   setEnabled(enabled: boolean) {
     this.enabled = Boolean(enabled);
     if (!this.enabled) {
       this.logs = [];
+      this.animation.reset();
     }
   }
 
@@ -259,6 +290,7 @@ export class LogService {
 
   reset() {
     this.logs = [];
+    this.animation.reset();
   }
 
   private getFrontIndex(pet: Pet): number | null {

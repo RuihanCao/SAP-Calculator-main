@@ -884,7 +884,24 @@ describe('random decision overrides', () => {
       ],
     };
 
-    const result = runSimulation(config);
+    /*
+     * Cocoa Bean only transforms a summon in a battle that reaches one, and an
+     * unseeded run does not always get there: on a full-suite run this spec
+     * failed on the decision being undefined rather than on the capture it is
+     * here to check. Take battles until one of them transforms.
+     */
+    let result = runSimulation(config);
+    for (
+      let attempt = 0;
+      attempt < 24 &&
+      !(result.randomDecisions ?? []).some(
+        (entry) => entry.key === 'equipment.cocoa-bean-transform',
+      );
+      attempt++
+    ) {
+      result = runSimulation(config);
+    }
+
     const cocoaDecision = (result.randomDecisions ?? []).find(
       (entry) => entry.key === 'equipment.cocoa-bean-transform',
     );

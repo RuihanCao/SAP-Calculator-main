@@ -1,0 +1,40 @@
+{
+ "id": "f04-summon-sheep",
+ "title": "Sheep faint summons two Rams, Horse reacts to each summon",
+ "covers": [
+  "summon",
+  "double summon staging",
+  "friend-summoned trigger badge"
+ ],
+ "turn": 11,
+ "player": [
+  {
+   "pet": "Sheep",
+   "attack": 2,
+   "health": 3
+  },
+  {
+   "pet": "Horse",
+   "attack": 4,
+   "health": 11
+  },
+  {
+   "pet": "Pig",
+   "attack": 3,
+   "health": 10
+  }
+ ],
+ "opponent": [
+  {
+   "pet": "Cow",
+   "attack": 4,
+   "health": 9
+  },
+  {
+   "pet": "Otter",
+   "attack": 2,
+   "health": 9
+  }
+ ],
+ "notes": "Two pets appear in one faint step and a third pet reacts twice. Tests summon staging and repeated trigger badges."
+}

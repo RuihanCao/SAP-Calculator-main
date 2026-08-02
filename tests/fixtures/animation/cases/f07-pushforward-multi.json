@@ -1,0 +1,9 @@
+{
+ "id": "f07-pushforward-multi",
+ "title": "Three enemies faint at once, two survivors push forward",
+ "covers": ["push forward after multiple faints", "simultaneous multi faint", "AoE"],
+ "turn": 11,
+ "player": [{"pet":"Hedgehog","attack":4,"health":2},{"pet":"Pig","attack":5,"health":12},{"pet":"Duck","attack":3,"health":12}],
+ "opponent": [{"pet":"Cow","attack":4,"health":6},{"pet":"Otter","attack":1,"health":2},{"pet":"Worm","attack":1,"health":2},{"pet":"Duck","attack":1,"health":9},{"pet":"Swan","attack":1,"health":9}],
+ "notes": "Hedgehog faint AoE removes the three front enemies in one step, so slots 4 and 5 have to slide two places forward."
+}

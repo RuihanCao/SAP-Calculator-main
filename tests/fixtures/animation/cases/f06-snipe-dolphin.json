@@ -1,0 +1,46 @@
+{
+ "id": "f06-snipe-dolphin",
+ "title": "Dolphin snipes the lowest health enemy from the back row",
+ "covers": [
+  "snipe / ranged",
+  "back-row source",
+  "mid-board target",
+  "jump or projectile arc"
+ ],
+ "turn": 11,
+ "player": [
+  {
+   "pet": "Pig",
+   "attack": 3,
+   "health": 10
+  },
+  {
+   "pet": "Duck",
+   "attack": 2,
+   "health": 11
+  },
+  {
+   "pet": "Dolphin",
+   "attack": 4,
+   "health": 6
+  }
+ ],
+ "opponent": [
+  {
+   "pet": "Cow",
+   "attack": 5,
+   "health": 9
+  },
+  {
+   "pet": "Otter",
+   "attack": 2,
+   "health": 3
+  },
+  {
+   "pet": "Worm",
+   "attack": 1,
+   "health": 8
+  }
+ ],
+ "notes": "Source is the back-most friend, target is the enemy middle slot. Compare the travel shape against f02 (front source, last-slot target)."
+}

@@ -1,0 +1,441 @@
+[
+  {
+    "type": "phase",
+    "group": null,
+    "phase": "before-battle",
+    "turn": null,
+    "seq": 0
+  },
+  {
+    "type": "phase",
+    "group": null,
+    "phase": "start-of-battle",
+    "turn": null,
+    "seq": 1
+  },
+  {
+    "type": "abilityTrigger",
+    "group": 0,
+    "actor": {
+      "kind": "pet",
+      "pet": {
+        "id": 2,
+        "name": "Pug",
+        "side": "player",
+        "index": 1,
+        "level": 2,
+        "attack": 3,
+        "health": 9
+      }
+    },
+    "abilitySource": "pet",
+    "trigger": "StartBattle",
+    "triggers": [
+      "StartBattle"
+    ],
+    "abilityName": "PugAbility",
+    "level": 2,
+    "text": "Start of battle: Give the nearest friend ahead +2 experience.",
+    "triggeredBy": null,
+    "seq": 2
+  },
+  {
+    "type": "projectile",
+    "group": 0,
+    "source": {
+      "kind": "pet",
+      "pet": {
+        "id": 2,
+        "name": "Pug",
+        "side": "player",
+        "index": 1,
+        "level": 2,
+        "attack": 3,
+        "health": 9
+      }
+    },
+    "payload": "xp-book",
+    "targets": [
+      {
+        "id": 1,
+        "name": "Pig",
+        "side": "player",
+        "index": 0,
+        "level": 2,
+        "attack": 6,
+        "health": 16
+      }
+    ],
+    "seq": 3
+  },
+  {
+    "type": "statChange",
+    "group": 0,
+    "kind": "exp",
+    "target": {
+      "id": 1,
+      "name": "Pig",
+      "side": "player",
+      "index": 0,
+      "level": 2,
+      "attack": 6,
+      "health": 16
+    },
+    "side": "player",
+    "amount": 2,
+    "total": null,
+    "levelFrom": 1,
+    "levelTo": 2,
+    "levelAttack": 2,
+    "levelHealth": 2,
+    "seq": 4
+  },
+  {
+    "type": "phase",
+    "group": null,
+    "phase": "after-start-of-battle",
+    "turn": null,
+    "seq": 5
+  },
+  {
+    "type": "phase",
+    "group": null,
+    "phase": "turn",
+    "turn": 1,
+    "seq": 6
+  },
+  {
+    "type": "clash",
+    "group": null,
+    "jump": false,
+    "hits": [
+      {
+        "source": {
+          "id": 1,
+          "name": "Pig",
+          "side": "player",
+          "index": 0,
+          "level": 2,
+          "attack": 6,
+          "health": 16
+        },
+        "target": {
+          "id": 11,
+          "name": "Cow",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 3,
+          "health": 3
+        },
+        "damage": 6,
+        "blocked": false
+      },
+      {
+        "source": {
+          "id": 11,
+          "name": "Cow",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 3,
+          "health": 3
+        },
+        "target": {
+          "id": 1,
+          "name": "Pig",
+          "side": "player",
+          "index": 0,
+          "level": 2,
+          "attack": 6,
+          "health": 13
+        },
+        "damage": 3,
+        "blocked": false
+      }
+    ],
+    "seq": 7
+  },
+  {
+    "type": "phase",
+    "group": null,
+    "phase": "turn",
+    "turn": 2,
+    "seq": 8
+  },
+  {
+    "type": "clash",
+    "group": null,
+    "jump": false,
+    "hits": [
+      {
+        "source": {
+          "id": 1,
+          "name": "Pig",
+          "side": "player",
+          "index": 0,
+          "level": 2,
+          "attack": 6,
+          "health": 13
+        },
+        "target": {
+          "id": 11,
+          "name": "Cow",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 3,
+          "health": -3
+        },
+        "damage": 6,
+        "blocked": false
+      },
+      {
+        "source": {
+          "id": 11,
+          "name": "Cow",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 3,
+          "health": -3
+        },
+        "target": {
+          "id": 1,
+          "name": "Pig",
+          "side": "player",
+          "index": 0,
+          "level": 2,
+          "attack": 6,
+          "health": 10
+        },
+        "damage": 3,
+        "blocked": false
+      }
+    ],
+    "seq": 9
+  },
+  {
+    "type": "faint",
+    "group": null,
+    "pet": {
+      "id": 11,
+      "name": "Cow",
+      "side": "opponent",
+      "index": 0,
+      "level": 1,
+      "attack": 3,
+      "health": -3
+    },
+    "killedBy": {
+      "id": 1,
+      "name": "Pig",
+      "side": "player",
+      "index": 0,
+      "level": 2,
+      "attack": 6,
+      "health": 10
+    },
+    "seq": 10
+  },
+  {
+    "type": "corpseLaunchGroup",
+    "group": null,
+    "pets": [
+      {
+        "id": 11,
+        "name": "Cow",
+        "side": "opponent",
+        "index": 0,
+        "level": 1,
+        "attack": 3,
+        "health": -3
+      }
+    ],
+    "seq": 11
+  },
+  {
+    "type": "phase",
+    "group": null,
+    "phase": "turn",
+    "turn": 3,
+    "seq": 12
+  },
+  {
+    "type": "pushForward",
+    "group": null,
+    "side": "opponent",
+    "moves": [
+      {
+        "pet": {
+          "id": 12,
+          "name": "Otter",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 2,
+          "health": 8
+        },
+        "from": 1,
+        "to": 0
+      }
+    ],
+    "seq": 13
+  },
+  {
+    "type": "clash",
+    "group": null,
+    "jump": false,
+    "hits": [
+      {
+        "source": {
+          "id": 1,
+          "name": "Pig",
+          "side": "player",
+          "index": 0,
+          "level": 2,
+          "attack": 6,
+          "health": 10
+        },
+        "target": {
+          "id": 12,
+          "name": "Otter",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 2,
+          "health": 2
+        },
+        "damage": 6,
+        "blocked": false
+      },
+      {
+        "source": {
+          "id": 12,
+          "name": "Otter",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 2,
+          "health": 2
+        },
+        "target": {
+          "id": 1,
+          "name": "Pig",
+          "side": "player",
+          "index": 0,
+          "level": 2,
+          "attack": 6,
+          "health": 8
+        },
+        "damage": 2,
+        "blocked": false
+      }
+    ],
+    "seq": 14
+  },
+  {
+    "type": "phase",
+    "group": null,
+    "phase": "turn",
+    "turn": 4,
+    "seq": 15
+  },
+  {
+    "type": "clash",
+    "group": null,
+    "jump": false,
+    "hits": [
+      {
+        "source": {
+          "id": 1,
+          "name": "Pig",
+          "side": "player",
+          "index": 0,
+          "level": 2,
+          "attack": 6,
+          "health": 8
+        },
+        "target": {
+          "id": 12,
+          "name": "Otter",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 2,
+          "health": -4
+        },
+        "damage": 6,
+        "blocked": false
+      },
+      {
+        "source": {
+          "id": 12,
+          "name": "Otter",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 2,
+          "health": -4
+        },
+        "target": {
+          "id": 1,
+          "name": "Pig",
+          "side": "player",
+          "index": 0,
+          "level": 2,
+          "attack": 6,
+          "health": 6
+        },
+        "damage": 2,
+        "blocked": false
+      }
+    ],
+    "seq": 16
+  },
+  {
+    "type": "faint",
+    "group": null,
+    "pet": {
+      "id": 12,
+      "name": "Otter",
+      "side": "opponent",
+      "index": 0,
+      "level": 1,
+      "attack": 2,
+      "health": -4
+    },
+    "killedBy": {
+      "id": 1,
+      "name": "Pig",
+      "side": "player",
+      "index": 0,
+      "level": 2,
+      "attack": 6,
+      "health": 6
+    },
+    "seq": 17
+  },
+  {
+    "type": "corpseLaunchGroup",
+    "group": null,
+    "pets": [
+      {
+        "id": 12,
+        "name": "Otter",
+        "side": "opponent",
+        "index": 0,
+        "level": 1,
+        "attack": 2,
+        "health": -4
+      }
+    ],
+    "seq": 18
+  },
+  {
+    "type": "outcome",
+    "group": null,
+    "winner": "player",
+    "seq": 19
+  }
+]

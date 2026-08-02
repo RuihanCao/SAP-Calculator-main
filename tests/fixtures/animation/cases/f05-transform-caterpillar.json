@@ -1,0 +1,38 @@
+{
+ "id": "f05-transform-caterpillar",
+ "title": "Caterpillar transforms into a Butterfly at start of battle",
+ "covers": [
+  "transform",
+  "stat copy staging"
+ ],
+ "turn": 11,
+ "pack": "puppy",
+ "playerPack": "Puppy",
+ "opponentPack": "Turtle",
+ "player": [
+  {
+   "pet": "Caterpillar",
+   "attack": 1,
+   "health": 1,
+   "level": 3
+  },
+  {
+   "pet": "Pig",
+   "attack": 3,
+   "health": 13
+  }
+ ],
+ "opponent": [
+  {
+   "pet": "Otter",
+   "attack": 2,
+   "health": 8
+  },
+  {
+   "pet": "Cow",
+   "attack": 6,
+   "health": 10
+  }
+ ],
+ "notes": "The Turtle pack has no transform pet, so this one fixture uses Caterpillar from the Puppy pack. Caterpillar and Butterfly are both core game pets, so there is no unknown-pet degradation risk. The strongest enemy is the BACK one, so the copied stats are visibly not the stats of the pet the Butterfly is about to fight."
+}

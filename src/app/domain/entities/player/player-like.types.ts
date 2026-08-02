@@ -1,3 +1,4 @@
+import type { AnimationEventRecorder } from 'app/domain/animation/animation-event-recorder';
 import type { Pet } from '../pet.class';
 import type { Toy } from '../toy.class';
 
@@ -7,6 +8,9 @@ export interface PetLike {
 }
 
 export interface PlayerLike {
+  isOpponent?: boolean;
+  /** Structured animation event sink, additive instrumentation only. */
+  animation: AnimationEventRecorder;
   pet0?: Pet;
   pet1?: Pet;
   pet2?: Pet;

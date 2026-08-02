@@ -55,6 +55,12 @@ export const gainTrumpets = (
   if (cherry) {
     message += ' (Cherry)';
   }
+  player.animation.recordStatChange({
+    kind: 'trumpet-gain',
+    board: player,
+    amount: amt,
+    total: player.trumpets,
+  });
   logService.createLog({
     message,
     type: 'trumpets',
@@ -73,6 +79,13 @@ export const spendTrumpets = (
   pteranodon?: boolean,
 ): void => {
   player.trumpets = Math.max(0, (player.trumpets -= amt));
+  player.animation.recordStatChange({
+    kind: 'trumpet-spend',
+    target: pet,
+    board: player,
+    amount: -amt,
+    total: player.trumpets,
+  });
   logService.createLog({
     message: `${pet.name} spent ${amt} trumpets. (${player.trumpets})`,
     type: 'trumpets',

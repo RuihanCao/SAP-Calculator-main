@@ -67,8 +67,7 @@ export class ButterflyAbility extends Ability {
       return;
     }
 
-    owner.health = targetResp.pet.health;
-    owner.attack = targetResp.pet.attack;
+    owner.copyStatsFrom(targetResp.pet);
     this.logService.createLog({
       message: `${owner.name} copied stats from the strongest enemy (${owner.attack}/${owner.health}).`,
       type: 'ability',

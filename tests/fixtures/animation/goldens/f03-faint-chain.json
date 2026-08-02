@@ -1,0 +1,683 @@
+[
+  {
+    "type": "phase",
+    "group": null,
+    "phase": "before-battle",
+    "turn": null,
+    "seq": 0
+  },
+  {
+    "type": "phase",
+    "group": null,
+    "phase": "start-of-battle",
+    "turn": null,
+    "seq": 1
+  },
+  {
+    "type": "phase",
+    "group": null,
+    "phase": "after-start-of-battle",
+    "turn": null,
+    "seq": 2
+  },
+  {
+    "type": "phase",
+    "group": null,
+    "phase": "turn",
+    "turn": 1,
+    "seq": 3
+  },
+  {
+    "type": "clash",
+    "group": null,
+    "jump": false,
+    "hits": [
+      {
+        "source": {
+          "id": 1,
+          "name": "Hedgehog",
+          "side": "player",
+          "index": 0,
+          "level": 1,
+          "attack": 4,
+          "health": 2
+        },
+        "target": {
+          "id": 11,
+          "name": "Cow",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 4,
+          "health": 3
+        },
+        "damage": 4,
+        "blocked": false
+      },
+      {
+        "source": {
+          "id": 11,
+          "name": "Cow",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 4,
+          "health": 3
+        },
+        "target": {
+          "id": 1,
+          "name": "Hedgehog",
+          "side": "player",
+          "index": 0,
+          "level": 1,
+          "attack": 4,
+          "health": -2
+        },
+        "damage": 4,
+        "blocked": false
+      }
+    ],
+    "seq": 4
+  },
+  {
+    "type": "faint",
+    "group": null,
+    "pet": {
+      "id": 1,
+      "name": "Hedgehog",
+      "side": "player",
+      "index": 0,
+      "level": 1,
+      "attack": 4,
+      "health": -2
+    },
+    "killedBy": {
+      "id": 11,
+      "name": "Cow",
+      "side": "opponent",
+      "index": 0,
+      "level": 1,
+      "attack": 4,
+      "health": 3
+    },
+    "seq": 5
+  },
+  {
+    "type": "abilityTrigger",
+    "group": 0,
+    "actor": {
+      "kind": "pet",
+      "pet": {
+        "id": 1,
+        "name": "Hedgehog",
+        "side": "player",
+        "index": 0,
+        "level": 1,
+        "attack": 4,
+        "health": -2
+      }
+    },
+    "abilitySource": "pet",
+    "trigger": "Faint",
+    "triggers": [
+      "Faint"
+    ],
+    "abilityName": "HedgehogAbility",
+    "level": 1,
+    "text": "Faint: Deal 2 damage to ALL pets.",
+    "triggeredBy": {
+      "id": 1,
+      "name": "Hedgehog",
+      "side": "player",
+      "index": 0,
+      "level": 1,
+      "attack": 4,
+      "health": -2
+    },
+    "seq": 6
+  },
+  {
+    "type": "projectile",
+    "group": 0,
+    "source": {
+      "kind": "pet",
+      "pet": {
+        "id": 1,
+        "name": "Hedgehog",
+        "side": "player",
+        "index": 0,
+        "level": 1,
+        "attack": 4,
+        "health": -2
+      }
+    },
+    "payload": "attack-glyph",
+    "targets": [
+      {
+        "id": 2,
+        "name": "Pig",
+        "side": "player",
+        "index": 1,
+        "level": 1,
+        "attack": 5,
+        "health": 10
+      },
+      {
+        "id": 11,
+        "name": "Cow",
+        "side": "opponent",
+        "index": 0,
+        "level": 1,
+        "attack": 4,
+        "health": 1
+      },
+      {
+        "id": 12,
+        "name": "Otter",
+        "side": "opponent",
+        "index": 1,
+        "level": 1,
+        "attack": 2,
+        "health": 0
+      },
+      {
+        "id": 13,
+        "name": "Worm",
+        "side": "opponent",
+        "index": 2,
+        "level": 1,
+        "attack": 1,
+        "health": 8
+      }
+    ],
+    "seq": 7
+  },
+  {
+    "type": "hit",
+    "group": 0,
+    "kind": "snipe",
+    "source": {
+      "kind": "pet",
+      "pet": {
+        "id": 1,
+        "name": "Hedgehog",
+        "side": "player",
+        "index": 0,
+        "level": 1,
+        "attack": 4,
+        "health": -2
+      }
+    },
+    "target": {
+      "id": 2,
+      "name": "Pig",
+      "side": "player",
+      "index": 1,
+      "level": 1,
+      "attack": 5,
+      "health": 10
+    },
+    "damage": 2,
+    "blocked": false,
+    "seq": 8
+  },
+  {
+    "type": "hit",
+    "group": 0,
+    "kind": "snipe",
+    "source": {
+      "kind": "pet",
+      "pet": {
+        "id": 1,
+        "name": "Hedgehog",
+        "side": "player",
+        "index": 0,
+        "level": 1,
+        "attack": 4,
+        "health": -2
+      }
+    },
+    "target": {
+      "id": 11,
+      "name": "Cow",
+      "side": "opponent",
+      "index": 0,
+      "level": 1,
+      "attack": 4,
+      "health": 1
+    },
+    "damage": 2,
+    "blocked": false,
+    "seq": 9
+  },
+  {
+    "type": "hit",
+    "group": 0,
+    "kind": "snipe",
+    "source": {
+      "kind": "pet",
+      "pet": {
+        "id": 1,
+        "name": "Hedgehog",
+        "side": "player",
+        "index": 0,
+        "level": 1,
+        "attack": 4,
+        "health": -2
+      }
+    },
+    "target": {
+      "id": 12,
+      "name": "Otter",
+      "side": "opponent",
+      "index": 1,
+      "level": 1,
+      "attack": 2,
+      "health": 0
+    },
+    "damage": 2,
+    "blocked": false,
+    "seq": 10
+  },
+  {
+    "type": "hit",
+    "group": 0,
+    "kind": "snipe",
+    "source": {
+      "kind": "pet",
+      "pet": {
+        "id": 1,
+        "name": "Hedgehog",
+        "side": "player",
+        "index": 0,
+        "level": 1,
+        "attack": 4,
+        "health": -2
+      }
+    },
+    "target": {
+      "id": 13,
+      "name": "Worm",
+      "side": "opponent",
+      "index": 2,
+      "level": 1,
+      "attack": 1,
+      "health": 8
+    },
+    "damage": 2,
+    "blocked": false,
+    "seq": 11
+  },
+  {
+    "type": "faint",
+    "group": null,
+    "pet": {
+      "id": 12,
+      "name": "Otter",
+      "side": "opponent",
+      "index": 1,
+      "level": 1,
+      "attack": 2,
+      "health": 0
+    },
+    "killedBy": {
+      "id": 1,
+      "name": "Hedgehog",
+      "side": "player",
+      "index": 0,
+      "level": 1,
+      "attack": 4,
+      "health": -2
+    },
+    "seq": 12
+  },
+  {
+    "type": "corpseLaunchGroup",
+    "group": null,
+    "pets": [
+      {
+        "id": 1,
+        "name": "Hedgehog",
+        "side": "player",
+        "index": 0,
+        "level": 1,
+        "attack": 4,
+        "health": -2
+      },
+      {
+        "id": 12,
+        "name": "Otter",
+        "side": "opponent",
+        "index": 1,
+        "level": 1,
+        "attack": 2,
+        "health": 0
+      }
+    ],
+    "seq": 13
+  },
+  {
+    "type": "phase",
+    "group": null,
+    "phase": "turn",
+    "turn": 2,
+    "seq": 14
+  },
+  {
+    "type": "pushForward",
+    "group": null,
+    "side": "player",
+    "moves": [
+      {
+        "pet": {
+          "id": 2,
+          "name": "Pig",
+          "side": "player",
+          "index": 0,
+          "level": 1,
+          "attack": 5,
+          "health": 10
+        },
+        "from": 1,
+        "to": 0
+      }
+    ],
+    "seq": 15
+  },
+  {
+    "type": "pushForward",
+    "group": null,
+    "side": "opponent",
+    "moves": [
+      {
+        "pet": {
+          "id": 13,
+          "name": "Worm",
+          "side": "opponent",
+          "index": 1,
+          "level": 1,
+          "attack": 1,
+          "health": 8
+        },
+        "from": 2,
+        "to": 1
+      }
+    ],
+    "seq": 16
+  },
+  {
+    "type": "clash",
+    "group": null,
+    "jump": false,
+    "hits": [
+      {
+        "source": {
+          "id": 2,
+          "name": "Pig",
+          "side": "player",
+          "index": 0,
+          "level": 1,
+          "attack": 5,
+          "health": 10
+        },
+        "target": {
+          "id": 11,
+          "name": "Cow",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 4,
+          "health": -4
+        },
+        "damage": 5,
+        "blocked": false
+      },
+      {
+        "source": {
+          "id": 11,
+          "name": "Cow",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 4,
+          "health": -4
+        },
+        "target": {
+          "id": 2,
+          "name": "Pig",
+          "side": "player",
+          "index": 0,
+          "level": 1,
+          "attack": 5,
+          "health": 6
+        },
+        "damage": 4,
+        "blocked": false
+      }
+    ],
+    "seq": 17
+  },
+  {
+    "type": "faint",
+    "group": null,
+    "pet": {
+      "id": 11,
+      "name": "Cow",
+      "side": "opponent",
+      "index": 0,
+      "level": 1,
+      "attack": 4,
+      "health": -4
+    },
+    "killedBy": {
+      "id": 2,
+      "name": "Pig",
+      "side": "player",
+      "index": 0,
+      "level": 1,
+      "attack": 5,
+      "health": 6
+    },
+    "seq": 18
+  },
+  {
+    "type": "corpseLaunchGroup",
+    "group": null,
+    "pets": [
+      {
+        "id": 11,
+        "name": "Cow",
+        "side": "opponent",
+        "index": 0,
+        "level": 1,
+        "attack": 4,
+        "health": -4
+      }
+    ],
+    "seq": 19
+  },
+  {
+    "type": "phase",
+    "group": null,
+    "phase": "turn",
+    "turn": 3,
+    "seq": 20
+  },
+  {
+    "type": "pushForward",
+    "group": null,
+    "side": "opponent",
+    "moves": [
+      {
+        "pet": {
+          "id": 13,
+          "name": "Worm",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 1,
+          "health": 8
+        },
+        "from": 1,
+        "to": 0
+      }
+    ],
+    "seq": 21
+  },
+  {
+    "type": "clash",
+    "group": null,
+    "jump": false,
+    "hits": [
+      {
+        "source": {
+          "id": 2,
+          "name": "Pig",
+          "side": "player",
+          "index": 0,
+          "level": 1,
+          "attack": 5,
+          "health": 6
+        },
+        "target": {
+          "id": 13,
+          "name": "Worm",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 1,
+          "health": 3
+        },
+        "damage": 5,
+        "blocked": false
+      },
+      {
+        "source": {
+          "id": 13,
+          "name": "Worm",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 1,
+          "health": 3
+        },
+        "target": {
+          "id": 2,
+          "name": "Pig",
+          "side": "player",
+          "index": 0,
+          "level": 1,
+          "attack": 5,
+          "health": 5
+        },
+        "damage": 1,
+        "blocked": false
+      }
+    ],
+    "seq": 22
+  },
+  {
+    "type": "phase",
+    "group": null,
+    "phase": "turn",
+    "turn": 4,
+    "seq": 23
+  },
+  {
+    "type": "clash",
+    "group": null,
+    "jump": false,
+    "hits": [
+      {
+        "source": {
+          "id": 2,
+          "name": "Pig",
+          "side": "player",
+          "index": 0,
+          "level": 1,
+          "attack": 5,
+          "health": 5
+        },
+        "target": {
+          "id": 13,
+          "name": "Worm",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 1,
+          "health": -2
+        },
+        "damage": 5,
+        "blocked": false
+      },
+      {
+        "source": {
+          "id": 13,
+          "name": "Worm",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 1,
+          "health": -2
+        },
+        "target": {
+          "id": 2,
+          "name": "Pig",
+          "side": "player",
+          "index": 0,
+          "level": 1,
+          "attack": 5,
+          "health": 4
+        },
+        "damage": 1,
+        "blocked": false
+      }
+    ],
+    "seq": 24
+  },
+  {
+    "type": "faint",
+    "group": null,
+    "pet": {
+      "id": 13,
+      "name": "Worm",
+      "side": "opponent",
+      "index": 0,
+      "level": 1,
+      "attack": 1,
+      "health": -2
+    },
+    "killedBy": {
+      "id": 2,
+      "name": "Pig",
+      "side": "player",
+      "index": 0,
+      "level": 1,
+      "attack": 5,
+      "health": 4
+    },
+    "seq": 25
+  },
+  {
+    "type": "corpseLaunchGroup",
+    "group": null,
+    "pets": [
+      {
+        "id": 13,
+        "name": "Worm",
+        "side": "opponent",
+        "index": 0,
+        "level": 1,
+        "attack": 1,
+        "health": -2
+      }
+    ],
+    "seq": 26
+  },
+  {
+    "type": "outcome",
+    "group": null,
+    "winner": "player",
+    "seq": 27
+  }
+]

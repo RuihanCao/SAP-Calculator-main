@@ -1,0 +1,969 @@
+[
+  {
+    "type": "phase",
+    "group": null,
+    "phase": "before-battle",
+    "turn": null,
+    "seq": 0
+  },
+  {
+    "type": "phase",
+    "group": null,
+    "phase": "start-of-battle",
+    "turn": null,
+    "seq": 1
+  },
+  {
+    "type": "phase",
+    "group": null,
+    "phase": "after-start-of-battle",
+    "turn": null,
+    "seq": 2
+  },
+  {
+    "type": "phase",
+    "group": null,
+    "phase": "turn",
+    "turn": 1,
+    "seq": 3
+  },
+  {
+    "type": "clash",
+    "group": null,
+    "jump": false,
+    "hits": [
+      {
+        "source": {
+          "id": 1,
+          "name": "Peacock",
+          "side": "player",
+          "index": 0,
+          "level": 1,
+          "attack": 2,
+          "health": 14
+        },
+        "target": {
+          "id": 11,
+          "name": "Hippo",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 6,
+          "health": 14
+        },
+        "damage": 2,
+        "blocked": false
+      },
+      {
+        "source": {
+          "id": 11,
+          "name": "Hippo",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 6,
+          "health": 14
+        },
+        "target": {
+          "id": 1,
+          "name": "Peacock",
+          "side": "player",
+          "index": 0,
+          "level": 1,
+          "attack": 2,
+          "health": 8
+        },
+        "damage": 6,
+        "blocked": false
+      }
+    ],
+    "seq": 4
+  },
+  {
+    "type": "abilityTrigger",
+    "group": 0,
+    "actor": {
+      "kind": "pet",
+      "pet": {
+        "id": 1,
+        "name": "Peacock",
+        "side": "player",
+        "index": 0,
+        "level": 1,
+        "attack": 2,
+        "health": 8
+      }
+    },
+    "abilitySource": "pet",
+    "trigger": "ThisHurt",
+    "triggers": [
+      "ThisHurt"
+    ],
+    "abilityName": "PeacockAbility",
+    "level": 1,
+    "text": "Hurt: Gain +3 attack.",
+    "triggeredBy": {
+      "id": 1,
+      "name": "Peacock",
+      "side": "player",
+      "index": 0,
+      "level": 1,
+      "attack": 2,
+      "health": 8
+    },
+    "seq": 5
+  },
+  {
+    "type": "projectile",
+    "group": 0,
+    "source": {
+      "kind": "pet",
+      "pet": {
+        "id": 1,
+        "name": "Peacock",
+        "side": "player",
+        "index": 0,
+        "level": 1,
+        "attack": 2,
+        "health": 8
+      }
+    },
+    "payload": "attack-glyph",
+    "targets": [
+      {
+        "id": 1,
+        "name": "Peacock",
+        "side": "player",
+        "index": 0,
+        "level": 1,
+        "attack": 5,
+        "health": 8
+      }
+    ],
+    "seq": 6
+  },
+  {
+    "type": "statChange",
+    "group": 0,
+    "kind": "attack",
+    "target": {
+      "id": 1,
+      "name": "Peacock",
+      "side": "player",
+      "index": 0,
+      "level": 1,
+      "attack": 5,
+      "health": 8
+    },
+    "side": "player",
+    "amount": 3,
+    "total": null,
+    "levelFrom": null,
+    "levelTo": null,
+    "seq": 7
+  },
+  {
+    "type": "phase",
+    "group": null,
+    "phase": "turn",
+    "turn": 2,
+    "seq": 8
+  },
+  {
+    "type": "clash",
+    "group": null,
+    "jump": false,
+    "hits": [
+      {
+        "source": {
+          "id": 1,
+          "name": "Peacock",
+          "side": "player",
+          "index": 0,
+          "level": 1,
+          "attack": 5,
+          "health": 8
+        },
+        "target": {
+          "id": 11,
+          "name": "Hippo",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 6,
+          "health": 9
+        },
+        "damage": 5,
+        "blocked": false
+      },
+      {
+        "source": {
+          "id": 11,
+          "name": "Hippo",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 6,
+          "health": 9
+        },
+        "target": {
+          "id": 1,
+          "name": "Peacock",
+          "side": "player",
+          "index": 0,
+          "level": 1,
+          "attack": 5,
+          "health": 2
+        },
+        "damage": 6,
+        "blocked": false
+      }
+    ],
+    "seq": 9
+  },
+  {
+    "type": "abilityTrigger",
+    "group": 1,
+    "actor": {
+      "kind": "pet",
+      "pet": {
+        "id": 1,
+        "name": "Peacock",
+        "side": "player",
+        "index": 0,
+        "level": 1,
+        "attack": 5,
+        "health": 2
+      }
+    },
+    "abilitySource": "pet",
+    "trigger": "ThisHurt",
+    "triggers": [
+      "ThisHurt"
+    ],
+    "abilityName": "PeacockAbility",
+    "level": 1,
+    "text": "Hurt: Gain +3 attack.",
+    "triggeredBy": {
+      "id": 1,
+      "name": "Peacock",
+      "side": "player",
+      "index": 0,
+      "level": 1,
+      "attack": 5,
+      "health": 2
+    },
+    "seq": 10
+  },
+  {
+    "type": "projectile",
+    "group": 1,
+    "source": {
+      "kind": "pet",
+      "pet": {
+        "id": 1,
+        "name": "Peacock",
+        "side": "player",
+        "index": 0,
+        "level": 1,
+        "attack": 5,
+        "health": 2
+      }
+    },
+    "payload": "attack-glyph",
+    "targets": [
+      {
+        "id": 1,
+        "name": "Peacock",
+        "side": "player",
+        "index": 0,
+        "level": 1,
+        "attack": 8,
+        "health": 2
+      }
+    ],
+    "seq": 11
+  },
+  {
+    "type": "statChange",
+    "group": 1,
+    "kind": "attack",
+    "target": {
+      "id": 1,
+      "name": "Peacock",
+      "side": "player",
+      "index": 0,
+      "level": 1,
+      "attack": 8,
+      "health": 2
+    },
+    "side": "player",
+    "amount": 3,
+    "total": null,
+    "levelFrom": null,
+    "levelTo": null,
+    "seq": 12
+  },
+  {
+    "type": "phase",
+    "group": null,
+    "phase": "turn",
+    "turn": 3,
+    "seq": 13
+  },
+  {
+    "type": "clash",
+    "group": null,
+    "jump": false,
+    "hits": [
+      {
+        "source": {
+          "id": 1,
+          "name": "Peacock",
+          "side": "player",
+          "index": 0,
+          "level": 1,
+          "attack": 8,
+          "health": 2
+        },
+        "target": {
+          "id": 11,
+          "name": "Hippo",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 6,
+          "health": 1
+        },
+        "damage": 8,
+        "blocked": false
+      },
+      {
+        "source": {
+          "id": 11,
+          "name": "Hippo",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 6,
+          "health": 1
+        },
+        "target": {
+          "id": 1,
+          "name": "Peacock",
+          "side": "player",
+          "index": 0,
+          "level": 1,
+          "attack": 8,
+          "health": -4
+        },
+        "damage": 6,
+        "blocked": false
+      }
+    ],
+    "seq": 14
+  },
+  {
+    "type": "abilityTrigger",
+    "group": 2,
+    "actor": {
+      "kind": "pet",
+      "pet": {
+        "id": 1,
+        "name": "Peacock",
+        "side": "player",
+        "index": 0,
+        "level": 1,
+        "attack": 8,
+        "health": -4
+      }
+    },
+    "abilitySource": "pet",
+    "trigger": "ThisHurt",
+    "triggers": [
+      "ThisHurt"
+    ],
+    "abilityName": "PeacockAbility",
+    "level": 1,
+    "text": "Hurt: Gain +3 attack.",
+    "triggeredBy": {
+      "id": 1,
+      "name": "Peacock",
+      "side": "player",
+      "index": 0,
+      "level": 1,
+      "attack": 8,
+      "health": -4
+    },
+    "seq": 15
+  },
+  {
+    "type": "faint",
+    "group": null,
+    "pet": {
+      "id": 1,
+      "name": "Peacock",
+      "side": "player",
+      "index": 0,
+      "level": 1,
+      "attack": 8,
+      "health": -4
+    },
+    "killedBy": {
+      "id": 11,
+      "name": "Hippo",
+      "side": "opponent",
+      "index": 0,
+      "level": 1,
+      "attack": 6,
+      "health": 1
+    },
+    "seq": 16
+  },
+  {
+    "type": "abilityTrigger",
+    "group": 3,
+    "actor": {
+      "kind": "pet",
+      "pet": {
+        "id": 11,
+        "name": "Hippo",
+        "side": "opponent",
+        "index": 0,
+        "level": 1,
+        "attack": 6,
+        "health": 1
+      }
+    },
+    "abilitySource": "pet",
+    "trigger": "KnockOut",
+    "triggers": [
+      "KnockOut"
+    ],
+    "abilityName": "HippoAbility",
+    "level": 1,
+    "text": "Knock out: Gain +3 attack and +3 health. Works 3 times per battle.",
+    "triggeredBy": {
+      "id": 1,
+      "name": "Peacock",
+      "side": "player",
+      "index": 0,
+      "level": 1,
+      "attack": 8,
+      "health": -4
+    },
+    "seq": 17
+  },
+  {
+    "type": "projectile",
+    "group": 3,
+    "source": {
+      "kind": "pet",
+      "pet": {
+        "id": 11,
+        "name": "Hippo",
+        "side": "opponent",
+        "index": 0,
+        "level": 1,
+        "attack": 6,
+        "health": 1
+      }
+    },
+    "payload": "attack-glyph",
+    "targets": [
+      {
+        "id": 11,
+        "name": "Hippo",
+        "side": "opponent",
+        "index": 0,
+        "level": 1,
+        "attack": 9,
+        "health": 1
+      }
+    ],
+    "seq": 18
+  },
+  {
+    "type": "statChange",
+    "group": 3,
+    "kind": "attack",
+    "target": {
+      "id": 11,
+      "name": "Hippo",
+      "side": "opponent",
+      "index": 0,
+      "level": 1,
+      "attack": 9,
+      "health": 1
+    },
+    "side": "opponent",
+    "amount": 3,
+    "total": null,
+    "levelFrom": null,
+    "levelTo": null,
+    "seq": 19
+  },
+  {
+    "type": "projectile",
+    "group": 3,
+    "source": {
+      "kind": "pet",
+      "pet": {
+        "id": 11,
+        "name": "Hippo",
+        "side": "opponent",
+        "index": 0,
+        "level": 1,
+        "attack": 6,
+        "health": 1
+      }
+    },
+    "payload": "heart",
+    "targets": [
+      {
+        "id": 11,
+        "name": "Hippo",
+        "side": "opponent",
+        "index": 0,
+        "level": 1,
+        "attack": 9,
+        "health": 4
+      }
+    ],
+    "seq": 20
+  },
+  {
+    "type": "statChange",
+    "group": 3,
+    "kind": "health",
+    "target": {
+      "id": 11,
+      "name": "Hippo",
+      "side": "opponent",
+      "index": 0,
+      "level": 1,
+      "attack": 9,
+      "health": 4
+    },
+    "side": "opponent",
+    "amount": 3,
+    "total": null,
+    "levelFrom": null,
+    "levelTo": null,
+    "seq": 21
+  },
+  {
+    "type": "corpseLaunchGroup",
+    "group": null,
+    "pets": [
+      {
+        "id": 1,
+        "name": "Peacock",
+        "side": "player",
+        "index": 0,
+        "level": 1,
+        "attack": 8,
+        "health": -4
+      }
+    ],
+    "seq": 22
+  },
+  {
+    "type": "phase",
+    "group": null,
+    "phase": "turn",
+    "turn": 4,
+    "seq": 23
+  },
+  {
+    "type": "pushForward",
+    "group": null,
+    "side": "player",
+    "moves": [
+      {
+        "pet": {
+          "id": 2,
+          "name": "Gorilla",
+          "side": "player",
+          "index": 0,
+          "level": 1,
+          "attack": 7,
+          "health": 12
+        },
+        "from": 1,
+        "to": 0
+      }
+    ],
+    "seq": 24
+  },
+  {
+    "type": "clash",
+    "group": null,
+    "jump": false,
+    "hits": [
+      {
+        "source": {
+          "id": 2,
+          "name": "Gorilla",
+          "side": "player",
+          "index": 0,
+          "level": 1,
+          "attack": 7,
+          "health": 12
+        },
+        "target": {
+          "id": 11,
+          "name": "Hippo",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 9,
+          "health": -3
+        },
+        "damage": 7,
+        "blocked": false
+      },
+      {
+        "source": {
+          "id": 11,
+          "name": "Hippo",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 9,
+          "health": -3
+        },
+        "target": {
+          "id": 2,
+          "name": "Gorilla",
+          "side": "player",
+          "index": 0,
+          "level": 1,
+          "attack": 7,
+          "health": 3
+        },
+        "damage": 9,
+        "blocked": false
+      }
+    ],
+    "seq": 25
+  },
+  {
+    "type": "abilityTrigger",
+    "group": 4,
+    "actor": {
+      "kind": "pet",
+      "pet": {
+        "id": 2,
+        "name": "Gorilla",
+        "side": "player",
+        "index": 0,
+        "level": 1,
+        "attack": 7,
+        "health": 3
+      }
+    },
+    "abilitySource": "pet",
+    "trigger": "ThisHurt",
+    "triggers": [
+      "ThisHurt"
+    ],
+    "abilityName": "GorillaAbility",
+    "level": 1,
+    "text": "Hurt: Gain Coconut perk. Works 1 time per turn.\nBlock damage, once.",
+    "triggeredBy": {
+      "id": 2,
+      "name": "Gorilla",
+      "side": "player",
+      "index": 0,
+      "level": 1,
+      "attack": 7,
+      "health": 3
+    },
+    "seq": 26
+  },
+  {
+    "type": "projectile",
+    "group": 4,
+    "source": {
+      "kind": "pet",
+      "pet": {
+        "id": 2,
+        "name": "Gorilla",
+        "side": "player",
+        "index": 0,
+        "level": 1,
+        "attack": 7,
+        "health": 3
+      }
+    },
+    "payload": "perk-icon",
+    "targets": [
+      {
+        "id": 2,
+        "name": "Gorilla",
+        "side": "player",
+        "index": 0,
+        "level": 1,
+        "attack": 7,
+        "health": 3
+      }
+    ],
+    "seq": 27
+  },
+  {
+    "type": "equipmentGain",
+    "group": 4,
+    "pet": {
+      "id": 2,
+      "name": "Gorilla",
+      "side": "player",
+      "index": 0,
+      "level": 1,
+      "attack": 7,
+      "health": 3
+    },
+    "equipment": "Coconut",
+    "ailment": false,
+    "seq": 28
+  },
+  {
+    "type": "faint",
+    "group": null,
+    "pet": {
+      "id": 11,
+      "name": "Hippo",
+      "side": "opponent",
+      "index": 0,
+      "level": 1,
+      "attack": 9,
+      "health": -3
+    },
+    "killedBy": {
+      "id": 2,
+      "name": "Gorilla",
+      "side": "player",
+      "index": 0,
+      "level": 1,
+      "attack": 7,
+      "health": 3
+    },
+    "seq": 29
+  },
+  {
+    "type": "corpseLaunchGroup",
+    "group": null,
+    "pets": [
+      {
+        "id": 11,
+        "name": "Hippo",
+        "side": "opponent",
+        "index": 0,
+        "level": 1,
+        "attack": 9,
+        "health": -3
+      }
+    ],
+    "seq": 30
+  },
+  {
+    "type": "phase",
+    "group": null,
+    "phase": "turn",
+    "turn": 5,
+    "seq": 31
+  },
+  {
+    "type": "pushForward",
+    "group": null,
+    "side": "opponent",
+    "moves": [
+      {
+        "pet": {
+          "id": 12,
+          "name": "Otter",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 2,
+          "health": 8
+        },
+        "from": 1,
+        "to": 0
+      }
+    ],
+    "seq": 32
+  },
+  {
+    "type": "clash",
+    "group": null,
+    "jump": false,
+    "hits": [
+      {
+        "source": {
+          "id": 2,
+          "name": "Gorilla",
+          "side": "player",
+          "index": 0,
+          "level": 1,
+          "attack": 7,
+          "health": 3
+        },
+        "target": {
+          "id": 12,
+          "name": "Otter",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 2,
+          "health": 1
+        },
+        "damage": 7,
+        "blocked": false
+      },
+      {
+        "source": {
+          "id": 12,
+          "name": "Otter",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 2,
+          "health": 1
+        },
+        "target": {
+          "id": 2,
+          "name": "Gorilla",
+          "side": "player",
+          "index": 0,
+          "level": 1,
+          "attack": 7,
+          "health": 3
+        },
+        "damage": 0,
+        "blocked": true
+      }
+    ],
+    "seq": 33
+  },
+  {
+    "type": "equipmentBreak",
+    "group": null,
+    "pet": {
+      "id": 2,
+      "name": "Gorilla",
+      "side": "player",
+      "index": 0,
+      "level": 1,
+      "attack": 7,
+      "health": 3
+    },
+    "equipment": "Coconut",
+    "ailment": false,
+    "seq": 34
+  },
+  {
+    "type": "phase",
+    "group": null,
+    "phase": "turn",
+    "turn": 6,
+    "seq": 35
+  },
+  {
+    "type": "clash",
+    "group": null,
+    "jump": false,
+    "hits": [
+      {
+        "source": {
+          "id": 2,
+          "name": "Gorilla",
+          "side": "player",
+          "index": 0,
+          "level": 1,
+          "attack": 7,
+          "health": 3
+        },
+        "target": {
+          "id": 12,
+          "name": "Otter",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 2,
+          "health": -6
+        },
+        "damage": 7,
+        "blocked": false
+      },
+      {
+        "source": {
+          "id": 12,
+          "name": "Otter",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 2,
+          "health": -6
+        },
+        "target": {
+          "id": 2,
+          "name": "Gorilla",
+          "side": "player",
+          "index": 0,
+          "level": 1,
+          "attack": 7,
+          "health": 1
+        },
+        "damage": 2,
+        "blocked": false
+      }
+    ],
+    "seq": 36
+  },
+  {
+    "type": "faint",
+    "group": null,
+    "pet": {
+      "id": 12,
+      "name": "Otter",
+      "side": "opponent",
+      "index": 0,
+      "level": 1,
+      "attack": 2,
+      "health": -6
+    },
+    "killedBy": {
+      "id": 2,
+      "name": "Gorilla",
+      "side": "player",
+      "index": 0,
+      "level": 1,
+      "attack": 7,
+      "health": 1
+    },
+    "seq": 37
+  },
+  {
+    "type": "corpseLaunchGroup",
+    "group": null,
+    "pets": [
+      {
+        "id": 12,
+        "name": "Otter",
+        "side": "opponent",
+        "index": 0,
+        "level": 1,
+        "attack": 2,
+        "health": -6
+      }
+    ],
+    "seq": 38
+  },
+  {
+    "type": "outcome",
+    "group": null,
+    "winner": "player",
+    "seq": 39
+  }
+]

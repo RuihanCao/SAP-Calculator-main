@@ -1,0 +1,42 @@
+{
+ "id": "f09-toy-pogo-stick",
+ "title": "Pogo Stick toy pushes the last enemy to the front",
+ "covers": [
+  "toy",
+  "toy start-of-battle trigger",
+  "move event"
+ ],
+ "turn": 11,
+ "playerToy": "Pogo Stick",
+ "playerToyLevel": 1,
+ "player": [
+  {
+   "pet": "Pig",
+   "attack": 4,
+   "health": 12
+  },
+  {
+   "pet": "Duck",
+   "attack": 3,
+   "health": 10
+  }
+ ],
+ "opponent": [
+  {
+   "pet": "Cow",
+   "attack": 3,
+   "health": 8
+  },
+  {
+   "pet": "Otter",
+   "attack": 2,
+   "health": 8
+  },
+  {
+   "pet": "Worm",
+   "attack": 1,
+   "health": 4
+  }
+ ],
+ "notes": "The only fixture that produces a pure reposition (move) event, which the current calculator animation never emits."
+}

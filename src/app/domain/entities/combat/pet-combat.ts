@@ -135,6 +135,7 @@ export function attackPet(
   }
   // peanut death
   if (attackEquipment instanceof Peanut && damage > 0) {
+    self.recordAnimationHit(pet, damage, jumpAttack ? 'jump' : 'melee');
     self.createLog({
       message: `${message} (Peanut)`,
       type: 'attack',
@@ -151,6 +152,7 @@ export function attackPet(
     damage > 0 &&
     attackEquipment.uses > 0
   ) {
+    self.recordAnimationHit(pet, damage, jumpAttack ? 'jump' : 'melee');
     self.createLog({
       message: `${message} (Peanut Butter)`,
       type: 'attack',
@@ -245,6 +247,7 @@ export function attackPet(
     message = appendDamageReductionMessages(message, damageResp, true);
     message = appendManticoreMessage(message, self, pet);
 
+    self.recordAnimationHit(pet, damage, jumpAttack ? 'jump' : 'melee');
     self.createLog({
       message: message,
       type: 'attack',
@@ -362,6 +365,7 @@ export function snipePet(
     damageResp,
   );
 
+  self.recordAnimationHit(pet, damage, 'snipe');
   self.createLog({
     message: message,
     type: 'attack',
@@ -412,8 +416,14 @@ export function jumpAttack(
   }
 
   // 4. Perform the attack
-  attackPet.attackPet(target, true, damage, randomEvent);
-  target.attackPet(attackPet);
+  // The landing is a two-sided clash at the target's slot, checklist 14.
+  attackPet.beginAnimationClash(true);
+  try {
+    attackPet.attackPet(target, true, damage, randomEvent);
+    target.attackPet(attackPet);
+  } finally {
+    attackPet.endAnimationClash();
+  }
 
   attackPet.useAttackDefenseEquipment();
   target.useAttackDefenseEquipment();

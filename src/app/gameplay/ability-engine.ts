@@ -83,6 +83,9 @@ export class AbilityEngine {
             );
           }
           this.abilityService.executeEventCallback(event);
+          // Queued callbacks that are not abilities, e.g. the mana snipe, write
+          // stats directly; this is the boundary where that lands.
+          this.logService.animation.settleStats();
           this.checkPetsAlive();
         } else {
           console.error(
@@ -116,9 +119,16 @@ export class AbilityEngine {
   }
 
   removeDeadPets() {
+    // Corpses that leave in the same sweep launch together (checklist 3), on
+    // both boards, so the group spans the two calls.
+    this.logService.animation.beginCorpseGroup();
     let petRemoved = false;
-    petRemoved = this.player.removeDeadPets();
-    petRemoved = this.opponent.removeDeadPets() || petRemoved;
+    try {
+      petRemoved = this.player.removeDeadPets();
+      petRemoved = this.opponent.removeDeadPets() || petRemoved;
+    } finally {
+      this.logService.animation.endCorpseGroup();
+    }
     return petRemoved;
   }
 
@@ -180,6 +190,9 @@ export class AbilityEngine {
           for (const pet of player.petArray) {
             if (pet instanceof Puma) {
               toy.level = pet.level;
+              // Every repeat is its own banner at the Puma's level, so it gets
+              // its own activation rather than more targets on the first one.
+              this.logService.animation.splitAbility({ level: pet.level });
               startOfBattle.call(toy, this.gameService.gameApi, true);
               toy.level = toyLevel;
             }
@@ -187,6 +200,7 @@ export class AbilityEngine {
         },
         priority: toy.tier,
         player,
+        sourceToy: toy,
         customParams: {
           toyName: toy.name,
           suppressFriendFaintLog: toy.suppressFriendFaintLog,
