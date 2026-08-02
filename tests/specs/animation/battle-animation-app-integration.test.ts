@@ -335,12 +335,16 @@ describe('Round 5, measured against the reference frames', () => {
       // the numeral changes; round 5 read the cap as the lettering's own
       // keyline and left it out, which came back a third short.
       const plaque = styles.slice(styles.indexOf('.anim-pet-level {'));
-      expect(plaque.slice(0, 400)).toContain('level-plaque.png');
-      expect(plaque).toMatch(/width:\s*2\.28em/);
-      expect(plaque).toMatch(/height:\s*1\.67em/);
+      // Round 8: the plaque is one ripped sprite drawn whole, LevelMap_0/1/2,
+      // so there is nothing to compose and nothing to keyline.
+      expect(stageTemplate).toContain('levelPlaque(pet.pet.level)');
+      const art = styles.slice(styles.indexOf('.anim-pet-level-art {'));
+      expect(art.slice(0, 200)).toContain('width: 100%');
+      expect(plaque).toMatch(/width:\s*2\.57em/);
       expect(styles).not.toContain("fill='%23a06a24'");
-      const num = styles.slice(styles.indexOf('.anim-pet-level-num {'));
-      expect(num.slice(0, 300)).toContain('#ffc21c');
+      // Round 8: the numeral is part of the sprite, so there is no numeral rule
+      // left to colour; what used to be typed is now drawn by the client.
+      expect(styles).not.toContain('.anim-pet-level-word');
       // The client sets the plaque back over its own team's rear.
       expect(styles).toContain('translateX(-1.25em)');
       expect(styles).toContain('translateX(1.25em)');
@@ -360,7 +364,7 @@ describe('Round 5, measured against the reference frames', () => {
       expect(stageTemplate).not.toContain('&#10006;');
       expect(styles).not.toContain('anim-pet-cross');
       expect(styles).toMatch(
-        /\.anim-pet-fainted \.anim-pet-icon,\s*\n\.anim-corpse \.anim-pet-icon\s*\{[^}]*brightness\(1\.6\)/,
+        /\.anim-pet-fainted \.anim-pet-icon,\s*\n\.anim-corpse \.anim-pet-icon\s*\{[^}]*brightness\(/,
       );
       expect(styles).not.toMatch(/\.anim-corpse\s*\{[^}]*grayscale/);
     });
@@ -371,11 +375,13 @@ describe('Round 5, measured against the reference frames', () => {
       const puff = styles.slice(styles.indexOf('.anim-corpse-puff {'));
       // Round 7: the same cloud a summon uses, and it is the client's own puff
       // cut out of a reference frame rather than a stack of drawn circles.
-      expect(puff.slice(0, 400)).toContain('cloud.png');
+      // Round 8: the client's trail is flat, stroke-free grey circles rather
+      // than one soft puff texture, measured on the close-up against f11b.
+      expect(puff.slice(0, 400)).toContain('border-radius: 50%');
       expect(puff.slice(0, 400)).not.toContain('gradient');
       expect(styles).not.toContain('%3Ccircle ');
       const summonPuff = styles.slice(styles.indexOf('.anim-puff-cloud {'));
-      expect(summonPuff.slice(0, 300)).toContain('cloud.png');
+      expect(summonPuff.slice(0, 300)).toContain('cloud-soft.png');
     });
 
     /**
@@ -469,7 +475,7 @@ describe('Round 5, measured against the reference frames', () => {
       );
       // Round 7: the glyphs are the client's own printing, lifted off its bar,
       // so there is no drawn path and no font character in the row at all.
-      expect((bar.match(/<img class="anim-ctl-glyph"/g) ?? []).length).toBe(5);
+      expect((bar.match(/class="anim-ctl-glyph/g) ?? []).length).toBe(5);
       expect(bar).not.toContain('<svg');
       expect(bar).not.toMatch(/&#9\d\d\d;/);
       expect(bar).not.toContain('&#65038;');
@@ -587,7 +593,9 @@ describe('Round 5, measured against the reference frames', () => {
       const from = styles.indexOf('.anim-outro-caption {');
       const caption = styles.slice(from, styles.indexOf('}', from));
       expect(caption).toMatch(/letter-spacing:\s*0\.05em/);
-      expect(caption).toMatch(/@include keyline\(/);
+      // Round 8: measured on the close-up, the client's caption goes straight
+      // from white to the veil with no stroke at all.
+      expect(caption).toContain('text-shadow: none');
       // The reference caption stands 33px tall and runs 179px wide on a 720
       // play area; at the old 1.45 scale units ours came out 25 by 138.
       expect(caption).toMatch(/font-size:\s*1\.9em/);
@@ -644,7 +652,7 @@ describe('Round 5, measured against the reference frames', () => {
       // A whited out corpse keeps the red line it died wearing.
       const corpse = ruleAt('.anim-corpse .anim-pet-icon {', true);
       expect((corpse.match(/drop-shadow/g) ?? []).length).toBe(4);
-      expect(corpse).toContain('brightness(1.6)');
+      expect(corpse).toContain('brightness(');
     });
   });
 

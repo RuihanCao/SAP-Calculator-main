@@ -73,6 +73,14 @@ interface Point {
  */
 const ICONS = '/assets/art/Public/Public/Icons/TextMap-resources.assets-31-split';
 const EXTRACTED = '/assets/art/Extracted';
+/**
+ * Round 8. The client's own build was unpacked, so the pieces that used to be
+ * cut out of screenshots are now the original sprites with their own alpha:
+ * whole level plaques, the bar's glyphs, the end screen's faces, and the
+ * particle textures the effects are composited from. Provenance, down to the
+ * Unity object name and the build id, is in `art/Ripped/manifest.json`.
+ */
+const RIPPED = '/assets/art/Ripped';
 
 const PAYLOAD_ICONS: Record<AnimationPayloadKind, string> = {
   'attack-glyph': `${ICONS}/fist.png`,
@@ -89,12 +97,42 @@ const PAYLOAD_ICONS: Record<AnimationPayloadKind, string> = {
  * replay never shows the bar in its paused state.
  */
 const GLYPHS = {
-  rewind: `${EXTRACTED}/glyph-rewind.png`,
-  pause: `${EXTRACTED}/glyph-pause.png`,
-  play: `${EXTRACTED}/glyph-play.png`,
-  autoplay: `${EXTRACTED}/glyph-autoplay.png`,
-  fast: `${EXTRACTED}/glyph-fast.png`,
-  skip: `${EXTRACTED}/glyph-skip.png`,
+  // REWIND is the client's own SKIP sprite mirrored, which is how the client
+  // draws it; the stylesheet does the flip.
+  rewind: `${RIPPED}/control/skip.png`,
+  pause: `${RIPPED}/control/pause.png`,
+  play: `${RIPPED}/control/play.png`,
+  autoplay: `${RIPPED}/control/refresh.png`,
+  fast: `${RIPPED}/control/fast-forward.png`,
+  skip: `${RIPPED}/control/skip.png`,
+} as const;
+
+/** The three level plaques, whole, as the client ships them. */
+const LEVEL_PLAQUES = [
+  `${RIPPED}/level/lvl-1.png`,
+  `${RIPPED}/level/lvl-2.png`,
+  `${RIPPED}/level/lvl-3.png`,
+] as const;
+
+/**
+ * The particle textures the effects are built from.
+ *
+ * The build carries the textures but not the particle systems' parameters, so
+ * the motion is measured off the recorded clips (see FX_TIMING in the
+ * stylesheet's comments and REPORT4.md) and the art is these.
+ */
+const FX = {
+  cloudSoft: `${RIPPED}/fx/cloud-soft.png`,
+  cloudHard: `${RIPPED}/fx/cloud-hard.png`,
+  glow: `${RIPPED}/fx/glow.png`,
+  glowRays: `${RIPPED}/fx/glow-rays.png`,
+  sparkle: `${RIPPED}/fx/sparkle.png`,
+  sparkle2: `${RIPPED}/fx/sparkle2.png`,
+  star: `${RIPPED}/fx/star.png`,
+  ring: `${RIPPED}/fx/ring.png`,
+  plus: `${RIPPED}/fx/plus.png`,
+  stats: `${RIPPED}/fx/stats.png`,
+  perk: `${RIPPED}/fx/particle-perk.png`,
 } as const;
 
 /**
@@ -104,8 +142,12 @@ const GLYPHS = {
  * a draw keep the caption alone rather than wearing a face that was invented
  * for them; the missing capture is recorded in the experiment's task list.
  */
-const OUTRO_FACES: Partial<Record<AnimationSide | 'draw', string>> = {
-  player: `${EXTRACTED}/outro-face.png`,
+const OUTRO_FACES: Record<AnimationSide | 'draw', string> = {
+  player: `${RIPPED}/mascot/happy.png`,
+  opponent: `${RIPPED}/mascot/woopsy.png`,
+  // A draw is neither, and the client has no third face for it, so the losing
+  // one is not put on a result that is not a loss: the caption stands alone.
+  draw: '',
 };
 
 const ATTACK_ICON = PAYLOAD_ICONS['attack-glyph'];
@@ -183,7 +225,14 @@ const CORPSE_EXIT_DY = 56;
  */
 const MASCOT_SPRITE = '/assets/art/Public/Public/Mascot/TurtleBattle.png';
 /** How many cloud links the corpse trail is drawn as. */
-const CORPSE_TRAIL_LINKS = 7;
+/*
+ * How many puffs the trail is.
+ *
+ * Counted on the close-up against f11b t=6.55: the client lays about 25 flat
+ * circles in seven or eight overlapping clusters of two to four along a trail
+ * roughly 950px long at 3x. Seven single puffs read as a dotted line.
+ */
+const CORPSE_TRAIL_LINKS = 24;
 const COUNTER_ANCHOR: Record<AnimationSide, Point> = {
   player: { x: 12, y: 12 },
   opponent: { x: 88, y: 12 },
@@ -548,15 +597,23 @@ export class BattleAnimationStageComponent
     const from = this.slotX(view.side, view.slot);
     const links: Array<{ index: number; style: Record<string, string> }> = [];
     for (let index = 0; index < CORPSE_TRAIL_LINKS; index += 1) {
-      const at = (view.progress * index) / CORPSE_TRAIL_LINKS;
-      const age = 1 - index / CORPSE_TRAIL_LINKS;
+      // Three or four puffs share each point on the path and are jittered off
+      // it, which is what makes the client's trail read as clusters of smoke
+      // rather than as a row of dots. The jitter is fixed per index rather than
+      // random, so a frame drawn twice is drawn the same.
+      const cluster = Math.floor(index / 3);
+      const clusters = Math.ceil(CORPSE_TRAIL_LINKS / 3);
+      const at = (view.progress * cluster) / clusters;
+      const age = 1 - cluster / clusters;
+      const jitterX = ((index * 37) % 11) / 11 - 0.5;
+      const jitterY = ((index * 53) % 7) / 7 - 0.5;
       links.push({
         index,
         style: {
-          left: `${from + sign * CORPSE_EXIT_DX * at}%`,
-          top: `${GROUND_Y - 6 - CORPSE_EXIT_DY * at}%`,
-          opacity: `${(0.35 + 0.65 * (1 - age)) * (1 - Math.max(0, view.progress - 0.8) * 5)}`,
-          transform: `translate(-50%, -50%) scale(${0.62 + 0.38 * (1 - age)})`,
+          left: `${from + sign * CORPSE_EXIT_DX * at + jitterX * 2.6}%`,
+          top: `${GROUND_Y - 6 - CORPSE_EXIT_DY * at + jitterY * 3.4}%`,
+          opacity: `${(0.72 + 0.28 * (1 - age)) * (1 - Math.max(0, view.progress - 0.8) * 5)}`,
+          transform: 'translate(-50%, -50%)',
         },
       });
     }
@@ -608,6 +665,40 @@ export class BattleAnimationStageComponent
       this.slotX(side, slot) + this.corpseExitSign(side) * CORPSE_EXIT_DX,
       GROUND_Y - CORPSE_EXIT_DY,
     );
+  }
+
+  /**
+   * One star of the spray a corpse leaves behind it.
+   *
+   * Measured on f03 (clips/f03-faint-chain, t=33.93 to 34.28): the stars appear
+   * where the corpse went off screen, throw outwards over about 350ms, and get
+   * bigger rather than smaller as they go, which is the opposite of the single
+   * shrinking star that used to be drawn here. They are thrown into the quarter
+   * turn the corpse was travelling in, so the fan follows the side.
+   */
+  burstStarStyle(
+    burst: { side: AnimationSide; slot: number; progress: number },
+    index: number,
+  ): Record<string, string> {
+    const sign = this.corpseExitSign(burst.side);
+    const origin = this.burstStyle(burst.side, burst.slot);
+    const count = this.burstStars.length;
+    // A fan of about 100 degrees centred on up-and-away.
+    const angle = (-Math.PI / 2) + sign * ((index / (count - 1)) - 0.5) * 1.75;
+    // Each star has its own reach and its own size, so the spray does not read
+    // as one shape scaling up.
+    const reach = 7 + ((index * 5) % 7);
+    const eased = 1 - Math.pow(1 - burst.progress, 2);
+    const x = parseFloat(origin['left']) + Math.cos(angle) * reach * eased;
+    const y = parseFloat(origin['top']) + Math.sin(angle) * reach * eased * 0.7;
+    const scale = 0.35 + eased * (0.75 + ((index * 3) % 5) * 0.11);
+    return {
+      left: `${x}%`,
+      top: `${y}%`,
+      opacity: `${burst.progress > 0.62 ? (1 - burst.progress) / 0.38 : 1}`,
+      transform:
+        `translate(-50%, -50%) scale(${scale}) rotate(${sign * (index * 47 + burst.progress * 210)}deg)`,
+    };
   }
 
   counterStyle(side: AnimationSide): Record<string, string> {
@@ -667,8 +758,24 @@ export class BattleAnimationStageComponent
   }
 
   outroFace(winner: AnimationSide | 'draw'): string | null {
-    return OUTRO_FACES[winner] ?? null;
+    return OUTRO_FACES[winner] || null;
   }
+
+  /** The plaque for a level, clamped to the three the client ships. */
+  levelPlaque(level: number): string {
+    const index = Math.min(LEVEL_PLAQUES.length, Math.max(1, Math.round(level || 1))) - 1;
+    return LEVEL_PLAQUES[index];
+  }
+
+  readonly fx = FX;
+  /**
+   * How many stars a corpse bursts into, and how many puffs its trail is.
+   *
+   * Read off f03 t=33.93..34.28, where the exit throws four to six yellow stars
+   * that grow as they spread; five is the count that reproduces the spread
+   * without crowding.
+   */
+  readonly burstStars = Array.from({ length: 5 }, (_, index) => index);
 
   equipmentIcon(pet: AnimationBoardPet): string | null {
     return pet.equipment

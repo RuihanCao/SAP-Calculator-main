@@ -46,45 +46,12 @@ TILE_RGB = (77, 150, 173)
 # the fixture and the still's own timestamp are the provenance and are written
 # into EXTRACTION.md next to the assets.
 ASSETS = {
-    # The level plaque, cut whole except for its numeral.
-    #
-    # The client draws a dark cap carrying "Lvl" in white, seated on a two-lobe
-    # brown bar, the pair haloed in white and keylined in black; the level's
-    # numeral is the only part that changes. Cutting the wood alone and setting
-    # "Lvl" as type lost the cap and came out a third short, so the cut now runs
-    # from the top of the halo down to the bottom of the wood and stops at the
-    # numeral's left edge. The numeral is drawn over the right of it.
-    # Cut by palette rather than by a border walk: the box has to stop at the
-    # numeral's left edge, which leaves no margin for a flood to start from, and
-    # the plaque carries no green at all while the bush band behind it is
-    # nothing but green.
-    "level-plaque": (
-        "f11-jump-african-wild-dog/r_003_0003000.png",
-        [494, 376, 52, 40],
-        # The numeral goes too: it is the one part that changes, and dropping it
-        # by its own yellow leaves the wood's rounded right end in the cut
-        # instead of a straight edge where the box stopped. The hole it leaves
-        # in the cap is exactly where the stage draws the numeral back.
-        {"palette_only": True, "drop_green": True, "drop_yellow": True},
-    ),
-    # The replay bar. The tile itself is a flat translucent rectangle and is
-    # drawn by the stylesheet from the colour measured here; what is cut is the
-    # white printing on it, label and glyph together, because the label never
-    # changes for a given control. Boxes are the tile interiors measured off the
-    # still: 50.0 by 58.7 css at x 459.7/537.0/614.7/692.7/770.0, y 47.0.
-    "glyph-rewind": ("f11-jump-african-wild-dog/r_003_0003000.png", [462, 66, 46, 36], {"white_key": TILE_RGB}),
-    "glyph-pause": ("f11-jump-african-wild-dog/r_003_0003000.png", [539, 66, 46, 36], {"white_key": TILE_RGB}),
-    "glyph-autoplay": ("f11-jump-african-wild-dog/r_003_0003000.png", [617, 66, 46, 36], {"white_key": TILE_RGB, "floor": 0.30}),
-    "glyph-fast": ("f11-jump-african-wild-dog/r_003_0003000.png", [695, 66, 46, 36], {"white_key": TILE_RGB, "floor": 0.30}),
-    "glyph-skip": ("f11-jump-african-wild-dog/r_003_0003000.png", [772, 66, 46, 36], {"white_key": TILE_RGB}),
-    # PLAY is the one bar state a capture of a running replay never shows, so
-    # its triangle is the SKIP glyph's own triangle with the stop bar cut off
-    # rather than a redrawn one.
-    "glyph-play": ("f11-jump-african-wild-dog/r_003_0003000.png", [772, 66, 30, 36], {"white_key": TILE_RGB}),
-    # The white plate with the heavy black keyline that the entrance names, the
-    # VS square, the ability toast and the trumpet counter all wear. `plate-name`
-    # is the nine-slice source for all of them, which is what makes them read as
-    # one layer instead of four separately invented boxes.
+    # Round 8: everything that had a ripped counterpart is gone from here and
+    # comes out of the client's own build instead (see harness/copy_ripped.py
+    # and art/Ripped/manifest.json). What is left is the two plates, which the
+    # build does not carry as a single sprite: the client composes them from a
+    # nine-slice panel at runtime, so a cut of the composed plate is still the
+    # closest thing to the original.
     "plate-vs": ("f11-jump-african-wild-dog/r_001_0001000.png", [594, 247, 92, 90], {}),
     "plate-name": (
         "f11-jump-african-wild-dog/r_001_0001000.png",
@@ -95,10 +62,6 @@ ASSETS = {
         # every label the stage draws.
         {"blank_slice": 40},
     ),
-    # The puff the client lays behind a corpse and under a summon.
-    "cloud": ("f11b/r_009_0006550.png", [893, 306, 170, 122], {"drop_green": True}),
-    # The end screen's face.
-    "outro-face": ("outro/r_030_0022455.png", [498, 192, 284, 284], {}),
 }
 
 

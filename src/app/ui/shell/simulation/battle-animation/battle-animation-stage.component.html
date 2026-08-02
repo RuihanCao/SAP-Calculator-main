@@ -39,10 +39,10 @@
         [class.anim-controls-gone]="view.controls === 0">
         <button type="button" class="anim-ctl" data-anim-control="rewind" (click)="onRewind()">
           <span class="anim-ctl-label anim-ctl-label-mid">REWIND</span>
-          <img class="anim-ctl-glyph" [src]="glyph.rewind" alt="" aria-hidden="true" />
+          <img class="anim-ctl-glyph anim-ctl-glyph-mirror" [src]="glyph.rewind" alt="" aria-hidden="true" />
         </button>
         <button type="button" class="anim-ctl" data-anim-control="play" (click)="togglePlay()">
-          <span class="anim-ctl-label" [class.anim-ctl-label-mid]="playing">{{ playing ? 'PAUSE' : 'PLAY' }}</span>
+          <span class="anim-ctl-label" [class.anim-ctl-label-five]="playing">{{ playing ? 'PAUSE' : 'PLAY' }}</span>
           <img class="anim-ctl-glyph" [src]="playing ? glyph.pause : glyph.play" alt="" aria-hidden="true" />
         </button>
         <button type="button" class="anim-ctl" data-anim-control="autoplay"
@@ -151,8 +151,15 @@
           haloed in white. Measured on f11 t=30.45, where it is 39 by 26 of a
           960 by 540 play area, sitting 13px above the sprite.
         -->
+        <!--
+          The level plaque is one sprite the client ships whole (LevelMap_0/1/2),
+          not a piece of wood with the wording set on top of it. Round 7 cut the
+          wood out of a screenshot and typed the numeral beside it, which is what
+          made it read as crooked and stitched.
+        -->
         <div class="anim-pet-level">
-          <span class="anim-pet-level-word">Lvl</span><span class="anim-pet-level-num">{{ pet.pet.level }}</span>
+          <img class="anim-pet-level-art" [src]="levelPlaque(pet.pet.level)"
+            [alt]="'Level ' + pet.pet.level" />
           <span class="anim-pet-xpbar" *ngIf="view.board.xpInPlay">
             <span class="anim-pet-xpfill" [style.width.%]="((pet.pet.exp || 0) % 5) * 20"></span>
           </span>
@@ -183,6 +190,14 @@
           <span class="anim-pet-shard" *ngFor="let shard of shardSlots; trackBy: trackByIndex"
             [class.anim-pet-shard-on]="pet.equipmentBreaking" [attr.data-shard]="shard"
             [style.background-image]="shardImage(pet.pet)" aria-hidden="true"></span>
+          <!--
+            A perk or a buff landing: the client's own perk particle thrown out
+            around the pet with its plus lifting over it, checklist 10 and 14.
+          -->
+          <ng-container *ngIf="pet.equipmentGaining">
+            <span class="anim-pet-buff" aria-hidden="true"></span>
+            <span class="anim-pet-buff anim-pet-buff-plus" aria-hidden="true"></span>
+          </ng-container>
           <img class="anim-pet-fasticon" *ngIf="pet.fastIcon as payload" [src]="payloadIcon(payload)" alt=""
             aria-hidden="true" />
         </div>
@@ -216,7 +231,7 @@
           [class.anim-pet-player]="corpse.side === 'player'"
           [class.anim-pet-opponent]="corpse.side === 'opponent'">
           <div class="anim-pet-level">
-            <span class="anim-pet-level-word">Lvl</span><span class="anim-pet-level-num">{{ corpse.level }}</span>
+            <img class="anim-pet-level-art" [src]="levelPlaque(corpse.level)" alt="" aria-hidden="true" />
           </div>
           <div class="anim-corpse-art">
             <img class="anim-pet-icon" *ngIf="petIcon(corpse.name) as icon" [src]="icon" [alt]="corpse.name"
@@ -228,10 +243,16 @@
           </div>
         </div>
       </ng-container>
-      <div class="anim-burst" *ngFor="let burst of view.bursts; trackBy: trackById"
-        [ngStyle]="burstStyle(burst.side, burst.slot)"
-        [style.opacity]="1 - burst.progress"
-        [style.transform]="'translate(-50%, -50%) scale(' + (0.5 + burst.progress * 1.5) + ')'"></div>
+      <!--
+        The star spray a corpse leaves where it goes off screen.
+        Measured on f03: the trail is gone by t=34.01 and the stars run
+        t=33.93..34.28, so about 350ms, four to six of them, growing as they
+        spread. The art is the client's own `Star` sprite, tinted.
+      -->
+      <ng-container *ngFor="let burst of view.bursts; trackBy: trackById">
+        <img class="anim-burst" *ngFor="let star of burstStars; trackBy: trackByIndex"
+          [src]="fx.star" [ngStyle]="burstStarStyle(burst, star)" alt="" aria-hidden="true" />
+      </ng-container>
 
       <!-- projectiles, checklist 5, 6 and 15 -->
       <div class="anim-projectile" *ngFor="let projectile of view.projectiles; trackBy: trackById"
@@ -281,7 +302,7 @@
           <button type="button" class="anim-ctl anim-outro-action" data-anim-outro="rewind"
             (click)="onRewind()">
             <span class="anim-ctl-label anim-ctl-label-mid">REWIND</span>
-            <img class="anim-ctl-glyph" [src]="glyph.rewind" alt="" aria-hidden="true" />
+            <img class="anim-ctl-glyph anim-ctl-glyph-mirror" [src]="glyph.rewind" alt="" aria-hidden="true" />
           </button>
           <button type="button" class="anim-ctl anim-outro-action" data-anim-outro="exit"
             *ngIf="fullscreen" (click)="onExit()">

@@ -118,7 +118,7 @@ async def shoot(page, cdp, path):
         handle.write(base64.b64decode(result["data"]))
 
 
-async def run(board, seconds, outdir, base_url):
+async def run(board, seconds, outdir, base_url, as_playing=False):
     from playwright.async_api import async_playwright
 
     os.makedirs(outdir, exist_ok=True)
@@ -144,17 +144,24 @@ async def run(board, seconds, outdir, base_url):
         # taken at exactly the second a reference still was taken at.
         for at in seconds:
             seeked = await page.evaluate(
-                """(ms) => {
+                """({ms, playing}) => {
                   const el = document.querySelector('app-battle-animation-stage');
                   const cmp = window.ng && window.ng.getComponent
                     ? window.ng.getComponent(el)
                     : null;
                   if (!cmp) { return null; }
                   cmp.onScrub(ms);
+                  if (playing) {
+                    // The bar reads PLAY when the clock is parked and the
+                    // client is never parked, so a still meant for comparison
+                    // is taken with the transport marked as running.
+                    cmp.playback = Object.assign({}, cmp.playback, {playing: true});
+                    cmp.onScrub(ms);
+                  }
                   const stage = el.querySelector('.anim-stage');
                   return Number(stage ? stage.dataset.animTime : -1);
                 }""",
-                int(at * 1000),
+                {"ms": int(at * 1000), "playing": as_playing},
             )
             if seeked is None:
                 raise SystemExit(
@@ -174,6 +181,11 @@ def main():
     parser.add_argument("--at", default="0,1,2,3,4,5,6,7,8")
     parser.add_argument("--out")
     parser.add_argument("--url", default=APP_URL)
+    parser.add_argument(
+        "--as-playing",
+        action="store_true",
+        help="mark the transport as running, so the bar shows PAUSE as the client does",
+    )
     args = parser.parse_args()
 
     path = args.board if args.board else os.path.join(FIXTURES, f"{args.fixture}.json")
@@ -183,7 +195,7 @@ def main():
         board = json.load(handle)
     seconds = [float(v) for v in args.at.split(",") if v.strip()]
     outdir = args.out or os.path.join(OUT_ROOT, board.get("id", "board"))
-    asyncio.run(run(board, seconds, outdir, args.url))
+    asyncio.run(run(board, seconds, outdir, args.url, args.as_playing))
     return 0
 
 

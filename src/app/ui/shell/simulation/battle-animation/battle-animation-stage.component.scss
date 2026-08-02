@@ -18,6 +18,17 @@
  */
 $icons: "/assets/art/Public/Public/Icons/TextMap-resources.assets-31-split";
 $extracted: "/assets/art/Extracted";
+/*
+ * Round 8. `Ripped/` is the client's own build unpacked: original sprites with
+ * their own 8-bit alpha, not screenshot cuts. Everything that has a ripped
+ * counterpart uses it, and the cut it replaced is deleted. Provenance, down to
+ * the Unity object name and the build id, is `art/Ripped/manifest.json`.
+ *
+ * Effect timings below are measured off the recorded clips frame by frame,
+ * because the build carries the particle textures but not the particle
+ * systems' parameters. The readings are cited where they are used.
+ */
+$ripped: "/assets/art/Ripped";
 
 /*
  * The plate every white box on this stage wears: the entrance names, the VS
@@ -470,67 +481,34 @@ $extracted: "/assets/art/Extracted";
 /*
  * The level plaque, checklist 18.
  *
- * A wooden sign with two lobes under a dark bar, keylined in black and haloed
- * in white, carrying a small white "Lvl" and a tall yellow numeral. Measured
- * on f11 t=30.45 at 39 by 26 of a 960 by 540 play area, which is 2.17 by 1.44
- * of this stage's scale unit, 0.72 above the sprite.
- */
-/*
- * The level plaque, checklist 18, rebuilt off the reference rather than off a
- * description of it.
- *
- * The old build was a dark bar sitting on two wooden lobes. There is no dark
- * bar: what looked like one is the black keyline the client puts on the "Lvl"
- * and the numeral, which are drawn *over* the wood, not inside a slab above it.
- * So the wood is the only art here (`Extracted/level-plaque.png`, cut from f11
- * t=3.00 where it runs 61 by 22 css on a 720 play area, so 2.54 by 0.92 of this
- * stage's scale unit), and the lettering is type with the game's own white halo
- * and black keyline, exactly as the client prints it.
+ * One sprite, drawn whole. The client ships `LevelMap_0/1/2` as the complete
+ * "Lvl 1 / Lvl 2 / Lvl 3" plaque, wood and wording and numeral and keyline and
+ * halo together, so there is nothing to compose. Rounds 5 to 7 built it out of
+ * parts off a screenshot and each attempt showed the join; the sprite has no
+ * join. Sized off the reference at 39 by 26 of a 960 by 540 play area, so 2.28
+ * of this stage's scale unit wide, and the sprite's own 123x109 aspect sets the
+ * height.
  */
 .anim-pet-level {
   position: relative;
-  width: 2.28em;
-  height: 1.67em;
+  width: 2.57em;
+  height: auto;
   margin-bottom: 0.02em;
-  display: block;
-  background: url("#{$extracted}/level-plaque.png") left bottom / 2.04em 1.67em no-repeat;
   line-height: 1;
   pointer-events: none;
 }
 
-/* "Lvl" is part of the cut, so nothing is set for it here. */
-.anim-pet-level-word {
-  display: none;
-}
-
 /*
- * The numeral is the only part of the plaque that changes, so it is the only
- * part still drawn: tall gold type standing off the cap's right end, keylined
- * in the plaque's own dark brown and haloed like everything else on the board.
- * On the reference it overhangs the cap upwards, which is why the plaque's box
- * is taller than its art.
+ * `LevelMap_0/1/2`, the whole "Lvl 1 / Lvl 2 / Lvl 3" plaque as the client
+ * ships it: wood, wording, numeral, keyline and halo in one sprite with its own
+ * alpha. Round 7 cut the wood out of a screenshot and set the numeral as type
+ * beside it, and the join between the two is what read as crooked and stitched.
+ * The sprite is 123x109, so the box follows that aspect.
  */
-/*
- * The numeral butts against the cut's right edge and overlaps it, so the two
- * read as one silhouette. It carries the plaque's black keyline and, outside
- * that, the same white halo the cut wears, because in the client the outline
- * runs unbroken around sign, numeral and wood; drawing the numeral clear of the
- * cut left the outline stopping dead in the middle of the plaque.
- */
-.anim-pet-level-num {
-  position: absolute;
-  left: 1.41em;
-  bottom: 0.5em;
-  font-size: 1.06em;
-  font-weight: 700;
-  color: #ffc21c;
-  text-shadow:
-    0.1em 0 0 #fff, -0.1em 0 0 #fff, 0 0.1em 0 #fff, 0 -0.1em 0 #fff,
-    0.075em 0.075em 0 #fff, -0.075em 0.075em 0 #fff,
-    0.075em -0.075em 0 #fff, -0.075em -0.075em 0 #fff,
-    0.07em 0 0 #130b04, -0.07em 0 0 #130b04, 0 0.07em 0 #130b04, 0 -0.07em 0 #130b04,
-    0.05em 0.05em 0 #130b04, -0.05em 0.05em 0 #130b04,
-    0.05em -0.05em 0 #130b04, -0.05em -0.05em 0 #130b04;
+.anim-pet-level-art {
+  display: block;
+  width: 100%;
+  height: auto;
 }
 
 /*
@@ -658,6 +636,65 @@ $extracted: "/assets/art/Extracted";
   pointer-events: none;
 }
 
+/*
+ * A buff or a perk arriving, checklist 10 and 14.
+ *
+ * The client throws its `ParticlePerk` sprite out around the pet and lifts a
+ * `Plus` over it; both are ripped originals. Timed to the contact effect
+ * measured on f03 and f14, where a landing reads over about 300ms: bright at
+ * once, then out and up while it fades.
+ */
+.anim-pet-buff {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  width: 2.4em;
+  height: 2.4em;
+  margin: -1.2em 0 0 -1.2em;
+  background: url("#{$ripped}/fx/particle-perk.png") center / contain no-repeat;
+  pointer-events: none;
+  animation: anim-buff-land 300ms ease-out forwards;
+}
+
+.anim-pet-buff-plus {
+  background-image: url("#{$ripped}/fx/plus.png");
+  animation: anim-buff-rise 420ms ease-out forwards;
+}
+
+@keyframes anim-buff-land {
+  0% {
+    opacity: 0;
+    transform: scale(0.35);
+  }
+
+  25% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.5);
+  }
+}
+
+@keyframes anim-buff-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(0.4em) scale(0.5);
+  }
+
+  30% {
+    opacity: 1;
+    transform: translateY(-0.2em) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-1.6em) scale(1.15);
+  }
+}
+
 .anim-pet-shard-on {
   animation: anim-shard 420ms ease-out forwards;
 }
@@ -699,14 +736,26 @@ $extracted: "/assets/art/Extracted";
   height: 1.3em;
 }
 
+/*
+ * The level-up burst.
+ *
+ * Two of the client's own particle textures rather than two CSS gradients:
+ * `glow6` is the rayed core and `sparkle` is the four-point flare that rides
+ * over it. Both are white and additive in the client, so they are screened over
+ * the board and tinted to the plaque's gold. No level-up was captured in the
+ * clip set, so the shape is the client's art and the timing follows the star
+ * spray measured at a corpse exit (about 350ms, growing as it goes) rather than
+ * being invented; that qualifier is in REPORT4.md.
+ */
 .anim-pet-xpburst {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 5em;
-  height: 5em;
-  border-radius: 50%;
-  background: radial-gradient(circle, #fff3b0 0%, #ffcf3f 35%, rgb(255 207 63 / 0%) 70%);
+  width: 5.4em;
+  height: 5.4em;
+  background: url("#{$ripped}/fx/glow-rays.png") center / 100% 100% no-repeat;
+  mix-blend-mode: screen;
+  filter: sepia(1) saturate(5) hue-rotate(-16deg) brightness(1.15);
   pointer-events: none;
 }
 
@@ -714,10 +763,11 @@ $extracted: "/assets/art/Extracted";
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 3.4em;
-  height: 3.4em;
-  border-radius: 50%;
-  border: 0.25em solid #ffd83f;
+  width: 3.6em;
+  height: 3.6em;
+  background: url("#{$ripped}/fx/sparkle.png") center / 100% 100% no-repeat;
+  mix-blend-mode: screen;
+  filter: sepia(1) saturate(4) hue-rotate(-10deg) brightness(1.2);
   pointer-events: none;
 }
 
@@ -822,7 +872,7 @@ $extracted: "/assets/art/Extracted";
 /* A whited out corpse keeps the red line it died wearing. */
 .anim-corpse .anim-pet-icon {
   filter:
-    saturate(0.28) brightness(1.6)
+    saturate(0.1) brightness(2.1)
     drop-shadow(0.09em 0 0 #ef2222) drop-shadow(-0.09em 0 0 #ef2222)
     drop-shadow(0 0.09em 0 #ef2222) drop-shadow(0 -0.09em 0 #ef2222);
 }
@@ -856,27 +906,56 @@ $extracted: "/assets/art/Extracted";
  * flew, each link a little smaller and fainter than the one in front of it,
  * which is what the reference leaves behind (f01 t=32.01 and t=37.39).
  */
+/*
+ * The trail a corpse leaves, measured on the close-ups against f11b t=6.55.
+ *
+ * The client draws it as flat, stroke-free circles 87 to 110px across at 3x,
+ * so 1.2 to 1.5 of this stage's scale unit, in clusters of two to four, each
+ * cluster a slightly different grey off a ten-step ramp from #dbdbdb to white.
+ * Ours was one 5.2 unit puff with the atlas's own soft edge, which read as one
+ * big smudge rather than as smoke.
+ */
 .anim-corpse-puff {
   position: absolute;
   z-index: 11;
-  width: 4.3em;
-  height: 3.4em;
+  width: 1.42em;
+  height: 1.42em;
+  border-radius: 50%;
   pointer-events: none;
-  background: url("#{$extracted}/cloud.png") center / 100% 100% no-repeat;
+  background: #f1f1f1;
 }
+
+.anim-corpse-puff:nth-child(6n + 1) { width: 1.22em; height: 1.22em; background: #dbdbdb; }
+.anim-corpse-puff:nth-child(6n + 2) { width: 1.5em; height: 1.5em; background: #fafafa; }
+.anim-corpse-puff:nth-child(6n + 3) { width: 1.3em; height: 1.3em; background: #dfdfdf; }
+.anim-corpse-puff:nth-child(6n + 4) { width: 1.46em; height: 1.46em; background: #fff; }
+.anim-corpse-puff:nth-child(6n + 5) { width: 1.26em; height: 1.26em; background: #ebebeb; }
 
 /*
  * The star a corpse bursts into. The pack's own star sprite, not a typographic
  * dingbat: the reference burst is a keylined, haloed star of the same family as
  * everything else on the board, and a font glyph could never be.
  */
+/*
+ * The star spray at a corpse's exit.
+ *
+ * The client's own `Star` sprite, which ships white so it can be tinted; the
+ * reference spray is the warm yellow the level plaque's numeral uses, with the
+ * board's black keyline around it, so the tint is a filter chain rather than a
+ * flat colour. Read off f03 t=33.93..34.28: about 350ms, four to six stars,
+ * each one getting bigger as it travels rather than shrinking.
+ */
 .anim-burst {
   position: absolute;
   z-index: 13;
-  width: 3.4em;
-  height: 3.4em;
+  width: 2.6em;
+  height: 2.6em;
   transform-origin: center;
-  background: url("#{$icons}/xp.png") center / 100% 100% no-repeat;
+  pointer-events: none;
+  filter:
+    drop-shadow(0.07em 0 0 #1a1206) drop-shadow(-0.07em 0 0 #1a1206)
+    drop-shadow(0 0.07em 0 #1a1206) drop-shadow(0 -0.07em 0 #1a1206)
+    sepia(1) saturate(6) hue-rotate(-12deg) brightness(1.06);
 }
 
 /* -------------------------------------------------- projectiles, puffs -- */
@@ -909,7 +988,7 @@ $extracted: "/assets/art/Extracted";
   width: 4.4em;
   height: 3.4em;
   border-radius: 0;
-  background: url("#{$extracted}/cloud.png") center / 100% 100% no-repeat;
+  background: url("#{$ripped}/fx/cloud-soft.png") 0 0 / 200% 200% no-repeat;
   filter: drop-shadow(0 0 0.2em rgb(255 255 255 / 80%));
 }
 
@@ -1054,38 +1133,49 @@ $extracted: "/assets/art/Extracted";
  * the heart row above and below it stay off, because those are a shop run's
  * score and this is a calculator.
  */
+/*
+ * The end screen's face and caption, placed independently.
+ *
+ * On the reference end screen the face's centre is 0.41 of the play area down
+ * and the caption's centre is 0.667; stacking them in one centred column put
+ * the face on top of the caption and the caption on top of the buttons. The
+ * face is `Standard--Happy` on a win and `Standard--Woopsy` on a loss, the
+ * client's own sprites, 284 css across on a 720 play area, so 11.8 of this
+ * stage's scale unit.
+ */
 .anim-outro-face {
   position: absolute;
-  left: 50%;
-  /* The caption's centre sits at 0.667 of the play area in the reference. */
-  top: 66.7%;
-  transform-origin: center;
-  translate: -50% -50%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  inset: 0;
+  pointer-events: none;
 }
 
 .anim-outro-mask {
-  width: 11.8em;
-  height: 11.8em;
-  margin-bottom: 0.5em;
+  position: absolute;
+  left: 50%;
+  top: 41%;
+  width: 11.45em;
+  height: 11.45em;
+  transform: translate(-50%, -50%);
   object-fit: contain;
 }
 
+/*
+ * Sized off the reference caption, which stands 33px tall and runs 179px wide
+ * on a 720 play area (out/outro_victory_end.jpg, scaled from its 40 by 217 at
+ * 960 by 600), with its centre 0.667 of the play area down.
+ */
 .anim-outro-caption {
-  /*
-   * Sized off the reference caption, which stands 33px tall and runs 179px
-   * wide on a 720 play area (out/outro_victory_end.jpg, scaled from its 40 by
-   * 217 at 960 by 600). At 1.45 ours came out 25 by 138.
-   */
+  position: absolute;
+  left: 50%;
+  top: 66.7%;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
   font-size: 1.9em;
   font-weight: 700;
   line-height: 1;
   letter-spacing: 0.05em;
-
-  @include keyline(0.035em);
+  /* The client's caption goes straight from white to the veil: no keyline. */
+  text-shadow: none;
 }
 
 /* Down at the foot of the screen, clear of the board the caption sits over. */
@@ -1167,7 +1257,7 @@ $extracted: "/assets/art/Extracted";
  * by 5px on each side.
  */
 .anim-ctl-label {
-  margin-top: -0.1em;
+  margin-top: -0.02em;
   font-size: 0.86em;
   font-weight: 700;
   letter-spacing: -0.01em;
@@ -1177,18 +1267,36 @@ $extracted: "/assets/art/Extracted";
 
 /* The long words are set down so they stay inside their tile. */
 .anim-ctl-label-long {
-  font-size: 0.56em;
+  font-size: 0.36em;
 }
 
 .anim-ctl-label-mid {
-  font-size: 0.64em;
+  font-size: 0.48em;
 }
 
-/* The glyphs are the client's own printing, lifted off its bar. */
+/* PAUSE is five letters where PLAY and SKIP are four. */
+.anim-ctl-label-five {
+  font-size: 0.59em;
+}
+
+/*
+ * The glyphs are the client's own sprites, white on full alpha, exactly as the
+ * build ships them; the client tints and plates them at runtime and so does
+ * this. Round 7 keyed them out of a screenshot of the bar, which left a seam
+ * along every edge where the key met the tile.
+ */
 .anim-ctl-glyph {
-  width: 1.5em;
-  height: 1.25em;
+  width: 1.17em;
+  height: 1.17em;
+  /* The client hangs the glyph 22px of a 3x capture below the tile's centre,
+     so 7.3 css, so 0.3 of this stage's scale unit. */
+  margin-top: 0.3em;
   object-fit: contain;
+}
+
+/* REWIND is the SKIP sprite turned round, which is how the client draws it. */
+.anim-ctl-glyph-mirror {
+  transform: scaleX(-1);
 }
 
 /*
@@ -1205,9 +1313,15 @@ $extracted: "/assets/art/Extracted";
   line-height: 1;
 }
 
-/* Engaged is a dimmed glyph, the treatment the real bar uses (checklist 16). */
-.anim-ctl-engaged {
-  opacity: 0.55;
+/*
+ * Engaged is a dimmed *glyph*, checklist 16: the client leaves the tile at its
+ * own colour and prints the label and the icon in #ccc. Fading the whole tile
+ * lightened its face to #5bb2cf against the client's #4d96ad.
+ */
+.anim-ctl-engaged .anim-ctl-glyph,
+.anim-ctl-engaged .anim-ctl-label {
+  filter: brightness(0.8) saturate(0);
+  opacity: 0.8;
 }
 
 /* ------------------------------------------------------ tools, not game -- */
