@@ -808,9 +808,11 @@ export const buildBattleTimeline = (
         // where the launch *would* have been (f02: the cow is hit at t=31.75
         // and airborne at 31.78, and the next contact is still 1.37 s later).
         const streamLaunchAt = Math.max(cursor, holdUntilMs);
-        const launchAt = allViaClash
-          ? Math.max(holdUntilMs, introEndMs)
-          : streamLaunchAt;
+        // `holdUntilMs` is already at or after the corpse cue's own start, so
+        // it needs no further floor, and not reaching for the entrance's end
+        // here is what lets the same director run on the preview build, which
+        // has no entrance.
+        const launchAt = allViaClash ? holdUntilMs : streamLaunchAt;
         const endMs = launchAt + beats.corpseLaunchMs;
         for (const ref of event.pets) {
           const corpse = openCorpses.get(ref.id);
