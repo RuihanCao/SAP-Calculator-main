@@ -7,12 +7,14 @@ import { SimulationConfig } from '../../src/app/domain/interfaces/simulation-con
 
 const require = createRequire(import.meta.url);
 
-export const EXPERIMENT_DIR = path.resolve(
-  __dirname,
-  '../../experiments/01-fight-animation-parity',
-);
-export const FIXTURE_DIR = path.join(EXPERIMENT_DIR, 'harness/fixtures');
-export const GOLDEN_DIR = path.join(EXPERIMENT_DIR, 'harness/expected/events');
+/**
+ * The recorded parity corpus: 16 board specs and the event stream each one is
+ * expected to produce. `cases/` and `goldens/` are two halves of one thing, so
+ * a fixture id names a file in both. See the README beside them.
+ */
+export const FIXTURE_ROOT = path.resolve(__dirname, '../fixtures/animation');
+export const FIXTURE_DIR = path.join(FIXTURE_ROOT, 'cases');
+export const GOLDEN_DIR = path.join(FIXTURE_ROOT, 'goldens');
 
 interface FixtureSpec {
   id: string;
@@ -21,7 +23,7 @@ interface FixtureSpec {
 }
 
 const { buildSimConfig } = require(
-  path.join(EXPERIMENT_DIR, 'harness/sim_config.js'),
+  path.join(FIXTURE_ROOT, 'sim-config.js'),
 ) as { buildSimConfig: (fixture: unknown) => SimulationConfig };
 
 export const listFixtureIds = (): string[] =>

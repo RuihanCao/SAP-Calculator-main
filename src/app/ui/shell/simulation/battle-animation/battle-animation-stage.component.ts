@@ -64,10 +64,11 @@ interface Point {
 /**
  * The art the stage is built from.
  *
- * Two sources, in the order the game-replication skill sets: the ripped asset
- * pack's own text-map sprites first, then pieces cut out of 3x captures of the
- * real client by `harness/extract_assets.py` for the in-battle chrome the pack
- * does not carry. Nothing here is drawn by hand: the SVG rock and the SVG
+ * Two sources, in that order of preference: the ripped asset pack's own
+ * text-map sprites first, then pieces keyed out of 3x captures of the real
+ * client for the in-battle chrome the pack does not carry, each with its clip,
+ * frame and crop box recorded in `art/Extracted/manifest.json`. Nothing here is
+ * drawn by hand: the SVG rock and the SVG
  * experience book that used to live in this file were the last two, and both
  * exist in the pack (`fist`, `xp`) as the very sprites the client prints.
  */
@@ -164,9 +165,8 @@ const OUTRO_FACES: Record<AnimationSide | 'draw', string> = {
  *
  * The build ships no such sprite (`Rock`, `SuperRock`, `ManaRock` and `Meteor`
  * are all food or pet tokens with eyes on them, and `Icons/snipe.png` is the
- * flat UI form), so this one is keyed out of the reference flight itself by
- * `harness/extract_projectile.py` and carries its provenance in
- * `art/Extracted/manifest.json`.
+ * flat UI form), so this one is keyed out of the reference flight itself and
+ * carries its provenance in `art/Extracted/manifest.json`.
  */
 const DAMAGE_ROCK = `${EXTRACTED}/damage-rock.png`;
 
@@ -234,7 +234,7 @@ const BANNER_ANCHOR: Point = { x: 43.4, y: 31.4 };
 /*
  * Round 9, traced rather than estimated.
  *
- * `harness/path_trace.py` follows the whited out body frame by frame. On f03
+ * The whited out body was followed frame by frame through the clips. On f03
  * the opponent's cow leaves its slot at (52.6%, 61%) of the play area and is at
  * (96%, 26%) when it goes off the corner; on f01 the player's pig runs
  * (43.5%, 66%) to (4%, 26%); on f02 the burst that marks the exit is at
@@ -650,9 +650,10 @@ export class BattleAnimationStageComponent
    * Where the body is at a fraction of its own flight.
    *
    * Linear across, eased up: on the reference the trail's slope falls from
-   * about 0.9 near the slot to 0.2 near the exit (f03 t=33.90, measured by
-   * `harness/trail_fit.py`), which is a rise that runs out of speed rather than
-   * a straight line. The whole travel is done in `CORPSE_FLIGHT_FRACTION` of
+   * about 0.9 near the slot to 0.2 near the exit (f03 t=33.90, fitted to the
+   * puffs the reference lays along the path), which is a rise that runs out of
+   * speed rather than a straight line. The travel is done in
+   * `CORPSE_FLIGHT_FRACTION` of
    * the cue and the body is off the field after it, so `travel` is deliberately
    * not clamped: it keeps going and `.anim-field`'s own clip takes it.
    */

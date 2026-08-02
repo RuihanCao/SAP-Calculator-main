@@ -1,7 +1,0 @@
-{
- "id": "w8-defeat",
- "title": "A board the player loses, for the defeat end screen",
- "turn": 11,
- "player": [{"pet": "Pig", "attack": 2, "health": 3}],
- "opponent": [{"pet": "Cow", "attack": 9, "health": 20}, {"pet": "Otter", "attack": 5, "health": 12}]
-}

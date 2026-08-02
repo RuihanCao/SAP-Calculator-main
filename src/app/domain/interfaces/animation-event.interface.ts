@@ -1,11 +1,15 @@
 /**
  * Structured battle animation events.
  *
- * The vocabulary maps 1:1 onto the behaviour grammar recorded from the real
- * game in `experiments/01-fight-animation-parity/CHECKLIST.md`. Every value is
- * plain data (numbers, strings, booleans and arrays of those) so a whole event
- * stream survives `postMessage` structured clone and `JSON.stringify` without
- * any sanitising step.
+ * The vocabulary maps 1:1 onto the behaviour grammar of the real game, which
+ * was read off frame-by-frame recordings of the client rather than inferred
+ * from this engine. That survey is numbered, and the `checklist N` citations
+ * through the animation code name its sections; each citation also states the
+ * behaviour it relies on, so nothing here needs the survey itself to be read.
+ *
+ * Every value is plain data (numbers, strings, booleans and arrays of those) so
+ * a whole event stream survives `postMessage` structured clone and
+ * `JSON.stringify` without any sanitising step.
  *
  * Simultaneity is expressed by membership, not by adjacency: a mutual attack is
  * one `clash` with two hits, an area effect is one `projectile` with N targets,

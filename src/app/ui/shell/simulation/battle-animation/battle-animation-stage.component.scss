@@ -8,10 +8,10 @@
  *      which are the same sprites the client prints in its ability text: the
  *      attack rock, the heart, the mana flask, the star, the trumpet, the gold
  *      level disc.
- *   `art/Extracted/...`  cut out of 3x captures of the real client by
- *      `experiments/01-fight-animation-parity/harness/extract_assets.py`, for
- *      the in-battle chrome the pack does not carry. Provenance for each piece,
- *      down to the still and the box, is in `art/Extracted/manifest.json`.
+ *   `art/Extracted/...`  keyed out of 3x captures of the real client, for the
+ *      in-battle chrome the pack does not carry. Provenance for each piece,
+ *      down to the clip, the frame and the box it was cut from, is in
+ *      `art/Extracted/manifest.json`.
  *
  * The one thing still drawn in CSS is a plain white rounded rectangle (the
  * plate a pair of stat badges stands on), because a rectangle is a rectangle.

@@ -487,8 +487,8 @@ describe('Round 5, measured against the reference frames', () => {
     });
 
     /**
-     * Round 9, item 3. Traced with `harness/path_trace.py`: on f03 the cow runs
-     * (52.6%, 61%) to (96%, 26%) of the play area, on f01 the pig runs
+     * Round 9, item 3. Traced frame by frame off the reference clips: on f03
+     * the cow runs (52.6%, 61%) to (96%, 26%) of the play area, on f01 the pig runs
      * (43.5%, 66%) to (4%, 26%), so the body covers about 43% of the width
      * against 35% of the height. Rounds 7 and 8 threw it 22 across and 56 up,
      * which is the steep arc the round 8 critic called out.

@@ -5,7 +5,7 @@
    269
   ],
   "method": "median-background alpha key and un-mix",
-  "note": "the build ships no such sprite; see harness/extract_projectile.py",
+  "note": "the build ships no such sprite; keyed out of the reference flight itself",
   "pixels": [
    61,
    65

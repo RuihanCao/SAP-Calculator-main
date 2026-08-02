@@ -17,8 +17,9 @@ import {
  *
  * Every case here is a board that reproduced one reported defect before its
  * fix. The battles are hand written rather than fixtures because none of them
- * was recorded from the real game: they exercise engine paths, and the
- * behaviour grammar they are checked against is CHECKLIST.md.
+ * was recorded from the real game: they exercise engine paths, and what they
+ * are checked against is the behaviour grammar the recorded fixtures pin, each
+ * case stating below which rule of it the board is there to hold.
  */
 
 const pet = (

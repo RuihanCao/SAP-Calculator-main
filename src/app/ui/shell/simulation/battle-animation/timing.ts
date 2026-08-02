@@ -1,12 +1,23 @@
 /**
  * The beat table.
  *
- * Every number here is read off the reference clips in
- * `experiments/01-fight-animation-parity/CHECKLIST.md`, section 12 for the
- * normal grammar and section 16 for the fast one. There is exactly one table:
- * a cue's duration IS the beat it occupies, so nothing schedules a second,
- * independent delay on top of an animation (the thing the old renderer did with
- * its two duration tables and its x2 fudge).
+ * Every number here was measured off clips of the real client, never chosen
+ * because it felt right. Two grammars were measured, and the second is not the
+ * first replayed faster:
+ *
+ *   normal  overlapping beats. Nothing waits for the thing before it to
+ *           finish: the push forward starts during the corpse flight, and the
+ *           next trigger banner is up while the previous popups still fade.
+ *   FAST    the trigger banner is not drawn at all. In its place the ability's
+ *           icon appears over the acting pet for about 0.2 s, so a projectile
+ *           has nowhere to travel from and simply appears at its target.
+ *           Per-target staging collapses (two summons from one ability arrive
+ *           in the same frame instead of ~0.3 s apart), and the beats that
+ *           survive run about 2.5x faster.
+ *
+ * There is exactly one table: a cue's duration IS the beat it occupies, so
+ * nothing schedules a second, independent delay on top of an animation (the
+ * thing the old renderer did with its two duration tables and its x2 fudge).
  */
 
 export type AnimationMode = 'normal' | 'fast';

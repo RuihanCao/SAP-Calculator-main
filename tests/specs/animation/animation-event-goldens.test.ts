@@ -13,7 +13,8 @@ import {
  * Regenerate deliberately with:
  *   UPDATE_ANIMATION_GOLDENS=1 npx vitest run --config config/vitest.config.ts \
  *     tests/specs/animation
- * and read the diff against CHECKLIST.md before committing it.
+ * and read every line of the diff before committing it: a change that was not
+ * the point of the edit is a regression, not a new baseline.
  */
 const UPDATE = process.env.UPDATE_ANIMATION_GOLDENS === '1';
 
