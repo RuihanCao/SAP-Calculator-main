@@ -231,7 +231,11 @@ async def record_one(fid, base_url, seconds, fast, quality, swap=False):
         missing = 0
         while time.time() < deadline:
             await page.wait_for_timeout(250)
-            state = await page.evaluate(
+            # Named `progress`, not `state`: `state` is the screencast's own
+            # counter dict, and shadowing it here made every frame callback
+            # raise KeyError('n') the moment the first poll landed. The clip came
+            # back 15 frames long and read as a broken animation.
+            progress = await page.evaluate(
                 """() => {
                   const stage = document.querySelector('app-battle-animation-stage .anim-stage');
                   if (!stage) { return null; }
@@ -242,7 +246,7 @@ async def record_one(fid, base_url, seconds, fast, quality, swap=False):
                   };
                 }"""
             )
-            if state is None or state["duration"] <= 0:
+            if progress is None or progress["duration"] <= 0:
                 missing += 1
                 if missing == 9:
                     # Say it once, then keep recording. Breaking out here ended
@@ -255,7 +259,7 @@ async def record_one(fid, base_url, seconds, fast, quality, swap=False):
                     )
                 continue
             missing = 0
-            if state["done"]:
+            if progress["done"]:
                 await page.wait_for_timeout(700)
                 break
 
