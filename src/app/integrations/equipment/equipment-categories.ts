@@ -122,3 +122,36 @@ export const AILMENT_CATEGORIES: { [key: string]: string[] } = {
     'Webbed',
   ],
 };
+
+/**
+ * Names are canonicalised on both sides of the comparison.
+ *
+ * Callers feed this whatever a log line carried, and a board log's perk name
+ * comes out of an `alt` attribute, so it can arrive padded or with a line break
+ * folded into the middle of it. Matching the raw string would silently answer
+ * "not an ailment" for `" Tasty"`, which is the same 404 this function exists to
+ * stop.
+ */
+const canonicalEquipmentName = (name: string): string =>
+  name.trim().replace(/\s+/g, ' ').toLowerCase();
+
+const AILMENT_NAMES = new Set(
+  Object.values(AILMENT_CATEGORIES)
+    .flat()
+    .filter(Boolean)
+    .map(canonicalEquipmentName),
+);
+
+/**
+ * Whether a perk name is an ailment rather than a food perk.
+ *
+ * Which of the two it is decides which art directory the icon comes from
+ * (`Ailments/` against `Food/`), so anything that resolves an icon from a name
+ * alone has to ask here rather than assume. Assuming was the Tasty broken-image
+ * bug: the battle animation's seed board read the perk name off the board log
+ * and passed `false`, which sent every ailment a pet was already wearing at the
+ * first bell to `Food/<name>.png` and a 404.
+ */
+export function isAilmentEquipmentName(name?: string | null): boolean {
+  return name ? AILMENT_NAMES.has(canonicalEquipmentName(name)) : false;
+}
