@@ -17,7 +17,7 @@ import {
   SlideCue,
   StatPillCue,
 } from './cues';
-import { INTRO_BEATS, OUTRO_BEATS } from './timing';
+import { AnimationBeats, INTRO_BEATS, OUTRO_BEATS, getBeats } from './timing';
 
 export type AnimationPhaseName = 'intro' | 'battle' | 'outro';
 
@@ -70,6 +70,8 @@ export interface CorpseView {
   health: number;
   slot: number;
   progress: number;
+  /** Thrown by the blow that killed it, rather than fading out in its slot. */
+  viaClash: boolean;
 }
 
 export interface BurstView {
@@ -88,6 +90,12 @@ export interface ProjectileView {
   toSide: AnimationSide;
   toSlot: number;
   progress: number;
+  /** Whether the throw delivers damage, which is drawn as the rock. */
+  damage: boolean;
+  /** Set when this one object carries both halves of a two part reward. */
+  pairedPayload: AnimationPayloadKind | null;
+  /** 0 to 1 over `projectileGrowMs`: the object growing to full size. */
+  grow: number;
 }
 
 export interface PopupView {
@@ -100,6 +108,18 @@ export interface PopupView {
   anchor: PetAnchor;
   text: string;
   statKind: AnimationStatKind | null;
+  /**
+   * Signed amount for a stat pill, so the stage can set the sign and the
+   * numeral separately the way the client does: a white plus, then the stat's
+   * own badge with the amount inside it.
+   */
+  amount: number | null;
+  /**
+   * Milliseconds since this popup's numeral last changed, which is what the
+   * damage numeral's punch is timed off. A merge restarts it, because the
+   * reference punches the new total the same way it punched the first hit.
+   */
+  ageMs: number;
   progress: number;
   merged: boolean;
   /**
@@ -120,7 +140,7 @@ export interface FlashView {
 
 export interface PuffView {
   id: string;
-  kind: 'summon' | 'transform' | 'impact' | 'landing' | 'mana';
+  kind: 'summon' | 'transform' | 'impact' | 'landing' | 'mana' | 'buff';
   side: AnimationSide;
   slot: number;
   progress: number;
@@ -310,7 +330,7 @@ const cloudOpacity = (progress: number): number =>
 export const popupValueAt = (
   cue: DamagePopupCue,
   timeMs: number,
-): { value: number; merged: boolean; progress: number } => {
+): { value: number; merged: boolean; progress: number; sinceMs: number } => {
   let index = 0;
   for (let at = cue.steps.length - 1; at >= 0; at -= 1) {
     if (timeMs >= cue.steps[at].atMs) {
@@ -323,6 +343,8 @@ export const popupValueAt = (
     value: step.value,
     merged: index > 0,
     progress: clamp01((timeMs - step.atMs) / Math.max(1, cue.lifeMs)),
+    // When the numeral on screen last changed, which is what the punch times off.
+    sinceMs: step.atMs,
   };
 };
 
@@ -355,11 +377,14 @@ const statPillText = (cue: StatPillCue): string => {
  */
 export class TimelineSampler {
   private readonly boardTrack: Array<{ atMs: number; board: AnimationBoardState }>;
+  /** The same beat table the director used, for ramps read off wall clock. */
+  private readonly beats: AnimationBeats;
 
   constructor(readonly timeline: AnimationTimeline) {
     this.boardTrack = timeline.steps
       .map((step) => ({ atMs: step.commitMs, board: step.board }))
       .sort((a, b) => a.atMs - b.atMs);
+    this.beats = getBeats(timeline.mode);
   }
 
   boardAt(timeMs: number): AnimationBoardState {
@@ -561,6 +586,7 @@ export class TimelineSampler {
             health: cue.health,
             slot: cue.index,
             progress,
+            viaClash: cue.viaClash,
           });
           break;
         }
@@ -575,6 +601,10 @@ export class TimelineSampler {
         }
         case 'projectile': {
           const view = cue as ProjectileCue;
+          // The grow is a wall-clock ramp rather than a fraction of the cue, so
+          // a long throw and a short one come out of the attacker the same way.
+          const growMs = this.beats.projectileGrowMs;
+          const grow = growMs > 0 ? Math.min(1, (timeMs - cue.startMs) / growMs) : 1;
           for (const target of view.targets) {
             projectiles.push({
               id: `${view.id}-${target.petId}`,
@@ -584,6 +614,9 @@ export class TimelineSampler {
               toSide: target.side,
               toSlot: slotOf(target.petId),
               progress,
+              damage: view.damage,
+              pairedPayload: view.pairedPayload,
+              grow,
             });
           }
           break;
@@ -600,6 +633,8 @@ export class TimelineSampler {
             anchor: slotAnchor(view.side, slotOf(view.petId)),
             text: `${shown.value}`,
             statKind: null,
+            amount: null,
+            ageMs: timeMs - (shown.sinceMs ?? view.startMs),
             progress: shown.progress,
             merged: shown.merged,
             offset: 0,
@@ -617,6 +652,8 @@ export class TimelineSampler {
             anchor: slotAnchor(view.side, view.petId != null ? slotOf(view.petId) : 0),
             text: statPillText(view),
             statKind: view.statKind,
+            amount: view.amount,
+            ageMs: timeMs - cue.startMs,
             progress,
             merged: false,
             offset: 0,
@@ -633,6 +670,8 @@ export class TimelineSampler {
             anchor: slotAnchor(sideOf(cue.petId), slotOf(cue.petId)),
             text: `${cue.attack} ${cue.health}`,
             statKind: null,
+            amount: null,
+            ageMs: timeMs - cue.startMs,
             progress,
             merged: false,
             offset: 0,
@@ -780,13 +819,19 @@ export class TimelineSampler {
         slot,
         lift,
         lean,
-        outline: sourceOutlines.has(pet.id)
-          ? 'source'
-          : hurtOutlines.has(pet.id)
-            ? 'hurt'
-            : windupOutlines.has(pet.id)
-              ? 'windup'
-              : 'none',
+        // A pet that has died wears the bandage and nothing else: on f02
+        // t=30.16 to 30.84 the dead worm has its plain white halo, no red hurt
+        // line, and the same is true of the peacock on f10. Ours kept the hurt
+        // outline running under the bandage for its full second.
+        outline: pet.fainted
+          ? 'none'
+          : sourceOutlines.has(pet.id)
+            ? 'source'
+            : hurtOutlines.has(pet.id)
+              ? 'hurt'
+              : windupOutlines.has(pet.id)
+                ? 'windup'
+                : 'none',
         reveal: revealByPet.get(pet.id) ?? 1,
         fastIcon: fastIconByPet.get(pet.id) ?? null,
         jumpTargetSide: jump ? jump.targetSide : null,

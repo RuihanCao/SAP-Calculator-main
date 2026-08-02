@@ -122,7 +122,10 @@ def swap_boards(fixture):
     return swapped
 
 
-async def record_one(fid, base_url, seconds, fast, quality, swap=False):
+async def record_one(
+    fid, base_url, seconds, fast, quality, swap=False, viewport=(1280, 800),
+    suffix=None,
+):
     from playwright.async_api import async_playwright
 
     with open(os.path.join(FIXTURES, f"{fid}.json")) as handle:
@@ -130,7 +133,9 @@ async def record_one(fid, base_url, seconds, fast, quality, swap=False):
     if swap:
         fixture = swap_boards(fixture)
 
-    suffix = "-fast" if fast else ("-defeat" if swap else "")
+    suffix = suffix if suffix is not None else (
+        "-fast" if fast else ("-defeat" if swap else "")
+    )
     outdir = os.path.join(OUT_ROOT, f"{fid}{suffix}")
     os.makedirs(outdir, exist_ok=True)
     for name in os.listdir(outdir):
@@ -139,7 +144,9 @@ async def record_one(fid, base_url, seconds, fast, quality, swap=False):
 
     async with async_playwright() as pw:
         browser = await pw.chromium.launch(args=LAUNCH_ARGS)
-        context = await browser.new_context(viewport={"width": 1280, "height": 800})
+        context = await browser.new_context(
+            viewport={"width": viewport[0], "height": viewport[1]}
+        )
         page = await context.new_page()
         await page.goto(fixture_url(fixture, base_url), wait_until="load", timeout=120000)
 
@@ -208,8 +215,8 @@ async def record_one(fid, base_url, seconds, fast, quality, swap=False):
             {
                 "format": "jpeg",
                 "quality": quality,
-                "maxWidth": 1280,
-                "maxHeight": 800,
+                "maxWidth": viewport[0],
+                "maxHeight": viewport[1],
                 "everyNthFrame": 1,
             },
         )
@@ -294,7 +301,23 @@ def main():
     )
     parser.add_argument("--seconds", type=float, default=45)
     parser.add_argument("--quality", type=int, default=70)
+    parser.add_argument(
+        "--viewport",
+        default="1280x800",
+        help=(
+            "browser viewport, WxH. 960x600 matches the reference clips: "
+            "the stage's field is 16:9, so at 960x600 its play area is the "
+            "same 960x540 on rows 30..570 that clips/ carries, and a crop "
+            "of the same box out of both sides is then a true 1:1 "
+            "comparison with neither side resampled."
+        ),
+    )
     parser.add_argument("--url", default=APP_URL)
+    parser.add_argument(
+        "--suffix",
+        default=None,
+        help="output directory suffix, so a second capture does not overwrite the first",
+    )
     args = parser.parse_args()
 
     ids = (
@@ -305,9 +328,20 @@ def main():
     if not ids or ids == [None]:
         parser.error("give a fixture id or --all")
 
+    width, _, height = args.viewport.partition("x")
+    viewport = (int(width), int(height))
     for fid in ids:
         asyncio.run(
-            record_one(fid, args.url, args.seconds, args.fast, args.quality, args.swap)
+            record_one(
+                fid,
+                args.url,
+                args.seconds,
+                args.fast,
+                args.quality,
+                args.swap,
+                viewport,
+                args.suffix,
+            )
         )
 
 

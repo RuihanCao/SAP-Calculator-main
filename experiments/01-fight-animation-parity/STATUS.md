@@ -1,15 +1,26 @@
 # STATUS — exp01 fight-animation-parity
-Updated: 2026-08-01 (handoff)
+Updated: 2026-08-02 (round 9)
 
 ## Current
-- **Round 7 (asset extraction, W-B):** every hand-drawn SVG/CSS element in the battle animation replaced by real game art, ailment icon bug found and fixed, `record_calc.py` unblocked. Branch `feature/anim01-w3-asset-extraction`. Provenance in `EXTRACTION.md`, functional gate `harness/functional_gate.py` 3/3 clean, animation suite 308/308.
-- **Last segment:** rounds 4-6 pixel-standard pass done; event axis 16/16, visual axis aligned (background/facing/letterbox/whiteout/corpse/end screen/controls), ~14 residuals listed — see RESULTS.md; eyeball: delivery artifact https://claude.ai/code/artifact/63558a0d-bc8f-4a29-a8bb-e469b3769cec or live http://127.0.0.1:4200 via `ssh -CNL 4200:127.0.0.1:4200 myAutodl` (Battle animation button; ?legacyAnimation=1 for the old renderer).
-- **Running:** ng serve :4200 on the box (log /root/workspace/worktrees/SAP-Calc-anim01-w2/tmp/w2/ngserve.log); play-web :8765 and sim-server :3001 (unrelated, healthy); harness driver daemon likely parked/dead (restart via harness/README.md if needed); no batch runs, no monitors.
-- **Branch/PR:** feature/anim01-w2-director / PR #3 (draft, depends on #1, #2; all three draft, merge bottom-up).
-- **Next:** 1) task.md Now items. 2) After Ruihan's calls: round 7 residual sweep or close and start the shop-animation line (play-web, SAP-PPO side).
-- **Waiting on Ruihan:** end-screen UI timing (ours 0.9s vs reference 2.1s); chrome scope (Replaying pill, hamburger, bottom team strips, yellow face); round-7 residual sweep vs accept; PR merge order go; legacy renderer retirement.
+- **Round 9 (death sequence, snipe, trail, buff):** the bandage stage exists, a body that nothing threw now fades in its slot instead of flying, the snipe throws the client's own rock over the measured arc for the measured 410 ms, the trail is the reference's thickness, and a buff throws one `HeartFist` and lands in a flash with the client's own chips. Branch `feature/anim01-w8-ripped-assets`. Evidence: 1:1 strips built by the new `harness/pair_strip.py`, both sides captured at 960x600 so neither is resampled. Animation suite 324/324, functional gate 3/3, eslint clean.
+- **Round 8 (ripped originals):** every screenshot cut that had a counterpart in the client's own build was replaced by the original sprite. Provenance in `EXTRACTION.md` and `art/Ripped/manifest.json`.
+- **Round 7 (asset extraction):** every hand-drawn SVG/CSS element replaced by real game art; ailment icon bug found and fixed.
+- **Rounds 4-6:** pixel-standard pass; event axis 16/16, visual axis aligned; residuals in RESULTS.md.
+- **Running:** ng serve :4202 (work) and :4200 (preview) on the box; harness driver daemon up; no batch runs, no monitors.
+- **Next:** the round 9 residuals below, then Ruihan's calls.
+- **Waiting on Ruihan:** chrome scope (the "Replaying..." pill, the hamburger, the ability card's border and font, which the round 9 critic named on three sheets and which nobody has decided to reproduce); end-screen UI timing; PR merge order; legacy renderer retirement.
+
+## Round 9 residuals, measured
+1. The blind critic still names the real client on all five sheets, so the whole-frame blind gate is not passed. It is now doing it off the ability card's styling, the missing "Replaying..." pill and a whole-board vertical offset of 15-19px rather than off the effects.
+2. The board sits 15-19px high of the reference inside the same crop, on every sheet, at the same scale. `GROUND_Y` is worth one more measurement.
+3. A lethal ranged hit throws white shards in the reference (f02 t=30.02 to 30.44) and ours throws none. Round 8 measured them and nothing draws them for a ranged impact.
+4. The reference washes the whole right of the frame gold at a corpse's star spray (f02 t=32.13); ours does not light the background at all.
+5. The attack stat badge and the attack half of a buff chip use `Icons/fist.png`, a fist; the client's is the grey damage token. Same sprite question as `damage-rock.png`.
+6. The green ability ring is about twice the reference's weight on the acting pet.
 
 ## History
+- 2026-08-02: round 9, death bandage stage / snipe throw / trail / buff, this file.
+- 2026-08-02: round 8, ripped originals replace the screenshot crops.
 - 2026-08-01: rounds 4-6 pixel pass, delivery v2, game-replication skill written.
 - 2026-07-31: W0-W3 done, event axis 16/16 (2-13-16), RESULTS.md created.
 - 2026-07-31: plan approved, experiment created.

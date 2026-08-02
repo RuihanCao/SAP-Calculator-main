@@ -592,14 +592,81 @@ $ripped: "/assets/art/Ripped";
  */
 
 /*
- * Fainting, checklist 3. There is no red cross anywhere in the reference: the
- * corpse whites out and launches (f01 t=32.01,
- * clips/f01-plain-trades/f_00905_0032006.jpg, where the pig is washed to white
- * with its black keyline intact and only the darkest patches left as colour).
+ * Fainting, checklist 3, corrected in round 9.
+ *
+ * Rounds 7 and 8 washed the pet out the moment it died and launched it. The
+ * reference does neither. A pet that has just taken a lethal hit stands in its
+ * own slot at its own full colour, wearing a crossed bandage, with its real
+ * health on the badge, and it is only the *launched* body that whites out
+ * (f02: the worm is whited at t=29.97 by the contact flash, is back to pink by
+ * 30.16, sits there with the bandage and a health of 0 until 30.84, and is gone
+ * at 30.88; f06's otter is the same with a health of -1; the peacock in f10
+ * holds it at -4 for over a second while the fight goes on around it).
+ *
+ * So the wash belongs to the corpse alone, and it is close to pure white there
+ * (f01 t=32.01, clips/f01-plain-trades/f_00905_0032006.jpg, where the pig is
+ * washed out with only its black keyline left).
  */
-.anim-pet-fainted .anim-pet-icon,
+/*
+ * The launched body keeps its own colours.
+ *
+ * Round 7 read f01 t=32.01 as a corpse washed out to white and rounds 7 and 8
+ * drew it that way. On a 1:1 crop of f02 t=31.78, one frame after the blow, the
+ * cow that was just thrown is its own grey and white with a pink nose and wears
+ * the red hurt line, and it is only the *contact frame itself* that paints both
+ * pets out. Washing it for the whole flight made our body invisible against its
+ * own smoke, which is what the round 9 critic saw when it reported that the
+ * thing flying was a bandage with no pet under it.
+ */
 .anim-corpse .anim-pet-icon {
-  filter: saturate(0.28) brightness(1.6);
+  filter: drop-shadow(0.06em 0 0 #e4262b) drop-shadow(-0.06em 0 0 #e4262b)
+    drop-shadow(0 0.06em 0 #e4262b) drop-shadow(0 -0.06em 0 #e4262b);
+}
+
+/*
+ * The bandage, `Bandage` out of the client's own build.
+ *
+ * Sized off f02 t=30.47, where the crossed plaster measures 66px across on a
+ * 540 tall play area, about 74 with its keyline, against a worm 81px wide. This
+ * stage's unit is a thirtieth of the play area's height, so that is 4.1em, and
+ * it is centred on the pet's art box.
+ *
+ * Onset: the hit lands at t=29.97 and the bandage is showing at 30.02 and full
+ * at 30.06, so it fades up over about 90ms after a 50ms beat.
+ */
+.anim-pet-bandage {
+  position: absolute;
+  left: 50%;
+  /*
+   * Round 9 second pass. Masking the plaster's tan on both sides with one
+   * colour range: the reference covers 1549 px on f02's worm and 1485 on f10's
+   * peacock, ours covered 1955 and 1899, so ours was 12% oversize on the
+   * diagonal, and its centre sat 12 to 17px high of the reference's.
+   */
+  top: 58%;
+  z-index: 3;
+  width: 3.7em;
+  height: 3.7em;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation: anim-bandage-in 90ms 50ms ease-out both;
+}
+
+/* Already up by the time the body launches, so it does not restart in flight. */
+.anim-corpse-bandage {
+  animation: none;
+}
+
+@keyframes anim-bandage-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.55);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
 }
 
 .anim-pet-equipment {
@@ -915,21 +982,61 @@ $ripped: "/assets/art/Ripped";
  * Ours was one 5.2 unit puff with the atlas's own soft edge, which read as one
  * big smudge rather than as smoke.
  */
+/*
+ * Round 9. Round 8's trail was the right construction at half the size, which
+ * is why the round 8 critic still called it thinner than the client's.
+ *
+ * Measured on f02 t=31.88 at native resolution: the trail behind the cow is a
+ * continuous band about 47px thick on a 540 tall play area, made of lobes about
+ * 45px across that overlap into each other. That is 2.4 to 2.6 of this stage's
+ * scale unit, against the 1.22 to 1.5 that was here.
+ */
 .anim-corpse-puff {
   position: absolute;
   z-index: 11;
-  width: 1.42em;
-  height: 1.42em;
+  width: 2.5em;
+  height: 2.5em;
   border-radius: 50%;
   pointer-events: none;
   background: #f1f1f1;
 }
 
-.anim-corpse-puff:nth-child(6n + 1) { width: 1.22em; height: 1.22em; background: #dbdbdb; }
-.anim-corpse-puff:nth-child(6n + 2) { width: 1.5em; height: 1.5em; background: #fafafa; }
-.anim-corpse-puff:nth-child(6n + 3) { width: 1.3em; height: 1.3em; background: #dfdfdf; }
-.anim-corpse-puff:nth-child(6n + 4) { width: 1.46em; height: 1.46em; background: #fff; }
-.anim-corpse-puff:nth-child(6n + 5) { width: 1.26em; height: 1.26em; background: #ebebeb; }
+.anim-corpse-puff:nth-child(6n + 1) { width: 2.14em; height: 2.14em; background: #dbdbdb; }
+.anim-corpse-puff:nth-child(6n + 2) { width: 2.62em; height: 2.62em; background: #fafafa; }
+.anim-corpse-puff:nth-child(6n + 3) { width: 2.28em; height: 2.28em; background: #dfdfdf; }
+.anim-corpse-puff:nth-child(6n + 4) { width: 2.56em; height: 2.56em; background: #fff; }
+.anim-corpse-puff:nth-child(6n + 5) { width: 2.2em; height: 2.2em; background: #ebebeb; }
+
+/*
+ * The bloom in the slot the body left.
+ *
+ * The client does not simply start a trail there: at f02 t=30.88 the worm's
+ * slot goes bright yellow-white and a cloud twice a trail link's size opens in
+ * it, and the same beat is on f06 at t=30.82. The art is the client's own
+ * `glow1` over its own soft cloud.
+ */
+.anim-corpse-launch-flash {
+  position: absolute;
+  z-index: 12;
+  width: 6.4em;
+  height: 6.4em;
+  pointer-events: none;
+  /*
+   * `cloud_2x2_soft` is a two by two atlas, so it is framed on one cell the way
+   * `.anim-puff-cloud` frames it. Centring it instead put the seam between four
+   * cells through the middle of the bloom and drew a hard white square, which
+   * is what the first round-9 strips caught.
+   */
+  background:
+    url("#{$ripped}/fx/cloud-hard.png") 0 0 / 200% 200% no-repeat,
+    radial-gradient(circle, rgb(255 252 232 / 95%) 0 20%, rgb(255 220 96 / 70%) 40%, rgb(255 220 96 / 0%) 72%);
+  /*
+   * The reference bloom lights what is behind it: on f02 t=30.88 the grass 40px
+   * to the left of the cloud lifts from 62,144,7 to 92,168,16. A plain painted
+   * gradient cannot do that, so the layer is screened over the field.
+   */
+  mix-blend-mode: screen;
+}
 
 /*
  * The star a corpse bursts into. The pack's own star sprite, not a typographic
@@ -945,17 +1052,22 @@ $ripped: "/assets/art/Ripped";
  * flat colour. Read off f03 t=33.93..34.28: about 350ms, four to six stars,
  * each one getting bigger as it travels rather than shrinking.
  */
+/*
+ * Round 9. Measured on f02 t=32.13: four to six gold stars about 20 to 24px
+ * across on a 540 tall play area, so 1.2 of this stage's unit, in a saturated
+ * #fdd417 rather than the pale #fbeb7a a 2.6em star was coming out as.
+ */
 .anim-burst {
   position: absolute;
   z-index: 13;
-  width: 2.6em;
-  height: 2.6em;
+  width: 1.3em;
+  height: 1.3em;
   transform-origin: center;
   pointer-events: none;
   filter:
     drop-shadow(0.07em 0 0 #1a1206) drop-shadow(-0.07em 0 0 #1a1206)
     drop-shadow(0 0.07em 0 #1a1206) drop-shadow(0 -0.07em 0 #1a1206)
-    sepia(1) saturate(6) hue-rotate(-12deg) brightness(1.06);
+    sepia(1) saturate(9) hue-rotate(-16deg) brightness(1.02);
 }
 
 /* -------------------------------------------------- projectiles, puffs -- */
@@ -966,10 +1078,20 @@ $ripped: "/assets/art/Ripped";
   transform: translate(-50%, -50%);
 }
 
+/*
+ * Round 9: the thrown object was half the size it should be.
+ *
+ * The reference rock measures 56 to 62px across on a 540 tall play area (f02,
+ * every frame from t=29.639 to 29.904), which is 3.3 of this stage's units.
+ * At 1.7em it read as a pip rather than as something thrown, which is most of
+ * why the throw had no weight. The white halo is the sprite's own on the
+ * extracted rock, so it is only added for the pack icons.
+ */
 .anim-projectile img {
-  width: 1.7em;
-  height: 1.7em;
-  filter: drop-shadow(0 0 0.12em rgb(255 255 255 / 90%));
+  width: 3.3em;
+  height: 3.3em;
+  object-fit: contain;
+  filter: drop-shadow(0 0 0.1em rgb(255 255 255 / 75%));
 }
 
 .anim-puff {
@@ -990,6 +1112,19 @@ $ripped: "/assets/art/Ripped";
   border-radius: 0;
   background: url("#{$ripped}/fx/cloud-soft.png") 0 0 / 200% 200% no-repeat;
   filter: drop-shadow(0 0 0.2em rgb(255 255 255 / 80%));
+}
+
+/*
+ * A stat gain landing, round 9. Same white bloom as mana, because that is what
+ * the reference does: f10 t=34.53 paints the Hippo out white as its knock-out
+ * reward arrives and lifts white sparks off it for the next quarter second.
+ */
+.anim-puff-buff {
+  width: 3.6em;
+  height: 3.6em;
+  background:
+    url("#{$ripped}/fx/sparkle.png") center / 46% 46% no-repeat,
+    url("#{$ripped}/fx/glow.png") center / contain no-repeat;
 }
 
 /* Checklist 5: a ranged arrival and a jump landing are a hard white puff. */
@@ -1051,29 +1186,59 @@ $ripped: "/assets/art/Ripped";
  * unit, and the outline it carries is black rather than the white one that
  * used to be here.
  */
+/*
+ * Round 9, measured rather than eyeballed.
+ *
+ * Masking pure red on f02's "8" frame by frame: the reference numeral covers
+ * 3943 px at its peak (t=29.976) and settles at a steady 765 px from t=30.16
+ * until it goes at 30.84. Ours covered 6224 and 1570, so the resting numeral
+ * was 43% oversize on the diagonal. Both critics named this numeral as the
+ * loudest tell on every sheet.
+ */
 .anim-popup-damage {
   color: #f00;
-  font-size: 3.6em;
+  font-size: 2.5em;
   line-height: 1;
 
   @include keyline(0.05em);
 }
 
 .anim-popup-merged {
-  font-size: 4.2em;
+  font-size: 2.9em;
 }
 
+/*
+ * A stat pill, checklist 15, corrected in round 9.
+ *
+ * The client sets a white plus and then the stat's own badge with the amount
+ * inside it in white, free over the pet, with the sprite's own halo and keyline
+ * doing all the separating (f10 t=34.59: `+ [3] + <3>` over the Hippo, no
+ * plate anywhere). Ours put a black numeral beside a small icon on a white
+ * plate, which read as a tooltip rather than as a reward.
+ */
 .anim-popup-stat {
-  padding: 0 0.06em;
-  font-size: 0.95em;
-  color: #101010;
+  display: flex;
+  align-items: center;
+  gap: 0.06em;
+  font-size: 1.5em;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
 
-  @include game-plate(0.42em);
+  @include keyline(0.05em, #0d0d0d);
 }
 
-.anim-popup-stat img {
-  width: 0.9em;
-  height: 0.9em;
+.anim-popup-plus {
+  font-size: 0.78em;
+}
+
+.anim-popup-chip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5em;
+  height: 1.5em;
+  background: center / contain no-repeat;
 }
 
 /* Checklist 14: mana lands as a large blue numeral, not as a grey chip. */

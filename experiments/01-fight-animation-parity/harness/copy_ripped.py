@@ -71,6 +71,14 @@ ASSETS = {
     "fx/plus.png": ("04_buff_ailment", "Sprite", "Plus", "a stat buff landing"),
     "fx/stats.png": ("04_buff_ailment", "Sprite", "Stats", "a stat buff landing"),
     "fx/particle-perk.png": ("04_buff_ailment", "Sprite", "ParticlePerk", "a perk being applied"),
+    # Round 9. A pet killed by a lethal hit stands in its slot wearing this,
+    # with its real, possibly negative, health on the badge, and carries it out
+    # with it when the corpse launches (f02 t=30.02 to 30.84, f06 t=29.95 to
+    # 30.72, and on the airborne body at f03 t=33.64).
+    "fx/bandage.png": ("04_buff_ailment", "Sprite", "Bandage", "the crossed bandage over a dead pet"),
+    # A reward of attack and health at once is one object in the client, not a
+    # fist and then a heart (f10 t=34.19 to 34.53).
+    "fx/heart-fist.png": ("03_mascot_faces", "Sprite", "HeartFist", "an attack and health buff, thrown together"),
 }
 
 

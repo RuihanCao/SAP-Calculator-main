@@ -363,10 +363,96 @@ describe('Round 5, measured against the reference frames', () => {
       expect(stageTemplate).not.toContain('anim-pet-cross');
       expect(stageTemplate).not.toContain('&#10006;');
       expect(styles).not.toContain('anim-pet-cross');
-      expect(styles).toMatch(
-        /\.anim-pet-fainted \.anim-pet-icon,\s*\n\.anim-corpse \.anim-pet-icon\s*\{[^}]*brightness\(/,
-      );
+      expect(styles).toMatch(/\.anim-corpse \.anim-pet-icon\s*\{[^}]*brightness\(/);
       expect(styles).not.toMatch(/\.anim-corpse\s*\{[^}]*grayscale/);
+    });
+
+    /**
+     * Round 9. The pet that has just died is *not* washed out: it stands in its
+     * own slot in its own colour until the corpse launches. f02's worm is pink
+     * again by t=30.16 and stays that way with a health of 0 until 30.84, and
+     * f06's otter is brown at -1 for the same beat.
+     */
+    it('leaves the pet dead in its slot at full colour, not washed out', () => {
+      const fainted = styles.match(/\.anim-pet-fainted[^{]*\{[^}]*\}/g) ?? [];
+      expect(fainted.every((rule) => !/brightness\(/.test(rule))).toBe(true);
+    });
+
+    /**
+     * Item 1 of round 9, and the thing Ruihan asked for by name: the lethal hit
+     * leaves the body in place under a crossed bandage with its real, possibly
+     * negative, health showing, and only then does the corpse launch. The
+     * marker is the client's own `Bandage` sprite and it rides the body out
+     * (f03 t=33.64, the airborne cow is wearing it).
+     */
+    it('marks a dead pet with the crossed bandage, in place and in flight', () => {
+      const stageSource = readFileSync(
+        path.join(stageDir, 'battle-animation-stage.component.ts'),
+        'utf8',
+      );
+      expect(stageTemplate).toContain('anim-pet-bandage');
+      expect(stageTemplate).toContain('*ngIf="pet.fainted"');
+      expect(stageTemplate).toContain('anim-corpse-bandage');
+      expect(stageSource).toContain('bandage: `${RIPPED}/fx/bandage.png`');
+      // Sized by masking the plaster's tan on both sides with one colour range:
+      // 1549 px on f02's worm and 1485 on f10's peacock against our 1955 and
+      // 1899, so ours came down 12% on the diagonal to 3.7em.
+      const rule = styles.slice(styles.indexOf('.anim-pet-bandage {'));
+      expect(rule.slice(0, rule.indexOf('}'))).toMatch(/width:\s*3\.7em/);
+      expect(styles).toContain('@keyframes anim-bandage-in');
+    });
+
+    /**
+     * Round 9, item 3. Round 8 built the trail the right way at half the size,
+     * which is why the round 8 critic still read it as thinner than the
+     * client's. Measured on f02 t=31.88 at native resolution: the band behind
+     * the cow is about 47px thick on a 540 tall play area and is made of lobes
+     * about 45px across, so 2.4 to 2.6 of this stage's unit.
+     */
+    it('sizes the trail lobes off the reference band, not half of it', () => {
+      const puff = styles.slice(styles.indexOf('.anim-corpse-puff {'));
+      const sizes = [...puff.slice(0, 900).matchAll(/width:\s*([\d.]+)em/g)].map((m) =>
+        Number(m[1]),
+      );
+      expect(sizes.length).toBeGreaterThanOrEqual(5);
+      expect(Math.min(...sizes)).toBeGreaterThanOrEqual(2.1);
+      expect(Math.max(...sizes)).toBeLessThanOrEqual(2.8);
+    });
+
+    /**
+     * The slot the body left blooms before the trail reads as a trail: f02
+     * t=30.88 and f06 t=30.82 both go bright yellow-white there with a cloud
+     * twice a trail link's size in it.
+     */
+    it('blooms the slot a corpse launched from', () => {
+      expect(stageTemplate).toContain('anim-corpse-launch-flash');
+      // The rule's own body carries `#{$ripped}`, so it cannot be sliced on the
+      // first brace; a fixed window covers it and nothing after it.
+      const at = styles.indexOf('.anim-corpse-launch-flash {');
+      const body = styles.slice(at, at + 900);
+      // `cloud_2x2_hard`'s first cell is the fluffy, lobed cloud the reference
+      // leaves in the slot; the soft variant is a smudge at this size.
+      expect(body).toContain('fx/cloud-hard.png');
+      expect(body).toContain('radial-gradient');
+      // `cloud_2x2_soft` is a two by two atlas, so it has to be framed on one
+      // cell; centring it drew the seam between four cells as a hard square.
+      expect(body).toContain('0 0 / 200% 200%');
+    });
+
+    /**
+     * The trail belongs to the flight, so a body that stayed in its slot has
+     * none: f02 t=30.88 to 31.5 is one cloud in the worm's slot and nothing
+     * anywhere else on the field.
+     */
+    it('draws no trail behind a body that was never thrown', () => {
+      const stageSource = readFileSync(
+        path.join(stageDir, 'battle-animation-stage.component.ts'),
+        'utf8',
+      );
+      const trail = stageSource.slice(stageSource.indexOf('corpseTrail(view: CorpseView)'));
+      expect(trail.slice(0, 500)).toContain('if (!view.viaClash)');
+      const style = stageSource.slice(stageSource.indexOf('corpseStyle(view: CorpseView)'));
+      expect(style.slice(0, 500)).toContain('if (!view.viaClash)');
     });
 
     it('lays the trail as a chain of clouds rather than one wisp', () => {
@@ -398,6 +484,26 @@ describe('Round 5, measured against the reference frames', () => {
       expect(corpse).toContain('anim-pet-stats');
       expect(corpse).toContain('corpse.health');
       expect(corpse).not.toContain('Math.max');
+    });
+
+    /**
+     * Round 9, item 3. Traced with `harness/path_trace.py`: on f03 the cow runs
+     * (52.6%, 61%) to (96%, 26%) of the play area, on f01 the pig runs
+     * (43.5%, 66%) to (4%, 26%), so the body covers about 43% of the width
+     * against 35% of the height. Rounds 7 and 8 threw it 22 across and 56 up,
+     * which is the steep arc the round 8 critic called out.
+     */
+    it('throws the corpse along the reference arc rather than straight up', () => {
+      const stageSource = readFileSync(
+        path.join(stageDir, 'battle-animation-stage.component.ts'),
+        'utf8',
+      );
+      expect(stageSource).toMatch(/const CORPSE_EXIT_DX = 43;/);
+      expect(stageSource).toMatch(/const CORPSE_EXIT_DY = 35;/);
+      // Across is linear and up eases off, which is what the trail's own slope
+      // does: about 0.9 near the slot and 0.2 near the exit.
+      const point = stageSource.slice(stageSource.indexOf('private corpsePoint('));
+      expect(point.slice(0, 600)).toContain('Math.pow(1 - Math.min(1, travel), 2)');
     });
   });
 
@@ -617,9 +723,11 @@ describe('Round 5, measured against the reference frames', () => {
       expect(styles).toMatch(/\.anim-stage\s*\{[^}]*font-family:\s*"Lapsus Pro"/);
       const from = styles.indexOf('.anim-popup-damage {');
       const damage = styles.slice(from, styles.indexOf('}', from));
-      // Round 7 re-reading off the reference: the client's red is flat #f00 and
-      // the numeral stands about a fifth taller than round 5 drew it.
-      expect(damage).toMatch(/font-size:\s*3\.6em/);
+      // Round 9 re-reading, this time by masking pure red on f02's "8" frame by
+      // frame instead of by eye: the reference numeral peaks at 3943 px and
+      // rests at 765 px, ours rested at 1570, so the resting size comes down
+      // 43% on the diagonal and the punch it lands with carries the rest.
+      expect(damage).toMatch(/font-size:\s*2\.5em/);
       expect(damage).toMatch(/@include keyline\(0\.05em\)/);
       expect(damage).toContain('#f00');
       expect(damage).not.toContain('#fff');
@@ -712,6 +820,43 @@ describe('Round 5, measured against the reference frames', () => {
       expect(stageSource).toContain('fist.png');
       expect(stageSource).not.toContain('<svg');
       expect(stageSource).not.toContain('ROCK_PATH');
+    });
+
+    /**
+     * Round 9, item 2. Ruihan's note was that the snipe has no throw to it.
+     * Three things were wrong and all three are measurements: the object was a
+     * fist where the client throws a grey rock (f02 t=29.7 against f10 t=34.4,
+     * where the buff is the fist), it was 1.7em where the reference rock is 56
+     * to 62px of a 540 tall play area, and the flight was 320ms where the
+     * reference is 410.
+     */
+    /**
+     * Round 9, item 4, off the buff close-up. The client sets a white plus and
+     * then the stat's own badge with the amount inside it in white, free over
+     * the pet (f10 t=34.59). Ours put a black numeral beside a small icon on a
+     * white plate, which read as a tooltip.
+     */
+    it('draws a stat pill as the badge itself, not as a plated tooltip', () => {
+      expect(stageTemplate).toContain('anim-popup-chip');
+      const rule = styles.slice(styles.indexOf('.anim-popup-stat {'));
+      const body = rule.slice(0, rule.indexOf('}'));
+      expect(body).not.toContain('game-plate');
+      expect(body).toContain('color: #fff');
+    });
+
+    it('throws the damage rock, at the size the reference throws it', () => {
+      const stageSource = readFileSync(
+        path.join(stageDir, 'battle-animation-stage.component.ts'),
+        'utf8',
+      );
+      expect(stageSource).toContain('damage-rock.png');
+      expect(stageSource).toMatch(/projectileIcon\(view: ProjectileView\)/);
+      expect(stageTemplate).toContain('projectileIcon(projectile)');
+      const img = styles.slice(styles.indexOf('.anim-projectile img {'));
+      expect(img.slice(0, img.indexOf('}'))).toMatch(/width:\s*3\.3em/);
+      // It comes out of the attacker small and grows: 41px at t=29.547 and 56
+      // to 62 from 29.639 on.
+      expect(stageSource).toMatch(/const scale = 0\.68 \+ 0\.32 \* Math\.min\(1, view\.grow\)/);
     });
   });
 });

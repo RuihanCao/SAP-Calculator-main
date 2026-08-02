@@ -80,6 +80,23 @@ export interface ProjectileCue extends CueBase {
   fromPetId: number | null;
   fromSide: AnimationSide;
   targets: ProjectileTarget[];
+  /**
+   * Whether this throw delivers damage rather than a buff.
+   *
+   * The engine calls both an attack payload, but the client does not draw them
+   * with the same object: a snipe throws the grey damage rock and an attack
+   * buff throws the grey fist (f02 t=29.7 against f10 t=34.4). The director
+   * reads which one it is from the step the throw lands on.
+   */
+  damage: boolean;
+  /**
+   * The other half of a two part reward thrown as one object.
+   *
+   * A buff that grants attack and health at once is a single `HeartFist` in the
+   * client, not two icons one after the other (f10 t=34.19 to 34.53), so the
+   * pair is folded into one cue and drawn with the client's own paired sprite.
+   */
+  pairedPayload: AnimationPayloadKind | null;
 }
 
 export interface ClashHitCue {
@@ -155,10 +172,21 @@ export interface StatCopyLabelCue extends CueBase {
 export interface ImpactPuffCue extends CueBase {
   kind: 'impactPuff';
   petId: number;
-  variant: 'impact' | 'landing' | 'mana';
+  /**
+   * `buff` is round 9: a stat gain arrives in a white flash on the pet with
+   * sparks lifting off it, exactly the way mana does (f10 t=34.53, where the
+   * Hippo is painted out white as its knock-out reward lands).
+   */
+  variant: 'impact' | 'landing' | 'mana' | 'buff';
 }
 
-/** Dead in place. Ends when the corpse group launches. */
+/**
+ * Dead in place, wearing the crossed bandage. Ends when the corpse launches.
+ *
+ * `viaClash` is how long that is: a pet killed at the midline is thrown by the
+ * blow and leaves in the next frame, one killed by a snipe or an ability stands
+ * there for the best part of a second first (checklist 3, round 9).
+ */
 export interface CorpseCue extends CueBase {
   kind: 'corpse';
   petId: number;
@@ -168,8 +196,22 @@ export interface CorpseCue extends CueBase {
   level: number;
   attack: number;
   health: number;
+  viaClash: boolean;
 }
 
+/**
+ * A body leaving the board. Two shapes, and which one is which is measured.
+ *
+ * `viaClash` true: the blow throws it. It flies up and away over its own board
+ * with a smoke trail behind it and a star spray where it goes off
+ * (f01 t=31.82, f02 t=31.75, f03 t=33.57).
+ *
+ * `viaClash` false: nothing threw it, so it does not fly. The body simply goes
+ * in a bright flash and a white cloud in its own slot, and there is no trail
+ * and no spray anywhere on the field (f02 t=30.88, the sniped worm; f06 t=30.82,
+ * the sniped otter). Rounds 7 and 8 launched every corpse, which is why a snipe
+ * kill sent a body across a field nothing had hit it from.
+ */
 export interface CorpseLaunchCue extends CueBase {
   kind: 'corpseLaunch';
   petId: number;
@@ -180,6 +222,7 @@ export interface CorpseLaunchCue extends CueBase {
   attack: number;
   health: number;
   groupId: string;
+  viaClash: boolean;
 }
 
 export interface StarburstCue extends CueBase {

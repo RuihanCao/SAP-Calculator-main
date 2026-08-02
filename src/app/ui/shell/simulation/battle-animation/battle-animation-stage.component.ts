@@ -133,6 +133,15 @@ const FX = {
   plus: `${RIPPED}/fx/plus.png`,
   stats: `${RIPPED}/fx/stats.png`,
   perk: `${RIPPED}/fx/particle-perk.png`,
+  /** The crossed bandage a dead pet wears until its corpse launches. */
+  bandage: `${RIPPED}/fx/bandage.png`,
+  /**
+   * A reward of attack and health at once, as one object.
+   *
+   * The client throws this single sprite rather than a fist and then a heart
+   * (f10 t=34.19 to 34.53), which is what the round 9 buff close-up caught.
+   */
+  heartFist: `${RIPPED}/fx/heart-fist.png`,
 } as const;
 
 /**
@@ -149,6 +158,17 @@ const OUTRO_FACES: Record<AnimationSide | 'draw', string> = {
   // one is not put on a result that is not a loss: the caption stands alone.
   draw: '',
 };
+
+/**
+ * The rock a snipe throws.
+ *
+ * The build ships no such sprite (`Rock`, `SuperRock`, `ManaRock` and `Meteor`
+ * are all food or pet tokens with eyes on them, and `Icons/snipe.png` is the
+ * flat UI form), so this one is keyed out of the reference flight itself by
+ * `harness/extract_projectile.py` and carries its provenance in
+ * `art/Extracted/manifest.json`.
+ */
+const DAMAGE_ROCK = `${EXTRACTED}/damage-rock.png`;
 
 const ATTACK_ICON = PAYLOAD_ICONS['attack-glyph'];
 const HEALTH_ICON = PAYLOAD_ICONS.heart;
@@ -211,8 +231,54 @@ const BANNER_ANCHOR: Point = { x: 43.4, y: 31.4 };
  * (clips/f01-plain-trades/f_00905_0032006.jpg) and the opponent's is up and to
  * the right at t=37.39 (f_01070_0037391.jpg), so the sign follows the side.
  */
-const CORPSE_EXIT_DX = 22;
-const CORPSE_EXIT_DY = 56;
+/*
+ * Round 9, traced rather than estimated.
+ *
+ * `harness/path_trace.py` follows the whited out body frame by frame. On f03
+ * the opponent's cow leaves its slot at (52.6%, 61%) of the play area and is at
+ * (96%, 26%) when it goes off the corner; on f01 the player's pig runs
+ * (43.5%, 66%) to (4%, 26%); on f02 the burst that marks the exit is at
+ * (95.7%, 26.7%). So the body covers about 43% of the width against 35% of the
+ * height, an arc a little under 45 degrees. Rounds 7 and 8 had 22 against 56,
+ * which threw the corpse almost straight up and is what the round 8 critic
+ * called a steeper arc than the client's.
+ */
+const CORPSE_EXIT_DX = 43;
+const CORPSE_EXIT_DY = 35;
+/**
+ * How much of the launch cue the body itself is airborne for.
+ *
+ * `corpseFlightMs` of `corpseLaunchMs`: the corpse is gone a third of the way
+ * in and the rest of the cue is its trail fading and the star spray.
+ */
+const CORPSE_FLIGHT_FRACTION = 180 / 690;
+/**
+ * When the trail starts fading and when it is gone, as fractions of the cue.
+ *
+ * Measured on f03: launched at t=33.59, the trail is complete at 33.83, still
+ * fully drawn at 33.90 and gone by 34.00.
+ */
+const CORPSE_TRAIL_FADE_FROM = 0.44;
+const CORPSE_TRAIL_FADE_TO = 0.6;
+/**
+ * Half a pet, in percent of the play area's height.
+ *
+ * A corpse is positioned by the bottom of its card but bursts around its body,
+ * so the star spray is lifted by this much off the path's end point.
+ */
+const CORPSE_BODY_LIFT = 8;
+/** How much of the launch cue the departure flash lives for. */
+const CORPSE_LAUNCH_FLASH_FRACTION = 0.34;
+/**
+ * A body that was not thrown goes in its own slot instead of flying.
+ *
+ * The sprite itself is cut on the first frame of the cue rather than faded,
+ * because the reference cuts it: f02's worm is on screen at t=30.84 and gone at
+ * 30.88. `CORPSE_FADE_FLASH_FRACTION` is how long the cloud that replaces it
+ * takes to open and break up, and that cloud is widest at 31.06 and is wisps by
+ * 31.5.
+ */
+const CORPSE_FADE_FLASH_FRACTION = 0.85;
 /**
  * The other player's avatar, standing at the field's right in every reference
  * battle frame. It is `Mascot/TurtleBattle.png` from the pack, which matches
@@ -231,8 +297,15 @@ const MASCOT_SPRITE = '/assets/art/Public/Public/Mascot/TurtleBattle.png';
  * Counted on the close-up against f11b t=6.55: the client lays about 25 flat
  * circles in seven or eight overlapping clusters of two to four along a trail
  * roughly 950px long at 3x. Seven single puffs read as a dotted line.
+ *
+ * Round 9 second pass: 24 links over eight cluster points still left gaps. On
+ * f02 t=31.88 the reference trail is *one* connected white region 55 to 70px
+ * thick from the slot to the exit, so the path is sampled at twelve points
+ * instead of eight and the lobes overlap into a band.
  */
-const CORPSE_TRAIL_LINKS = 24;
+const CORPSE_TRAIL_LINKS = 36;
+/** How long a damage numeral takes to settle out of its punch. */
+const NUMERAL_PUNCH_MS = 230;
 const COUNTER_ANCHOR: Record<AnimationSide, Point> = {
   player: { x: 12, y: 12 },
   opponent: { x: 88, y: 12 },
@@ -573,17 +646,67 @@ export class BattleAnimationStageComponent
     return side === 'player' ? -1 : 1;
   }
 
-  corpseStyle(view: CorpseView): Record<string, string> {
-    const sign = this.corpseExitSign(view.side);
-    const from = this.slotX(view.side, view.slot);
-    const x = from + sign * CORPSE_EXIT_DX * view.progress;
-    const y = GROUND_Y - CORPSE_EXIT_DY * view.progress;
+  /**
+   * Where the body is at a fraction of its own flight.
+   *
+   * Linear across, eased up: on the reference the trail's slope falls from
+   * about 0.9 near the slot to 0.2 near the exit (f03 t=33.90, measured by
+   * `harness/trail_fit.py`), which is a rise that runs out of speed rather than
+   * a straight line. The whole travel is done in `CORPSE_FLIGHT_FRACTION` of
+   * the cue and the body is off the field after it, so `travel` is deliberately
+   * not clamped: it keeps going and `.anim-field`'s own clip takes it.
+   */
+  private corpsePoint(
+    side: AnimationSide,
+    slot: number,
+    travel: number,
+  ): { x: number; y: number } {
+    const sign = this.corpseExitSign(side);
+    const rise = 1 - Math.pow(1 - Math.min(1, travel), 2);
     return {
-      left: `${x}%`,
-      top: `${y}%`,
-      opacity: `${1 - Math.max(0, view.progress - 0.8) * 5}`,
-      transform: `translate(-50%, -100%) rotate(${sign * view.progress * 90}deg)`,
+      x: this.slotX(side, slot) + sign * CORPSE_EXIT_DX * travel,
+      y: GROUND_Y - CORPSE_EXIT_DY * rise,
     };
+  }
+
+  corpseStyle(view: CorpseView): Record<string, string> {
+    if (!view.viaClash) {
+      // Nothing threw it, so it does not fly: the body goes where it stood, in
+      // the flash and the cloud the slot blooms (f02 t=30.88, f06 t=30.82).
+      return {
+        left: `${this.slotX(view.side, view.slot)}%`,
+        top: `${GROUND_Y}%`,
+        // One frame, not a fade: f02's worm is on screen at t=30.84 and gone at
+        // 30.88. Fading it let the field's green show through its own white
+        // badge plate and tinted the numerals olive for two frames.
+        opacity: view.progress > 0 ? '0' : '1',
+        transform: 'translate(-50%, -100%)',
+      };
+    }
+    const sign = this.corpseExitSign(view.side);
+    const travel = view.progress / CORPSE_FLIGHT_FRACTION;
+    const point = this.corpsePoint(view.side, view.slot, travel);
+    return {
+      left: `${point.x}%`,
+      top: `${point.y}%`,
+      transform: `translate(-50%, -100%) rotate(${sign * Math.min(1, travel) * 90}deg)`,
+    };
+  }
+
+  /**
+   * Undoes the body's own rotation, for the printing that rides it.
+   *
+   * f02 t=31.78: the thrown cow is nose down and its plaque and its badges are
+   * still upright beside it. The plaque also carries a per-side nudge, so that
+   * is folded back in here rather than overwritten.
+   */
+  corpseUprightTransform(view: CorpseView): string {
+    if (!view.viaClash) {
+      return '';
+    }
+    const sign = this.corpseExitSign(view.side);
+    const travel = Math.min(1, view.progress / CORPSE_FLIGHT_FRACTION);
+    return `rotate(${-sign * travel * 90}deg)`;
   }
 
   /**
@@ -593,9 +716,25 @@ export class BattleAnimationStageComponent
    * placed at its own fraction of the path and fades with age.
    */
   corpseTrail(view: CorpseView): Array<{ index: number; style: Record<string, string> }> {
-    const sign = this.corpseExitSign(view.side);
-    const from = this.slotX(view.side, view.slot);
     const links: Array<{ index: number; style: Record<string, string> }> = [];
+    if (!view.viaClash) {
+      // No flight, no trail. The reference leaves one cloud in the slot and
+      // nothing anywhere else (f02 t=30.88 to 31.5).
+      return links;
+    }
+    // The trail is complete when the body leaves, then lingers and fades: at
+    // f03 t=33.90, 70ms after the corpse is gone, it is still fully drawn, and
+    // by 34.00 there is nothing left of it.
+    const travel = Math.min(1, view.progress / CORPSE_FLIGHT_FRACTION);
+    const fade =
+      view.progress <= CORPSE_TRAIL_FADE_FROM
+        ? 1
+        : Math.max(
+            0,
+            1 -
+              (view.progress - CORPSE_TRAIL_FADE_FROM) /
+                (CORPSE_TRAIL_FADE_TO - CORPSE_TRAIL_FADE_FROM),
+          );
     for (let index = 0; index < CORPSE_TRAIL_LINKS; index += 1) {
       // Three or four puffs share each point on the path and are jittered off
       // it, which is what makes the client's trail read as clusters of smoke
@@ -603,16 +742,17 @@ export class BattleAnimationStageComponent
       // random, so a frame drawn twice is drawn the same.
       const cluster = Math.floor(index / 3);
       const clusters = Math.ceil(CORPSE_TRAIL_LINKS / 3);
-      const at = (view.progress * cluster) / clusters;
+      const at = (travel * cluster) / clusters;
       const age = 1 - cluster / clusters;
       const jitterX = ((index * 37) % 11) / 11 - 0.5;
       const jitterY = ((index * 53) % 7) / 7 - 0.5;
+      const point = this.corpsePoint(view.side, view.slot, at);
       links.push({
         index,
         style: {
-          left: `${from + sign * CORPSE_EXIT_DX * at + jitterX * 2.6}%`,
-          top: `${GROUND_Y - 6 - CORPSE_EXIT_DY * at + jitterY * 3.4}%`,
-          opacity: `${(0.72 + 0.28 * (1 - age)) * (1 - Math.max(0, view.progress - 0.8) * 5)}`,
+          left: `${point.x + jitterX * 2.6}%`,
+          top: `${point.y - CORPSE_BODY_LIFT + jitterY * 3.4}%`,
+          opacity: `${(0.72 + 0.28 * (1 - age)) * fade}`,
           transform: 'translate(-50%, -50%)',
         },
       });
@@ -620,6 +760,16 @@ export class BattleAnimationStageComponent
     return links;
   }
 
+  /**
+   * A thrown object, checklist 5.
+   *
+   * Straight across and a parabola up, which is what the reference draws: on
+   * f02 the rock leaves the crocodile at (45%, 54%) of the play area, tops out
+   * at (60%, 34%) 46% of the way through, and lands on the worm at (75%, 62%),
+   * and f06 tops out at the same height over a third more ground. It also comes
+   * out of the attacker small and grows for the first 130 ms, which is most of
+   * what makes it read as thrown rather than slid.
+   */
   projectileStyle(view: ProjectileView): Record<string, string> {
     const fromX =
       view.fromSlot != null ? this.slotX(view.fromSide, view.fromSlot) : BANNER_ANCHOR.x;
@@ -630,20 +780,107 @@ export class BattleAnimationStageComponent
     const x = fromX + (toX - fromX) * p;
     const apex = 4 * p * (1 - p);
     const y = fromY + (toY - fromY) * p - apex * 34;
-    return { left: `${x}%`, top: `${y}%` };
+    // 41px across at t=29.547 and 56 to 62px from t=29.639 on, of a 540 tall
+    // play area, so it starts at about two thirds and is full size a third of
+    // the way through.
+    const scale = 0.68 + 0.32 * Math.min(1, view.grow);
+    return {
+      left: `${x}%`,
+      top: `${y}%`,
+      transform: `translate(-50%, -50%) scale(${scale.toFixed(3)})`,
+    };
   }
 
+  /**
+   * What a throw is drawn as.
+   *
+   * The engine calls a snipe and an attack buff the same payload, and the
+   * client does not: a snipe throws the grey damage rock (f02 t=29.7) and a
+   * buff throws the grey fist (f10 t=34.4, where the Hippo's knock-out reward
+   * is the fist and the heart together).
+   */
+  projectileIcon(view: ProjectileView): string {
+    if (view.pairedPayload) {
+      return FX.heartFist;
+    }
+    return view.damage && view.payload === 'attack-glyph'
+      ? DAMAGE_ROCK
+      : this.payloadIcon(view.payload);
+  }
+
+  /**
+   * The flash and the fat cloud a corpse leaves in the slot it launched from.
+   *
+   * The reference does not just start a trail there: at f02 t=30.88 the worm's
+   * slot goes bright yellow-white and a cloud twice the size of a trail link
+   * blooms in it, and only then does the trail read as a trail (the same beat
+   * is on f06 at t=30.82). Rounds 7 and 8 had the trail and not this.
+   */
+  corpseLaunchFlashStyle(view: CorpseView): Record<string, string> {
+    // A thrown body leaves a brief bloom behind it; a body that was not thrown
+    // *is* the bloom, so it runs the length of the cue and grows further. On
+    // f02 the sniped worm's cloud opens at t=30.88, is at its widest by 31.06
+    // and has broken into wisps by 31.5.
+    const span = view.viaClash
+      ? CORPSE_LAUNCH_FLASH_FRACTION
+      : CORPSE_FADE_FLASH_FRACTION;
+    const life = Math.min(1, view.progress / span);
+    const fade = view.viaClash
+      ? Math.max(0, 1 - life)
+      : Math.max(0, 1 - Math.pow(life, 2));
+    const grow = 0.55 + life * (view.viaClash ? 0.75 : 1.35);
+    return {
+      left: `${this.slotX(view.side, view.slot)}%`,
+      top: `${GROUND_Y - CORPSE_BODY_LIFT}%`,
+      opacity: `${fade}`,
+      transform: `translate(-50%, -50%) scale(${grow.toFixed(3)})`,
+    };
+  }
+
+  /** The amount without its sign, which the pill's badge carries. */
+  popupMagnitude(view: PopupView): string {
+    return `${Math.abs(view.amount ?? 0)}`;
+  }
+
+  /**
+   * A popup, and for a damage numeral the punch it lands with.
+   *
+   * Round 9. Measured on f02's "8" frame by frame: it spawns about 59 by 92 px
+   * of a 540 tall play area, overshoots to 63 by 97 one frame later, and is
+   * eased down to its resting 26 by 41 by t+0.23. Ours drew a fixed 31 by 45
+   * for its whole life, which is the single loudest tell the round 9 critic
+   * found: it named the numeral first on all five sheets.
+   */
   popupStyle(view: PopupView): Record<string, string> {
     const point = this.anchorPoint(view.anchor);
     const x = point.x;
     const rise = view.progress * 6;
     const y = point.y - 16 - rise;
+    const punch =
+      view.kind === 'damage'
+        ? this.numeralPunch(view.ageMs)
+        : 1;
     return {
       left: `${x}%`,
       top: `${y}%`,
       opacity: `${view.progress > 0.75 ? (1 - view.progress) * 4 : 1}`,
-      transform: `translate(calc(-50% + ${view.offset * 2.6}em), -100%)`,
+      transform:
+        `translate(calc(-50% + ${view.offset * 2.6}em), -100%)` +
+        (punch === 1 ? '' : ` scale(${punch.toFixed(3)})`),
     };
+  }
+
+  /** 2.25x at the contact frame, 2.4x one frame later, 1x by 230ms. */
+  private numeralPunch(ageMs: number): number {
+    if (ageMs >= NUMERAL_PUNCH_MS) {
+      return 1;
+    }
+    const peakMs = 40;
+    if (ageMs <= peakMs) {
+      return 2.25 + (ageMs / peakMs) * 0.15;
+    }
+    const settle = (ageMs - peakMs) / (NUMERAL_PUNCH_MS - peakMs);
+    return 1 + (2.4 - 1) * Math.pow(1 - settle, 2);
   }
 
   pointStyle(x: number, y: number): Record<string, string> {
@@ -661,10 +898,8 @@ export class BattleAnimationStageComponent
 
   /** Where a corpse group leaves the screen, which is where it bursts. */
   burstStyle(side: AnimationSide, slot: number): Record<string, string> {
-    return this.pointStyle(
-      this.slotX(side, slot) + this.corpseExitSign(side) * CORPSE_EXIT_DX,
-      GROUND_Y - CORPSE_EXIT_DY,
-    );
+    const point = this.corpsePoint(side, slot, 1);
+    return this.pointStyle(point.x, point.y - CORPSE_BODY_LIFT);
   }
 
   /**
@@ -775,7 +1010,11 @@ export class BattleAnimationStageComponent
    * that grow as they spread; five is the count that reproduces the spread
    * without crowding.
    */
-  readonly burstStars = Array.from({ length: 5 }, (_, index) => index);
+  /*
+   * Round 9: counted on f02 t=32.13, the spray is four saturated gold stars
+   * about 20 to 24px across on a 540 tall play area, not one pale 31px one.
+   */
+  readonly burstStars = Array.from({ length: 7 }, (_, index) => index);
 
   equipmentIcon(pet: AnimationBoardPet): string | null {
     return pet.equipment

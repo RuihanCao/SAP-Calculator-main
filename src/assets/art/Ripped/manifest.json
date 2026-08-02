@@ -35,6 +35,13 @@
    "unity_type": "Sprite",
    "used_for": "SKIP, and mirrored, REWIND"
   },
+  "fx/bandage.png": {
+   "rip_group": "04_buff_ailment",
+   "sha256_16": "16c04c180471f122",
+   "unity_object": "Bandage",
+   "unity_type": "Sprite",
+   "used_for": "the crossed bandage over a dead pet"
+  },
   "fx/cloud-hard.png": {
    "rip_group": "05_death_levelup_fx",
    "sha256_16": "4dbe1f8dc3e9d155",
@@ -62,6 +69,13 @@
    "unity_object": "glow1",
    "unity_type": "Texture2D",
    "used_for": "the flash at a faint and at contact"
+  },
+  "fx/heart-fist.png": {
+   "rip_group": "03_mascot_faces",
+   "sha256_16": "f4c0ff1c2e1b8be8",
+   "unity_object": "HeartFist",
+   "unity_type": "Sprite",
+   "used_for": "an attack and health buff, thrown together"
   },
   "fx/particle-perk.png": {
    "rip_group": "04_buff_ailment",

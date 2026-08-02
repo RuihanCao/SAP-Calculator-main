@@ -200,6 +200,16 @@
           </ng-container>
           <img class="anim-pet-fasticon" *ngIf="pet.fastIcon as payload" [src]="payloadIcon(payload)" alt=""
             aria-hidden="true" />
+          <!--
+            Checklist 3, round 9. A lethal hit does not launch the body: it
+            leaves it standing in its own slot at full colour with a crossed
+            bandage over it and its real, possibly negative, health on the
+            badge, and only then does the corpse go. f02 t=30.02 to 30.84 (worm,
+            health 0), f06 t=29.95 to 30.72 (otter, health -1) and f10 t=34.00
+            onwards (peacock, health -4) all hold that pose for the best part of
+            a second. The art is the client's own `Bandage` sprite.
+          -->
+          <img class="anim-pet-bandage" *ngIf="pet.fainted" [src]="fx.bandage" alt="fainted" />
         </div>
         <!--
           The stat badges, checklist 18. One white plate carries both: the
@@ -224,20 +234,35 @@
         -5 on clips/f01-plain-trades/f_00905_0032006.jpg).
       -->
       <ng-container *ngFor="let corpse of view.corpses; trackBy: trackByCorpse">
+        <!--
+          The slot the body left goes bright and blooms a cloud twice a trail
+          link's size before the trail reads as a trail at all (f02 t=30.88,
+          f06 t=30.82).
+        -->
+        <div class="anim-corpse-launch-flash" [ngStyle]="corpseLaunchFlashStyle(corpse)"
+          aria-hidden="true"></div>
         <div class="anim-corpse-puff" *ngFor="let link of corpseTrail(corpse); trackBy: trackByIndexed"
           [ngStyle]="link.style" aria-hidden="true"></div>
         <div class="anim-corpse"
           [ngStyle]="corpseStyle(corpse)"
           [class.anim-pet-player]="corpse.side === 'player'"
           [class.anim-pet-opponent]="corpse.side === 'opponent'">
-          <div class="anim-pet-level">
+          <!--
+            The card turns with the body but its printing does not: on f02
+            t=31.78 the thrown cow is nose down while its plaque and its "3" and
+            "-2" badges are still the right way up. Ours rotated the whole card
+            and the digits read sideways.
+          -->
+          <div class="anim-pet-level" [style.transform]="corpseUprightTransform(corpse)">
             <img class="anim-pet-level-art" [src]="levelPlaque(corpse.level)" alt="" aria-hidden="true" />
           </div>
           <div class="anim-corpse-art">
             <img class="anim-pet-icon" *ngIf="petIcon(corpse.name) as icon" [src]="icon" [alt]="corpse.name"
               [style.transform]="iconTransform(corpse.side)" />
+            <!-- the bandage rides the body out: f03 t=33.64, the airborne cow wears it -->
+            <img class="anim-pet-bandage anim-corpse-bandage" [src]="fx.bandage" alt="" aria-hidden="true" />
           </div>
-          <div class="anim-pet-stats">
+          <div class="anim-pet-stats" [style.transform]="corpseUprightTransform(corpse)">
             <span class="anim-pet-stat anim-pet-attack">{{ corpse.attack }}</span>
             <span class="anim-pet-stat anim-pet-health">{{ corpse.health }}</span>
           </div>
@@ -254,10 +279,15 @@
           [src]="fx.star" [ngStyle]="burstStarStyle(burst, star)" alt="" aria-hidden="true" />
       </ng-container>
 
-      <!-- projectiles, checklist 5, 6 and 15 -->
+      <!--
+        Projectiles, checklist 5, 6 and 15. A snipe throws the client's damage
+        rock and a buff throws its fist or its heart; both come out small and
+        grow, and both arc well over pet height (f02 t=29.50..29.91,
+        f10 t=34.19..34.53).
+      -->
       <div class="anim-projectile" *ngFor="let projectile of view.projectiles; trackBy: trackById"
         [ngStyle]="projectileStyle(projectile)">
-        <img [src]="payloadIcon(projectile.payload)" alt="" aria-hidden="true" />
+        <img [src]="projectileIcon(projectile)" alt="" aria-hidden="true" />
       </div>
 
       <!-- puffs: summon and transform clouds, ranged impact, jump landing, mana -->
@@ -266,6 +296,7 @@
         [class.anim-puff-cloud]="puff.kind === 'summon' || puff.kind === 'transform'"
         [class.anim-puff-impact]="puff.kind === 'impact' || puff.kind === 'landing'"
         [class.anim-puff-mana]="puff.kind === 'mana'"
+        [class.anim-puff-buff]="puff.kind === 'buff'"
         [style.opacity]="puff.opacity"
         [style.transform]="'translate(-50%, -50%) scale(' + (0.5 + puff.progress * 1.1) + ')'"></div>
 
@@ -279,8 +310,21 @@
         [class.anim-popup-mana]="popup.kind === 'mana'"
         [class.anim-popup-copy]="popup.kind === 'copy'"
         [class.anim-popup-merged]="popup.merged">
-        <img *ngIf="popup.kind === 'stat'" [src]="statIcon(popup.statKind)" alt="" aria-hidden="true" />
-        <span>{{ popup.text }}</span>
+        <!--
+          A stat pill, checklist 15, corrected in round 9. The client sets a
+          white plus and then the stat's own badge with the amount inside it in
+          white, all free over the pet: no white plate, no black type
+          (f10 t=34.59, `+ [3] + <3>` over the Hippo). Ours put the numeral
+          beside the icon on a plate, which read as a tooltip.
+        -->
+        <ng-container *ngIf="popup.kind === 'stat'; else plainPopup">
+          <span class="anim-popup-plus">{{ (popup.amount || 0) < 0 ? '-' : '+' }}</span>
+          <span class="anim-popup-chip"
+            [style.background-image]="'url(' + statIcon(popup.statKind) + ')'">{{ popupMagnitude(popup) }}</span>
+        </ng-container>
+        <ng-template #plainPopup>
+          <span>{{ popup.text }}</span>
+        </ng-template>
       </div>
 
       <!--

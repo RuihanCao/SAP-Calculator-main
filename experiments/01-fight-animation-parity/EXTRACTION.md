@@ -64,3 +64,36 @@ Notes on the cuts that are not a plain rectangle:
 
 The end screen's face has only been captured on a win.
 A loss and a draw keep the caption alone rather than wearing a face invented for them; the missing capture is one `capture_refs.py --pausestep` run on the `outro-defeat` payload and is in `task.md`.
+
+## Round 9: one cut from a clip rather than from a still
+
+`damage-rock.png`, the object a snipe throws.
+
+It is not in the shipped texture set. Every `Rock`, `Rock_2x`, `SuperRock`,
+`ManaRock` and `Meteor` in the build is a food or a pet token with eyes drawn
+on it, `Icons/snipe.png` is the flat UI form of the same token with a UI-weight
+outline, and a shape-and-colour match of the reference crop against all 2202
+sprites in the build returns nothing closer than `coins_1`. So this is a
+reference-frame cut, the next rule down in the game-replication skill, and the
+only one taken from a `clips/` recording rather than from a 3x still.
+
+`harness/extract_projectile.py` does it, and it does not bake a rectangle of
+screenshot. The background is the per-pixel median over the whole flight window
+of `clips/f02-snipe-crocodile` t=29.2 to 30.3, in which the rock occupies any
+given pixel for at most two frames out of forty, so the median is the clean
+field behind it. Alpha is how far frame `f_*_0029815.jpg` has moved off that
+background, the colour is then un-mixed out of
+`observed = alpha * colour + (1 - alpha) * background`, and anything further off
+neutral than the sprite's own black keyline, grey body and white halo is pulled
+back to its own luminance, because the rock passes over a level plaque whose
+brown would otherwise stay in the halo. The result is 61 by 65 with a real alpha
+edge.
+
+t=29.815 is the frame used because the rock is at full size there, is clear of
+the ability card, and stands on the forest band, whose green is as far from
+black, grey and white as anything on the field gets.
+
+Two ripped originals were added in the same round and are in
+`art/Ripped/manifest.json`, not here: `fx/bandage.png` (`Bandage`), the crossed
+plaster a dead pet wears, and `fx/heart-fist.png` (`HeartFist`), the single
+object the client throws for a reward of attack and health together.

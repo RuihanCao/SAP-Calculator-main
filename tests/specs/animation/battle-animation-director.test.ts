@@ -11,6 +11,7 @@ import {
   ClashCue,
   CorpseLaunchCue,
   DamagePopupCue,
+  ImpactPuffCue,
   MoveArcCue,
   OutlineCue,
   ProjectileCue,
@@ -514,15 +515,99 @@ describe('battle animation director', () => {
           .reverse()
           .find((clash) => clash.contactMs <= launch.startMs);
         expect(killer).toBeTruthy();
-        // Checklist 3: dead in place first, f01 t=29.84 to t=30.01.
+        // Round 9 re-measured this. Checklist 3's "dead in place first" is
+        // right, and how long depends on what killed it: a clash throws its
+        // loser on the blow, one frame later, and it is a snipe or an ability
+        // that leaves the body standing (f01 t=31.82, f02 t=31.75 to 31.78 and
+        // f03 t=33.571 to 33.595 are all one frame; f02's sniped worm holds for
+        // 890 ms, which the test above covers).
         const hold = launch.startMs - (killer?.contactMs ?? 0);
-        expect({ hold: hold >= 150 && hold <= 260 }).toEqual({ hold: true });
+        expect({ hold: hold >= 0 && hold <= 90 }).toEqual({ hold: true });
         const before = sampler.frameAt(launch.startMs - 10);
         expect(before.pets.some((pet) => pet.pet.id === launch.petId && pet.fainted)).toBe(
           true,
         );
         expect(before.corpses).toHaveLength(0);
       }
+    });
+
+    /**
+     * Round 9, item 1. How long a body lies in its slot depends on what killed
+     * it, and the two cases are almost a second apart.
+     *
+     * f02: the snipe lands on the worm at t=29.97 and the corpse leaves at
+     * 30.86, 890ms later, with the bandage and a health of 0 on screen for all
+     * of it. Two clashes later in the same clip the cow is hit at t=31.85 and
+     * is airborne by 31.88.
+     */
+    it('holds a sniped body far longer than a clash death', () => {
+      const timeline = timelineFor('f02-snipe-crocodile');
+      const launches = cuesOfKind<CorpseLaunchCue>(timeline, 'corpseLaunch');
+      const hits = cuesOfKind<ImpactPuffCue>(timeline, 'impactPuff');
+      const clashes = cuesOfKind<ClashCue>(timeline, 'clash');
+      expect(launches.length).toBeGreaterThanOrEqual(2);
+
+      // The first death in f02 is the crocodile's start of battle snipe.
+      const sniped = launches[0];
+      const arrival = hits.find((cue) => cue.petId === sniped.petId);
+      expect(arrival).toBeTruthy();
+      expect(sniped.startMs - (arrival?.startMs ?? 0)).toBeGreaterThanOrEqual(880);
+
+      // Every later death in this clip is a clash, and they leave promptly.
+      for (const launch of launches.slice(1)) {
+        const killer = [...clashes]
+          .reverse()
+          .find((clash) => clash.contactMs <= launch.startMs);
+        expect(killer).toBeTruthy();
+        expect(launch.startMs - (killer?.contactMs ?? 0)).toBeLessThan(400);
+      }
+    });
+
+    /**
+     * Round 9, and the thing the 1:1 death strip caught: a body that was not
+     * hit at the midline is not thrown anywhere.
+     *
+     * f02's sniped worm is standing under its bandage at t=30.84 and at 30.88
+     * its slot goes bright and blooms one white cloud, which drifts and breaks
+     * up in place through 31.5. There is no body crossing the field, no smoke
+     * trail and no star spray anywhere in those frames, and f06's sniped otter
+     * does exactly the same at t=30.82. Rounds 7 and 8 launched every corpse.
+     */
+    it('fades a body that nothing threw, and throws only the one a clash did', () => {
+      const sniped = timelineFor('f02-snipe-crocodile');
+      const launches = cuesOfKind<CorpseLaunchCue>(sniped, 'corpseLaunch');
+      expect(launches.length).toBeGreaterThanOrEqual(2);
+      // The snipe kill is the first death in this clip and the rest are clashes.
+      expect(launches[0].viaClash).toBe(false);
+      expect(launches.slice(1).every((cue) => cue.viaClash)).toBe(true);
+
+      // A spray marks where a thrown body left, so the faded one has none.
+      const bursts = cuesOfKind<AnimationCue>(sniped, 'starburst');
+      expect(bursts.length).toBe(launches.length - 1);
+      expect(
+        bursts.every((burst) =>
+          launches.some(
+            (launch) => launch.viaClash && burst.startMs >= launch.startMs,
+          ),
+        ),
+      ).toBe(true);
+    });
+
+    /**
+     * The launch cue is the whole aftermath, not the flight. On f03 the cow is
+     * launched at t=33.59, off screen by 33.83, its trail is gone by 34.00 and
+     * the star spray runs 33.93 to 34.34.
+     */
+    it('runs the launch cue long enough to carry the trail and the spray', () => {
+      const timeline = timelineFor('f01-plain-trades');
+      const launch = cuesOfKind<CorpseLaunchCue>(timeline, 'corpseLaunch')[0];
+      expect(launch.endMs - launch.startMs).toBe(690);
+      const burst = cuesOfKind<AnimationCue>(timeline, 'starburst').find(
+        (cue) => cue.startMs >= launch.startMs && cue.endMs <= launch.endMs,
+      );
+      expect(burst).toBeTruthy();
+      expect((burst?.startMs ?? 0) - launch.startMs).toBe(340);
+      expect(burst?.endMs).toBe(launch.endMs);
     });
 
     it('slides the survivors while the corpses are still in the air', () => {
@@ -572,7 +657,74 @@ describe('battle animation director', () => {
         'projectile',
       )[0];
       expect(near.endMs - near.startMs).toBe(far.endMs - far.startMs);
-      expect(near.endMs - near.startMs).toBe(320);
+      // Round 9, measured: f02's rock is first visible at t=29.509 and the
+      // damage numeral is in the frame at 29.924, with the rock last seen at
+      // 29.904, so about 414ms; f06 throws a third further and takes 390.
+      expect(near.endMs - near.startMs).toBe(410);
+    });
+
+    /**
+     * Checklist 5, round 9. The engine calls a snipe and an attack buff the
+     * same payload and the client does not: f02 t=29.7 throws the grey damage
+     * rock and f10 t=34.4 throws the fist and the heart, so the director has to
+     * say which one a throw is.
+     */
+    it('marks a throw that delivers damage apart from one that delivers a buff', () => {
+      const snipe = cuesOfKind<ProjectileCue>(
+        timelineFor('f02-snipe-crocodile'),
+        'projectile',
+      )[0];
+      expect(snipe.payload).toBe('attack-glyph');
+      expect(snipe.damage).toBe(true);
+
+      const buffs = cuesOfKind<ProjectileCue>(
+        timelineFor('f10-hurt-knockout'),
+        'projectile',
+      ).filter((cue) => cue.payload === 'attack-glyph');
+      expect(buffs.length).toBeGreaterThan(0);
+      expect(buffs.every((cue) => cue.damage === false)).toBe(true);
+    });
+
+    /**
+     * Round 9, item 4. A reward of attack and health at once is one object in
+     * the client, not two: on f10 the Hippo's knock-out reward falls between
+     * t=34.19 and t=34.53 as a single sprite with the heart behind the fist.
+     * Ours threw the fist, waited out the stagger, then threw the heart.
+     */
+    it('throws a two part reward as one object', () => {
+      const timeline = timelineFor('f10-hurt-knockout');
+      const projectiles = cuesOfKind<ProjectileCue>(timeline, 'projectile');
+      const paired = projectiles.filter((cue) => cue.pairedPayload != null);
+      expect(paired.length).toBeGreaterThan(0);
+      for (const cue of paired) {
+        expect(new Set([cue.payload, cue.pairedPayload])).toEqual(
+          new Set(['attack-glyph', 'heart']),
+        );
+      }
+      // And there is no second throw hiding behind the first.
+      const hearts = projectiles.filter((cue) => cue.payload === 'heart');
+      expect(hearts).toHaveLength(0);
+    });
+
+    /**
+     * A stat gain arrives in a white bloom the way mana does: f10 t=34.53 paints
+     * the Hippo out white as the reward lands.
+     */
+    it('lands a stat gain in a white flash on the pet', () => {
+      const timeline = timelineFor('f10-hurt-knockout');
+      const puffs = cuesOfKind<ImpactPuffCue>(timeline, 'impactPuff').filter(
+        (cue) => cue.variant === 'buff',
+      );
+      expect(puffs.length).toBeGreaterThan(0);
+      const pills = cuesOfKind<StatPillCue>(timeline, 'statPill').filter(
+        (cue) => cue.statKind === 'attack' && cue.amount > 0,
+      );
+      expect(pills.length).toBeGreaterThan(0);
+      for (const pill of pills) {
+        expect(
+          puffs.some((puff) => puff.petId === pill.petId && puff.startMs === pill.startMs),
+        ).toBe(true);
+      }
     });
 
     it('lands every popup of an area effect in one frame', () => {
@@ -843,9 +995,15 @@ describe('battle animation director', () => {
       expect(attack.statKind).toBe('attack');
       expect(health.statKind).toBe('health');
       const frame = new TimelineSampler(timeline).frameAt(health.startMs + 10);
-      const together = frame.popups.filter((popup) => popup.petId === attack.petId);
+      // Round 9 folded the two throws into one object, so both pills now land
+      // on the same frame and a damage numeral from the clash that caused them
+      // can still be alive beside them. What this asserts is the two halves of
+      // the reward standing apart, which is what checklist 15 is about.
+      const together = frame.popups.filter(
+        (popup) => popup.petId === attack.petId && popup.kind === 'stat',
+      );
       expect(together).toHaveLength(2);
-      expect(together.map((popup) => popup.offset).sort()).toEqual([-0.5, 0.5]);
+      expect(new Set(together.map((popup) => popup.offset)).size).toBe(2);
     });
 
     it('draws xp as a level-up burst rather than a stat pill', () => {
@@ -1204,7 +1362,9 @@ describe('battle animation director', () => {
       // A lifetime is not a beat: scaled by the speed factor it would be
       // 0.32 s, too short to read and short enough to lose merges that the
       // normal grammar makes.
-      expect(getBeats('normal').damagePopupMs).toBe(700);
+      // 870 ms, measured on f02: the "8" appears at t=29.971 and its last frame
+      // is 30.840.
+      expect(getBeats('normal').damagePopupMs).toBe(870);
       expect(getBeats('fast').damagePopupMs).toBeGreaterThanOrEqual(350);
       expect(getBeats('fast').statPillMs).toBe(getBeats('fast').damagePopupMs);
     });

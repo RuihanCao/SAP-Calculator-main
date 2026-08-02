@@ -22,6 +22,14 @@ export interface AnimationBeats {
 
   /** Distance invariant, checklist 5. */
   projectileFlightMs: number;
+  /**
+   * How long the thrown object spends growing to full size after it leaves.
+   *
+   * Measured on f02 (clips/f02-snipe-crocodile): the rock is 41px across at
+   * t=29.547 and 56 to 62px from t=29.639 on, so it comes out of the attacker
+   * small and is at size about a third of the way through the flight.
+   */
+  projectileGrowMs: number;
   /** Second and later payloads of one multi part effect, checklist 15. */
   projectileStaggerMs: number;
 
@@ -54,13 +62,30 @@ export interface AnimationBeats {
   /** Ranged impact to the next beat. */
   hitSettleMs: number;
 
-  /** Corpse launch to star burst. */
+  /** Launch to the trail having faded and the star spray being over. */
   corpseLaunchMs: number;
   corpseBurstMs: number;
+  /**
+   * The corpse's own travel, which is shorter than the cue it lives in: the
+   * sprite is off screen well before the trail it left has faded.
+   */
+  corpseFlightMs: number;
   /** Launch start to the stream continuing; the flight overlaps what follows. */
   corpseAdvanceMs: number;
-  /** Dead in place before the corpse leaves, even for a single death. */
+  /**
+   * Dead in place before the corpse leaves, when the blow that killed it was a
+   * clash. The knock away *is* the launch, so this is one frame.
+   */
   corpseHoldMs: number;
+  /**
+   * Dead in place before the corpse leaves, when the killing damage was not a
+   * clash (a snipe, an ability, a faint's own payload).
+   *
+   * The pet stays standing in its slot at full colour with the crossed bandage
+   * over it and its real, possibly negative, health on the badge, and only then
+   * does the corpse launch.
+   */
+  corpseBandageHoldMs: number;
 
   pushForwardMs: number;
 
@@ -103,7 +128,18 @@ const NORMAL_BEATS: AnimationBeats = {
   fastIconMs: 200,
   fastIconLeadMs: 90,
 
-  projectileFlightMs: 320,
+  /*
+   * Round 9, measured rather than guessed.
+   *
+   * f02-snipe-crocodile: the rock's first pixels are at t=29.509 (nothing at
+   * 29.488) and the damage numeral with its flash is at t=29.924, with the rock
+   * last seen at 29.904, so contact is about 29.914 and the flight is 414 ms.
+   * f06-snipe-dolphin throws about a third further and lands 390 ms after it
+   * leaves, which is the same number inside the frame timing's own noise and is
+   * why checklist 5 calls the flight distance invariant.
+   */
+  projectileFlightMs: 410,
+  projectileGrowMs: 130,
   projectileStaggerMs: 190,
 
   clashWindupMs: 500,
@@ -116,15 +152,44 @@ const NORMAL_BEATS: AnimationBeats = {
   jumpReturnMs: 380,
   landingPuffMs: 260,
 
-  damagePopupMs: 700,
+  /*
+   * Round 9. Measured on f02's "8": it appears at t=29.971 and its last frame
+   * is 30.840, so 870 ms, not the 700 the checklist carried. The merge window
+   * is the same number by definition (checklist 19), and the clash cadence of
+   * 620 ms is inside either value, so what this changes is how long a numeral
+   * is readable rather than which hits merge.
+   */
+  damagePopupMs: 870,
   statPillMs: 700,
   impactPuffMs: 260,
   hitSettleMs: 300,
 
-  corpseLaunchMs: 550,
-  corpseBurstMs: 250,
+  /*
+   * Round 9. The cue is as long as the whole aftermath, not as long as the
+   * flight: on f03-faint-chain the cow is launched at t=33.59, is off the top
+   * right corner by 33.83, its trail is still drawn at 33.90 and gone by 34.00,
+   * and the star spray runs 33.93 to 34.34. So 690 ms end to end, of which the
+   * corpse itself is airborne for about 180: f02's cow is hit at t=31.75, is
+   * three quarters of the way across at 31.88 and gone by 31.93.
+   */
+  corpseLaunchMs: 690,
+  corpseBurstMs: 350,
+  corpseFlightMs: 180,
   corpseAdvanceMs: 350,
-  corpseHoldMs: 170,
+  /*
+   * A clash death launches on the blow. f03 t=33.571 is the contact frame with
+   * the cow already at -4 health, and at t=33.595 it is airborne; f01 and f02
+   * are the same one frame.
+   */
+  corpseHoldMs: 40,
+  /*
+   * A death that was not a clash lies in its slot first. f02's worm is hit at
+   * t=29.97 and its corpse leaves at 30.86 (890 ms); f06's otter is hit at
+   * t=29.88 and leaves at 30.80 (920 ms). f03's hedgehog holds for 2.1 s, but
+   * that is its own faint ability resolving pushing the cursor past this floor,
+   * not a longer hold.
+   */
+  corpseBandageHoldMs: 890,
 
   pushForwardMs: 350,
 
@@ -185,6 +250,8 @@ const FAST_OVERRIDES: Partial<AnimationBeats> = {
   bannerLeadMs: 0,
   bannerHoldMs: 0,
   projectileFlightMs: 0,
+  // Nothing travels, so nothing grows on the way.
+  projectileGrowMs: 0,
   projectileStaggerMs: 0,
   summonStaggerMs: 0,
   trumpetSpendGapMs: 260,

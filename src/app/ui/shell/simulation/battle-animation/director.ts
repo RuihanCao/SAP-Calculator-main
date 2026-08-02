@@ -23,6 +23,7 @@ import {
   CorpseCue,
   DamagePopupCue,
   OutlineCue,
+  ProjectileCue,
 } from './cues';
 import { AnimationMode, INTRO_BEATS, OUTRO_BEATS, getBeats } from './timing';
 
@@ -105,10 +106,22 @@ export const buildBattleTimeline = (
   /** Arrival of the projectile whose deliveries are still being read. */
   let pendingDeliveryMs: number | null = null;
   let groupProjectileStartMs: number | null = null;
+  /**
+   * The throw the current group has already put in the air, so a reward that is
+   * attack *and* health goes out as one object rather than two.
+   */
+  let groupProjectileCue: ProjectileCue | null = null;
   /** Nothing in the current group may start before this (a spend's own gap). */
   let groupBeatFloorMs = 0;
   /** When the damage step that is killing pets landed, so a corpse holds. */
   let lastDamageMs: number | null = null;
+  /**
+   * Whether that damage was a clash contact.
+   *
+   * A clash throws its loser away on the blow; anything else leaves the body
+   * standing in its slot under the bandage first (checklist 3, round 9).
+   */
+  let lastDamageWasClash = false;
   let groupSummonStartMs: number | null = null;
   let groupSummonCount = 0;
   /**
@@ -144,6 +157,7 @@ export const buildBattleTimeline = (
     }
     liveGroup = null;
     groupProjectileStartMs = null;
+    groupProjectileCue = null;
     groupBeatFloorMs = 0;
     groupSummonStartMs = null;
     groupSummonCount = 0;
@@ -277,7 +291,33 @@ export const buildBattleTimeline = (
     'equipmentGain',
   ] as Array<AnimationEvent['type']>);
 
-  for (const event of events) {
+  /**
+   * What the throw currently being read is going to do when it lands.
+   *
+   * The projectile event itself does not say, so the first delivery after it is
+   * read ahead: a `hit` makes it a damage throw and anything else a buff.
+   */
+  const deliversDamage = (fromIndex: number): boolean => {
+    for (let i = fromIndex + 1; i < events.length; i += 1) {
+      const next = events[i];
+      if (next.type === 'hit') {
+        return true;
+      }
+      if (
+        next.type === 'statChange' ||
+        next.type === 'statCopy' ||
+        next.type === 'equipmentGain' ||
+        next.type === 'projectile' ||
+        next.type === 'clash'
+      ) {
+        return false;
+      }
+    }
+    return false;
+  };
+
+  for (let eventIndex = 0; eventIndex < events.length; eventIndex += 1) {
+    const event = events[eventIndex];
     const before = cues.length;
     const stepCuesFrom = (): AnimationCue[] => cues.slice(before);
     if (!REACTION_TYPES.has(event.type)) {
@@ -387,6 +427,37 @@ export const buildBattleTimeline = (
         // projectile step is therefore a marker with no flight and no icon,
         // which is what keeps a spend to exactly one token.
         const trumpetPayload = projectile.payload === 'trumpet';
+        // A reward of attack and health together is one `HeartFist` in the
+        // client, thrown once (f10 t=34.19 to 34.53, where the Hippo's knock
+        // out reward falls as a single object with the heart behind the fist).
+        // Two icons one after the other was ours, and the buff close-up is
+        // what caught it.
+        const pairable =
+          groupProjectileCue &&
+          groupProjectileCue.pairedPayload == null &&
+          !groupProjectileCue.damage &&
+          projectile.payload !== groupProjectileCue.payload &&
+          (projectile.payload === 'heart' ||
+            projectile.payload === 'attack-glyph') &&
+          (groupProjectileCue.payload === 'heart' ||
+            groupProjectileCue.payload === 'attack-glyph') &&
+          groupProjectileCue.targets.length === projectile.targets.length &&
+          groupProjectileCue.targets.every(
+            (target, index) => target.petId === projectile.targets[index].id,
+          );
+        if (pairable && groupProjectileCue) {
+          groupProjectileCue.pairedPayload = projectile.payload;
+          addPayloadToBanner(projectile.payload);
+          pendingDeliveryMs = groupProjectileCue.endMs;
+          commitStep(
+            event,
+            groupProjectileCue.startMs,
+            groupProjectileCue.endMs,
+            groupProjectileCue.endMs,
+            stepCuesFrom(),
+          );
+          break;
+        }
         const arrivalMs = trumpetPayload
           ? startMs
           : startMs + beats.projectileFlightMs;
@@ -411,7 +482,10 @@ export const buildBattleTimeline = (
               petId: target.id,
               side: target.side,
             })),
+            damage: deliversDamage(eventIndex),
+            pairedPayload: null,
           });
+          groupProjectileCue = cues[cues.length - 1] as ProjectileCue;
         } else if (mode === 'fast' && projectile.source.kind === 'pet') {
           // FAST has no travel: the icon appears at the source instead.
           push({
@@ -522,6 +596,7 @@ export const buildBattleTimeline = (
           hurtOutline(hit.target.id, contactMs, event.seq, event.group);
         }
         lastDamageMs = contactMs;
+        lastDamageWasClash = true;
         lastClashContactMs = contactMs;
         cursor = clash.jump ? endMs : contactMs + beats.clashRecoilMs;
         commitStep(event, startMs, endMs, contactMs, stepCuesFrom());
@@ -551,6 +626,7 @@ export const buildBattleTimeline = (
         );
         hurtOutline(hit.target.id, atMs, event.seq, event.group);
         lastDamageMs = atMs;
+        lastDamageWasClash = false;
         if (liveBanner) {
           liveBanner.endMs = Math.max(liveBanner.endMs, atMs);
         }
@@ -617,8 +693,14 @@ export const buildBattleTimeline = (
             levelTo: statChange.levelTo,
           });
         } else {
-          if (statChange.kind === 'mana' && targetId != null) {
-            // Mana lands in a white flash, checklist 14.
+          const buffLands =
+            (statChange.kind === 'attack' || statChange.kind === 'health') &&
+            statChange.amount > 0;
+          if ((statChange.kind === 'mana' || buffLands) && targetId != null) {
+            // Mana lands in a white flash, checklist 14, and round 9's buff
+            // close-up shows a stat gain doing exactly the same thing: at f10
+            // t=34.53 the Hippo is painted out white as its reward arrives and
+            // white sparks lift off it for the next quarter second.
             push({
               kind: 'impactPuff',
               startMs: atMs,
@@ -626,7 +708,7 @@ export const buildBattleTimeline = (
               seq: event.seq,
               group: event.group,
               petId: targetId,
-              variant: 'mana',
+              variant: statChange.kind === 'mana' ? 'mana' : 'buff',
             });
           }
           push({
@@ -689,6 +771,7 @@ export const buildBattleTimeline = (
           level: event.pet.level,
           attack: pet?.attack ?? event.pet.attack,
           health: pet?.health ?? event.pet.health,
+          viaClash: lastDamageWasClash,
         });
         openCorpses.set(event.pet.id, cue);
         commitStep(event, startMs, startMs, startMs, stepCuesFrom());
@@ -698,20 +781,41 @@ export const buildBattleTimeline = (
       case 'corpseLaunchGroup': {
         pendingDeliveryMs = null;
         const groupId = `launch-${event.seq}`;
-        // Dead in place first, even when only one pet died: the corpse holds
-        // its slot for a beat and only then leaves (checklist 3).
+        // Dead in place first, wearing the bandage, and only then away
+        // (checklist 3). How long that is depends on what killed it: a clash
+        // throws its loser on the blow, a snipe or an ability leaves the body
+        // standing in its slot for the best part of a second (round 9,
+        // measured on f02/f06 against f01/f02/f03).
         const holdUntilMs = event.pets.reduce((latest, ref) => {
           const corpse = openCorpses.get(ref.id);
-          return corpse
-            ? Math.max(latest, corpse.startMs + beats.corpseHoldMs)
-            : latest;
+          if (!corpse) {
+            return latest;
+          }
+          const hold = corpse.viaClash
+            ? beats.corpseHoldMs
+            : beats.corpseBandageHoldMs;
+          return Math.max(latest, corpse.startMs + hold);
         }, 0);
-        const launchAt = Math.max(cursor, holdUntilMs);
+        // A clash death leaves on the blow, so it does not wait out the recoil
+        // the cursor is sitting on: on f02 the cow is hit at t=31.75 and is
+        // airborne at 31.78, and on f03 the cow is hit at 33.571 and airborne
+        // at 33.595. Anything else waits for the cursor as well as the hold.
+        const allViaClash =
+          event.pets.length > 0 &&
+          event.pets.every((ref) => openCorpses.get(ref.id)?.viaClash === true);
+        // The body leaving early does not make the rest of the beat early: the
+        // board still takes its own time to re-form, so the stream advances off
+        // where the launch *would* have been (f02: the cow is hit at t=31.75
+        // and airborne at 31.78, and the next contact is still 1.37 s later).
+        const streamLaunchAt = Math.max(cursor, holdUntilMs);
+        const launchAt = allViaClash
+          ? Math.max(holdUntilMs, introEndMs)
+          : streamLaunchAt;
         const endMs = launchAt + beats.corpseLaunchMs;
         for (const ref of event.pets) {
           const corpse = openCorpses.get(ref.id);
           if (corpse) {
-            corpse.endMs = launchAt;
+            corpse.endMs = Math.max(corpse.startMs, launchAt);
             openCorpses.delete(ref.id);
           }
           const pet = findPet(board, ref.id);
@@ -729,9 +833,14 @@ export const buildBattleTimeline = (
             attack: pet?.attack ?? ref.attack,
             health: pet?.health ?? ref.health,
             groupId,
+            viaClash: corpse?.viaClash ?? false,
           });
         }
-        if (event.pets.length > 0) {
+        // The star spray marks where a *thrown* body left the field. Nothing is
+        // thrown when the kill was not a clash, and the reference has no spray
+        // there either (f02 t=30.88 to 31.5 is one cloud in a slot and nothing
+        // else).
+        if (allViaClash && event.pets.length > 0) {
           push({
             kind: 'starburst',
             startMs: endMs - beats.corpseBurstMs,
@@ -743,7 +852,7 @@ export const buildBattleTimeline = (
             groupId,
           });
         }
-        cursor = launchAt + beats.corpseAdvanceMs;
+        cursor = streamLaunchAt + beats.corpseAdvanceMs;
         commitStep(event, launchAt, endMs, launchAt, stepCuesFrom());
         break;
       }
