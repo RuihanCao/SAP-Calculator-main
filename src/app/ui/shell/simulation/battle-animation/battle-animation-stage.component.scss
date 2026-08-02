@@ -1,0 +1,1525 @@
+/*
+ * Where the art comes from.
+ *
+ * Nothing on this stage is drawn by hand any more (game-replication skill,
+ * rule 4). Two sources, in that order of preference:
+ *
+ *   `art/Public/Public/Icons/...`  the ripped asset pack's own text-map icons,
+ *      which are the same sprites the client prints in its ability text: the
+ *      attack rock, the heart, the mana flask, the star, the trumpet, the gold
+ *      level disc.
+ *   `art/Extracted/...`  keyed out of 3x captures of the real client, for the
+ *      in-battle chrome the pack does not carry. Provenance for each piece,
+ *      down to the clip, the frame and the box it was cut from, is in
+ *      `art/Extracted/manifest.json`.
+ *
+ * The one thing still drawn in CSS is a plain white rounded rectangle (the
+ * plate a pair of stat badges stands on), because a rectangle is a rectangle.
+ */
+$icons: "/assets/art/Public/Public/Icons/TextMap-resources.assets-31-split";
+$extracted: "/assets/art/Extracted";
+/*
+ * `Ripped/` is the client's own build unpacked: original sprites with
+ * their own 8-bit alpha, not screenshot cuts. Everything that has a ripped
+ * counterpart uses it, and the cut it replaced is deleted. Provenance, down to
+ * the Unity object name and the build id, is `art/Ripped/manifest.json`.
+ *
+ * Effect timings below are measured off the recorded clips frame by frame,
+ * because the build carries the particle textures but not the particle
+ * systems' parameters. The readings are cited where they are used.
+ */
+$ripped: "/assets/art/Ripped";
+
+/*
+ * The plate every white box on this stage wears: the entrance names, the VS
+ * square, the ability toast, the trumpet counter and the stat popups. One
+ * nine-slice cut from the client's own entrance plate, so they share a keyline
+ * weight and a corner radius instead of each inventing their own, which is what
+ * made the old stage read as several layers stacked together.
+ *
+ * The source is 514 by 215 at 3x, so 40 source pixels is 13.3 css px of the
+ * reference viewport, and the slice covers the keyline and the corner.
+ */
+@mixin game-plate($border: 0.55em) {
+  background: none;
+  border: $border solid transparent;
+  border-image: url("#{$extracted}/plate-name.png") 40 fill / #{$border} / 0 stretch;
+  box-shadow: none;
+}
+
+/*
+ * The outline the game puts on a numeral: a solid black line outside the
+ * glyph. A text stroke is painted centred on the outline in Chrome, which eats
+ * the fill and turns a bright red numeral muddy, so this is eight shadows
+ * instead, which sit behind the fill.
+ */
+@mixin keyline($width, $colour: #0b0b0b) {
+  text-shadow:
+    #{$width} 0 0 $colour,
+    -#{$width} 0 0 $colour,
+    0 #{$width} 0 $colour,
+    0 -#{$width} 0 $colour,
+    #{$width * 0.75} #{$width * 0.75} 0 $colour,
+    -#{$width * 0.75} #{$width * 0.75} 0 $colour,
+    #{$width * 0.75} -#{$width * 0.75} 0 $colour,
+    -#{$width * 0.75} -#{$width * 0.75} 0 $colour;
+}
+
+:host {
+  display: block;
+  height: 100%;
+  min-height: 0;
+}
+
+.anim-stage {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  gap: 0.35rem;
+
+  /* The game's own face, so nothing on the stage is the calculator's font. */
+  font-family: "Lapsus Pro", "Segoe UI", sans-serif;
+}
+
+/*
+ * The letterbox, checklist 18.
+ *
+ * Every reference recording is a 960 by 600 viewport whose play area runs rows
+ * 30 to 569, so 960 by 540: an aspect of 1.7745 against 16:9's 1.7778, with
+ * black bars taking the rest. Holding that box is what makes a percentage on
+ * this stage mean the same thing it meant when it was measured on a reference
+ * frame, whatever the window is; without it the lane band alone drifted 10%
+ * thin at 1280 by 800.
+ */
+.anim-stage-box {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+/*
+ * The battlefield is the game's own Field battle art, the same sheet the
+ * reference clips are recorded on: sky and clouds, mountains, the forest band,
+ * the dirt lane the pets stand on, then grass.
+ *
+ * The framing is measured off the reference frame rather than guessed, and
+ * re-measured after a first reading came out 10% short.
+ *
+ * On the reference (f11 t=30.45, clips/f11-jump-african-wild-dog/
+ * f_00862_0030453.jpg, play area rows 30 to 569) the lane runs from 0.5611 to
+ * 0.7074 of the play area, and in the sheet itself it runs from 0.4530 to
+ * 0.5607 of the image, sampled on a column no art covers. One scale carries
+ * both edges: 0.1464/0.1077 is 1.359, so the sheet is drawn 135.9% of the play
+ * area's height, and its top has to sit 0.0546 of the play area above it. A
+ * percentage background position offsets by P x (container - image), which is
+ * -0.359 of the play area here, so P is 15.2%. Checked back: the lane lands at
+ * 0.5610 and 0.7074, and the forest's own top edge lands at 0.264 against a
+ * measured 0.272.
+ *
+ * The width is stretched to the field because every band is horizontal, and
+ * because the play area is now locked to 16:9 the stretch is the same one the
+ * reference recording has.
+ *
+ * The image itself is bound from the component, because the biome is either
+ * the replay's own one or a random draw from the pack.
+ */
+.anim-field {
+  position: relative;
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  /* Set from the component: one em is the whole stage's scale unit. */
+  font-size: 14px;
+  color: #1b2430;
+  background-color: #6edcff;
+  background-image: url('/assets/art/Public/Public/Background/FieldBattle.png');
+  background-repeat: no-repeat;
+  background-position: center 15.2%;
+  background-size: 100% 135.9%;
+  image-rendering: auto;
+}
+
+/* Fullscreen is the game's screen and nothing else: no rounded card edge. */
+.anim-stage-fullscreen {
+  gap: 0;
+  background: #000;
+}
+
+.anim-stage-fullscreen .anim-stage-box {
+  border-radius: 0;
+}
+
+/* --------------------------------------------------------- the mascot -- */
+
+/*
+ * The other player's avatar, `Mascot/TurtleBattle.png`, standing at the
+ * field's right in every reference battle frame.
+ *
+ * Placed off f11 t=30.45, where the figure's cream runs x=853 to 923 and
+ * y=210 to 333 of a 960 by 540 play area against the same cream in the asset.
+ * That fixes the scale at 0.278, so the sprite's 512 square box lands 26.4% of
+ * the play area tall with its left edge 86.0% across, and the boots come down
+ * on the lane's top edge.
+ */
+.anim-mascot {
+  position: absolute;
+  left: 86%;
+  bottom: 42.5%;
+  height: 26.4%;
+  width: auto;
+  z-index: 4;
+  pointer-events: none;
+}
+
+/* -------------------------------------------------------------- banner -- */
+
+/*
+ * The ability toast, checklist 11.
+ *
+ * Sized off the reference plate on f11 t=30.45, which runs x=264 to 565 and
+ * y=141 to 258 of a 960 by 540 play area: 16.7em wide against this stage's
+ * scale unit, a heavy black keyline, and a name row over a ruled divider with
+ * the body under it.
+ */
+.anim-banner {
+  position: absolute;
+  z-index: 30;
+  transform: translate(-50%, -50%);
+  width: 16.7em;
+  max-width: 62%;
+  font-size: 1em;
+  padding: 0.1em 0.16em 0.16em;
+
+  /* The reference toast carries no drop shadow, only the keyline. */
+  @include game-plate(0.5em);
+}
+
+.anim-banner-head {
+  display: flex;
+  align-items: center;
+  gap: 0.3em;
+}
+
+.anim-banner-portrait {
+  width: 1.7em;
+  height: 1.7em;
+  object-fit: contain;
+}
+
+.anim-banner-name {
+  flex: 1 1 auto;
+  color: #f2591f;
+  font-size: 1.3em;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  line-height: 1.05;
+  /* One line, so a long name never wraps a stray glyph under the plate. */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
+}
+
+/*
+ * The gold disc the toast's level rides in is the pack's own `gold` text-map
+ * icon, the same sprite the client prints inline, rather than a CSS gradient
+ * with a border on it.
+ */
+.anim-banner-level {
+  flex: 0 0 auto;
+  width: 2.05em;
+  height: 2.05em;
+  background: url("#{$icons}/gold.png") center / 100% 100% no-repeat;
+  text-align: center;
+  font-size: 1.05em;
+  font-weight: 700;
+  line-height: 2;
+  color: #6b3d00;
+}
+
+.anim-banner-divider {
+  position: relative;
+  margin: 0.26em 0 0.22em;
+  border-top: 0.1em solid #3b3b3b;
+}
+
+/* The small pipped box the real card hangs on the middle of the rule. */
+.anim-banner-pip {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0.62em;
+  height: 0.62em;
+  transform: translate(-50%, -50%);
+  border: 0.11em solid #2b2b2b;
+  border-radius: 0.14em;
+  background: #fff;
+}
+
+.anim-banner-pip::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0.14em;
+  height: 0.14em;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: #2b2b2b;
+}
+
+.anim-banner-text {
+  font-size: 1.12em;
+  line-height: 1.22;
+}
+
+.anim-banner-trigger {
+  font-weight: 700;
+  margin-right: 0.2em;
+}
+
+/* The amount and its glyph stay on one line, so no icon wraps on its own. */
+.anim-banner-run {
+  white-space: nowrap;
+}
+
+/* The inline payload glyph, a rock for damage, on the text's own baseline. */
+.anim-banner-glyph {
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.14em;
+  margin: 0 0.1em;
+}
+
+.anim-banner-note {
+  margin-top: 0.15em;
+  color: #6b7280;
+  font-style: italic;
+  font-size: 0.9em;
+}
+
+.anim-banner-uses {
+  position: absolute;
+  right: -0.1em;
+  top: 50%;
+  transform: translate(100%, -50%);
+  padding: 0 0.14em;
+  font-size: 0.8em;
+  font-weight: 700;
+  white-space: nowrap;
+  color: #101010;
+
+  @include game-plate(0.4em);
+}
+
+.anim-banner-toy .anim-banner-name {
+  color: #7b3fb5;
+}
+
+/* ------------------------------------------------------------ counters -- */
+
+/*
+ * The trumpet counter, checklist 14. Measured on the reference at f12 t=4.51
+ * (f12 r_007_0004514.png): the plate runs 250 by 118 css on a 720 play
+ * area, so 10.4 by 4.9 of this stage's scale unit, with a gold trumpet standing
+ * off each end and the tally between them. The trumpets are the pack's own
+ * sprite and the plate is the shared nine-slice.
+ */
+.anim-counter {
+  position: absolute;
+  z-index: 29;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  min-width: 6.4em;
+  padding: 0.06em 0.1em 0.14em;
+  font-size: 0.9em;
+  font-weight: 700;
+  color: #f5b800;
+
+  @include game-plate(0.62em);
+  @include keyline(0.05em);
+}
+
+.anim-counter img {
+  width: 2.1em;
+  height: 2.1em;
+  /* The trumpets stand proud of the plate's ends, as in the reference. */
+  margin: 0 -0.7em;
+}
+
+.anim-counter-total {
+  font-size: 1.5em;
+  line-height: 1;
+}
+
+/* A gain and a spend are a flash on the tally, not a repaint of the plate. */
+.anim-counter-gain .anim-counter-total {
+  color: #b6f0b0;
+}
+
+.anim-counter-spend .anim-counter-total {
+  color: #fff6c0;
+}
+
+.anim-token {
+  position: absolute;
+  z-index: 28;
+  transform: translate(-50%, -50%);
+}
+
+.anim-token img {
+  width: 1em;
+  height: 1em;
+}
+
+/* ---------------------------------------------------------------- pets -- */
+
+.anim-pet {
+  position: absolute;
+  z-index: 10;
+  width: 5.2em;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  will-change: left, top;
+}
+
+/*
+ * The level plaque, checklist 18.
+ *
+ * One sprite, drawn whole. The client ships `LevelMap_0/1/2` as the complete
+ * "Lvl 1 / Lvl 2 / Lvl 3" plaque, wood and wording and numeral and keyline and
+ * halo together, so there is nothing to compose. Built out of parts off a
+ * screenshot it showed the join every time; the sprite has no join. Sized off the reference at 39 by 26 of a 960 by 540 play area, so 2.28
+ * of this stage's scale unit wide, and the sprite's own 123x109 aspect sets the
+ * height.
+ */
+.anim-pet-level {
+  position: relative;
+  width: 2.57em;
+  height: auto;
+  margin-bottom: 0.02em;
+  line-height: 1;
+  pointer-events: none;
+}
+
+/*
+ * `LevelMap_0/1/2`, the whole "Lvl 1 / Lvl 2 / Lvl 3" plaque as the client
+ * ships it: wood, wording, numeral, keyline and halo in one sprite with its own
+ * alpha. Cutting the wood out of a screenshot and setting the numeral as type
+ * beside it left a join that read as crooked and stitched.
+ * The sprite is 123x109, so the box follows that aspect.
+ */
+.anim-pet-level-art {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/*
+ * The plaque is not centred on its pet: the client sets it back over its own
+ * team's rear by 22.5px of a 960 wide frame, so 1.25 of this stage's scale
+ * unit, and the sign follows the side.
+ */
+.anim-pet-player .anim-pet-level,
+.anim-corpse.anim-pet-player .anim-pet-level {
+  transform: translateX(-1.25em);
+}
+
+.anim-pet-opponent .anim-pet-level,
+.anim-corpse.anim-pet-opponent .anim-pet-level {
+  transform: translateX(1.25em);
+}
+
+.anim-pet-xpbar {
+  position: absolute;
+  left: 12%;
+  bottom: -0.34em;
+  display: inline-block;
+  width: 76%;
+  height: 0.22em;
+  background: rgb(20 12 4 / 55%);
+  border-radius: 0.11em;
+  overflow: hidden;
+}
+
+.anim-pet-xpfill {
+  display: block;
+  height: 100%;
+  background: #ffcf3f;
+}
+
+/*
+ * The sprite box. Measured against the lane rather than picked: on f11 t=30.45
+ * the lane runs 80px of a 540 play area and the worm's art fills 82px of it,
+ * so a pet's box is 15.6% of the play area, 4.7 of this stage's scale unit.
+ * The earlier 4 left every pet about 18% short against the lane.
+ */
+.anim-pet-art {
+  position: relative;
+  width: 4.7em;
+  height: 4.7em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.anim-pet-icon {
+  width: 4.7em;
+  height: 4.7em;
+  object-fit: contain;
+}
+
+/*
+ * The contact whiteout, checklist 1. `brightness(0) invert(1)` keeps the
+ * sprite's alpha and throws its colour away, which is a flat white silhouette
+ * with the art's own hard edge, exactly what the reference contact frame
+ * carries (clips/f01-plain-trades/f_00882_0031156.jpg, where the pig and the
+ * otter are both painted out to white with their red lines still on them).
+ */
+.anim-pet-whiteout {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 4.7em;
+  height: 4.7em;
+  object-fit: contain;
+  margin: -2.35em 0 0 -2.35em;
+  pointer-events: none;
+  filter: brightness(0) invert(1);
+}
+
+/*
+ * Facing lives in facing.ts and is bound onto the pet's own image, so the one
+ * rule covers a pet standing still, lunging, jumping, flying off as a corpse
+ * and arriving as a summon. The measurements it is derived from are cited
+ * there.
+ */
+
+/*
+ * Fainting, checklist 3.
+ *
+ * Washing the pet out the moment it dies and launching it are both wrong: the
+ * reference does neither. A pet that has just taken a lethal hit stands in its
+ * own slot at its own full colour, wearing a crossed bandage, with its real
+ * health on the badge, and it is only the *launched* body that whites out
+ * (f02: the worm is whited at t=29.97 by the contact flash, is back to pink by
+ * 30.16, sits there with the bandage and a health of 0 until 30.84, and is gone
+ * at 30.88; f06's otter is the same with a health of -1; the peacock in f10
+ * holds it at -4 for over a second while the fight goes on around it).
+ *
+ * So the wash belongs to the corpse alone, and it is close to pure white there
+ * (f01 t=32.01, clips/f01-plain-trades/f_00905_0032006.jpg, where the pig is
+ * washed out with only its black keyline left).
+ */
+/*
+ * The launched body keeps its own colours.
+ *
+ * f01 t=32.01 shows a corpse washed out to white, and an earlier pass drew
+ * every thrown body that way. On a 1:1 crop of f02 t=31.78, one frame after the blow, the
+ * cow that was just thrown is its own grey and white with a pink nose and wears
+ * the red hurt line, and it is only the *contact frame itself* that paints both
+ * pets out. Washing it for the whole flight made our body invisible against its
+ * own smoke, so what flew read as a bandage with no pet under it.
+ */
+.anim-corpse .anim-pet-icon {
+  filter: drop-shadow(0.06em 0 0 #e4262b) drop-shadow(-0.06em 0 0 #e4262b)
+    drop-shadow(0 0.06em 0 #e4262b) drop-shadow(0 -0.06em 0 #e4262b);
+}
+
+/*
+ * The bandage, `Bandage` out of the client's own build.
+ *
+ * Sized off f02 t=30.47, where the crossed plaster measures 66px across on a
+ * 540 tall play area, about 74 with its keyline, against a worm 81px wide. This
+ * stage's unit is a thirtieth of the play area's height, so that is 4.1em, and
+ * it is centred on the pet's art box.
+ *
+ * Onset: the hit lands at t=29.97 and the bandage is showing at 30.02 and full
+ * at 30.06, so it fades up over about 90ms after a 50ms beat.
+ */
+.anim-pet-bandage {
+  position: absolute;
+  left: 50%;
+  /*
+   * Masking the plaster's tan on both sides with one
+   * colour range: the reference covers 1549 px on f02's worm and 1485 on f10's
+   * peacock, ours covered 1955 and 1899, so ours was 12% oversize on the
+   * diagonal, and its centre sat 12 to 17px high of the reference's.
+   */
+  top: 58%;
+  z-index: 3;
+  width: 3.7em;
+  height: 3.7em;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation: anim-bandage-in 90ms 50ms ease-out both;
+}
+
+/* Already up by the time the body launches, so it does not restart in flight. */
+.anim-corpse-bandage {
+  animation: none;
+}
+
+@keyframes anim-bandage-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.55);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+.anim-pet-equipment {
+  position: absolute;
+  right: -0.3em;
+  top: -0.15em;
+  width: 1.4em;
+  height: 1.4em;
+}
+
+.anim-pet-equipment-break {
+  animation: anim-shatter 380ms ease-out forwards;
+}
+
+.anim-pet-equipment-gain {
+  animation: anim-pop 300ms ease-out;
+}
+
+/*
+ * Fragments of a consumed perk, thrown out around the pet, checklist 10.
+ *
+ * They are small copies of the perk's own sprite rather than green CSS chips:
+ * what shatters is the melon, so what flies is the melon. The image is bound
+ * from the component, because which perk it is only exists at runtime.
+ */
+.anim-pet-shard {
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  width: 0.62em;
+  height: 0.62em;
+  background: center / contain no-repeat;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/*
+ * A buff or a perk arriving, checklist 10 and 14.
+ *
+ * The client throws its `ParticlePerk` sprite out around the pet and lifts a
+ * `Plus` over it; both are ripped originals. Timed to the contact effect
+ * measured on f03 and f14, where a landing reads over about 300ms: bright at
+ * once, then out and up while it fades.
+ */
+.anim-pet-buff {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  width: 2.4em;
+  height: 2.4em;
+  margin: -1.2em 0 0 -1.2em;
+  background: url("#{$ripped}/fx/particle-perk.png") center / contain no-repeat;
+  pointer-events: none;
+  animation: anim-buff-land 300ms ease-out forwards;
+}
+
+.anim-pet-buff-plus {
+  background-image: url("#{$ripped}/fx/plus.png");
+  animation: anim-buff-rise 420ms ease-out forwards;
+}
+
+@keyframes anim-buff-land {
+  0% {
+    opacity: 0;
+    transform: scale(0.35);
+  }
+
+  25% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.5);
+  }
+}
+
+@keyframes anim-buff-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(0.4em) scale(0.5);
+  }
+
+  30% {
+    opacity: 1;
+    transform: translateY(-0.2em) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-1.6em) scale(1.15);
+  }
+}
+
+.anim-pet-shard-on {
+  animation: anim-shard 420ms ease-out forwards;
+}
+
+.anim-pet-shard-on[data-shard='0'] {
+  --shard-x: -1.9em;
+  --shard-y: -1.4em;
+}
+
+.anim-pet-shard-on[data-shard='1'] {
+  --shard-x: 1.9em;
+  --shard-y: -1.5em;
+}
+
+.anim-pet-shard-on[data-shard='2'] {
+  --shard-x: -2.2em;
+  --shard-y: 0.9em;
+}
+
+.anim-pet-shard-on[data-shard='3'] {
+  --shard-x: 2.2em;
+  --shard-y: 1em;
+}
+
+.anim-pet-shard-on[data-shard='4'] {
+  --shard-x: -0.5em;
+  --shard-y: -2.2em;
+}
+
+.anim-pet-shard-on[data-shard='5'] {
+  --shard-x: 0.7em;
+  --shard-y: 1.9em;
+}
+
+.anim-pet-fasticon {
+  position: absolute;
+  top: -1.1em;
+  width: 1.3em;
+  height: 1.3em;
+}
+
+/*
+ * The level-up burst.
+ *
+ * Two of the client's own particle textures rather than two CSS gradients:
+ * `glow6` is the rayed core and `sparkle` is the four-point flare that rides
+ * over it. Both are white and additive in the client, so they are screened over
+ * the board and tinted to the plaque's gold. No level-up was captured in the
+ * clip set, so the shape is the client's art and the timing follows the star
+ * spray measured at a corpse exit (about 350ms, growing as it goes) rather than
+ * being invented; that qualifier is in REPORT4.md.
+ */
+.anim-pet-xpburst {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 5.4em;
+  height: 5.4em;
+  background: url("#{$ripped}/fx/glow-rays.png") center / 100% 100% no-repeat;
+  mix-blend-mode: screen;
+  filter: sepia(1) saturate(5) hue-rotate(-16deg) brightness(1.15);
+  pointer-events: none;
+}
+
+.anim-pet-xpring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 3.6em;
+  height: 3.6em;
+  background: url("#{$ripped}/fx/sparkle.png") center / 100% 100% no-repeat;
+  mix-blend-mode: screen;
+  filter: sepia(1) saturate(4) hue-rotate(-10deg) brightness(1.2);
+  pointer-events: none;
+}
+
+/*
+ * The stat badges, checklist 18.
+ *
+ * Structure, not styling: one white plate carries the pair, the attack numeral
+ * sits inside a charcoal rock and the health numeral inside a red heart, both
+ * shapes keylined heavily in black and haloed in white, both numerals white
+ * with a black outline. Read off f11 t=30.45, where the pair is 32px tall on a
+ * 540 play area and the plate runs 10px past the shapes on each side.
+ */
+/*
+ * The badge pair, measured on the reference at f12 t=4.51: the white plate runs
+ * 111 by 51 css on a 720 play area, so 4.63 by 2.13 of this stage's scale unit,
+ * and each badge stands about 2.0 units tall with its ends hanging over the
+ * plate's. The plate is a bare white rounded rectangle in the client too, with
+ * no keyline of its own, so it stays CSS; the shapes standing on it are the
+ * pack's sprites.
+ */
+.anim-pet-stats {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 2.4em;
+  margin-top: 0.02em;
+}
+
+/* The plate, laid behind the badges and short of their outer edges. */
+.anim-pet-stats::before {
+  content: '';
+  position: absolute;
+  left: 0.85em;
+  right: 0.85em;
+  top: 50%;
+  height: 2.13em;
+  transform: translateY(-50%);
+  border-radius: 0.34em;
+  background: #fff;
+}
+
+.anim-pet-stat {
+  position: relative;
+  height: 100%;
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* The client leaves 11px of a 960 wide frame, 0.61 of this stage's scale
+     unit, of bare plate between the rock and the heart. The pair used to be set
+     to overlap, which fused them into one blob. */
+  margin: 0 0.14em;
+  font-size: 1.34em;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+  background: center / contain no-repeat;
+
+  @include keyline(0.05em, #0d0d0d);
+}
+
+/*
+ * The three badge shapes are the pack's own text-map sprites, the same rock,
+ * heart and flask the client prints in its ability text and stamps on a board.
+ * They arrive with the game's white halo and black keyline already on them,
+ * which is what the drawn SVG paths that used to be here were approximating.
+ */
+.anim-pet-attack {
+  background-image: url("#{$icons}/fist.png");
+}
+
+.anim-pet-health {
+  background-image: url("#{$icons}/heart.png");
+}
+
+.anim-pet-mana {
+  background-image: url("#{$icons}/mana.png");
+}
+
+/*
+ * The outlines, checklist 1 and 14. They trace the sprite's own silhouette
+ * rather than ringing the box it sits in: the reference wind-up is a red line
+ * hugging the pig and the otter (out/z_f01_clash.jpg and the crop kept as
+ * ref_faint.png), and a jump attacker hangs over its target inside a green one
+ * (f11 t=30.45). Four one-pixel drop shadows off the transparent sprite give
+ * exactly that line.
+ */
+.anim-pet-source .anim-pet-icon {
+  filter:
+    drop-shadow(0.09em 0 0 #35d34a) drop-shadow(-0.09em 0 0 #35d34a)
+    drop-shadow(0 0.09em 0 #35d34a) drop-shadow(0 -0.09em 0 #35d34a);
+}
+
+.anim-pet-hurt .anim-pet-icon,
+.anim-pet-windup .anim-pet-icon {
+  filter:
+    drop-shadow(0.09em 0 0 #ef2222) drop-shadow(-0.09em 0 0 #ef2222)
+    drop-shadow(0 0.09em 0 #ef2222) drop-shadow(0 -0.09em 0 #ef2222);
+}
+
+/* A whited out corpse keeps the red line it died wearing. */
+.anim-corpse .anim-pet-icon {
+  filter:
+    saturate(0.1) brightness(2.1)
+    drop-shadow(0.09em 0 0 #ef2222) drop-shadow(-0.09em 0 0 #ef2222)
+    drop-shadow(0 0.09em 0 #ef2222) drop-shadow(0 -0.09em 0 #ef2222);
+}
+
+.anim-pet-levelup .anim-pet-level-num {
+  color: #fff6c0;
+}
+
+/* ------------------------------------------------------- corpse, burst -- */
+
+.anim-corpse {
+  position: absolute;
+  z-index: 12;
+  width: 5.2em;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.anim-corpse-art {
+  position: relative;
+  width: 4.7em;
+  height: 4.7em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/*
+ * The trail, checklist 3: a chain of fat clouds laid along the path the corpse
+ * flew, each link a little smaller and fainter than the one in front of it,
+ * which is what the reference leaves behind (f01 t=32.01 and t=37.39).
+ */
+/*
+ * The trail a corpse leaves, measured on the close-ups against f11b t=6.55.
+ *
+ * The client draws it as flat, stroke-free circles 87 to 110px across at 3x,
+ * so 1.2 to 1.5 of this stage's scale unit, in clusters of two to four, each
+ * cluster a slightly different grey off a ten-step ramp from #dbdbdb to white.
+ * Ours was one 5.2 unit puff with the atlas's own soft edge, which read as one
+ * big smudge rather than as smoke.
+ */
+/*
+ * The trail was the right construction at half the size, which read as thinner
+ * than the client's.
+ *
+ * Measured on f02 t=31.88 at native resolution: the trail behind the cow is a
+ * continuous band about 47px thick on a 540 tall play area, made of lobes about
+ * 45px across that overlap into each other. That is 2.4 to 2.6 of this stage's
+ * scale unit, against the 1.22 to 1.5 that was here.
+ */
+.anim-corpse-puff {
+  position: absolute;
+  z-index: 11;
+  width: 2.5em;
+  height: 2.5em;
+  border-radius: 50%;
+  pointer-events: none;
+  background: #f1f1f1;
+}
+
+.anim-corpse-puff:nth-child(6n + 1) { width: 2.14em; height: 2.14em; background: #dbdbdb; }
+.anim-corpse-puff:nth-child(6n + 2) { width: 2.62em; height: 2.62em; background: #fafafa; }
+.anim-corpse-puff:nth-child(6n + 3) { width: 2.28em; height: 2.28em; background: #dfdfdf; }
+.anim-corpse-puff:nth-child(6n + 4) { width: 2.56em; height: 2.56em; background: #fff; }
+.anim-corpse-puff:nth-child(6n + 5) { width: 2.2em; height: 2.2em; background: #ebebeb; }
+
+/*
+ * The bloom in the slot the body left.
+ *
+ * The client does not simply start a trail there: at f02 t=30.88 the worm's
+ * slot goes bright yellow-white and a cloud twice a trail link's size opens in
+ * it, and the same beat is on f06 at t=30.82. The art is the client's own
+ * `glow1` over its own soft cloud.
+ */
+.anim-corpse-launch-flash {
+  position: absolute;
+  z-index: 12;
+  width: 6.4em;
+  height: 6.4em;
+  pointer-events: none;
+  /*
+   * `cloud_2x2_soft` is a two by two atlas, so it is framed on one cell the way
+   * `.anim-puff-cloud` frames it. Centring it instead put the seam between four
+   * cells through the middle of the bloom and drew a hard white square, which
+   * is what the first comparison strips caught.
+   */
+  background:
+    url("#{$ripped}/fx/cloud-hard.png") 0 0 / 200% 200% no-repeat,
+    radial-gradient(circle, rgb(255 252 232 / 95%) 0 20%, rgb(255 220 96 / 70%) 40%, rgb(255 220 96 / 0%) 72%);
+  /*
+   * The reference bloom lights what is behind it: on f02 t=30.88 the grass 40px
+   * to the left of the cloud lifts from 62,144,7 to 92,168,16. A plain painted
+   * gradient cannot do that, so the layer is screened over the field.
+   */
+  mix-blend-mode: screen;
+}
+
+/*
+ * The star a corpse bursts into. The pack's own star sprite, not a typographic
+ * dingbat: the reference burst is a keylined, haloed star of the same family as
+ * everything else on the board, and a font glyph could never be.
+ */
+/*
+ * The star spray at a corpse's exit.
+ *
+ * The client's own `Star` sprite, which ships white so it can be tinted; the
+ * reference spray is the warm yellow the level plaque's numeral uses, with the
+ * board's black keyline around it, so the tint is a filter chain rather than a
+ * flat colour. Read off f03 t=33.93..34.28: about 350ms, four to six stars,
+ * each one getting bigger as it travels rather than shrinking.
+ */
+/*
+ * Measured on f02 t=32.13: four to six gold stars about 20 to 24px
+ * across on a 540 tall play area, so 1.2 of this stage's unit, in a saturated
+ * #fdd417 rather than the pale #fbeb7a a 2.6em star was coming out as.
+ */
+.anim-burst {
+  position: absolute;
+  z-index: 13;
+  width: 1.3em;
+  height: 1.3em;
+  transform-origin: center;
+  pointer-events: none;
+  filter:
+    drop-shadow(0.07em 0 0 #1a1206) drop-shadow(-0.07em 0 0 #1a1206)
+    drop-shadow(0 0.07em 0 #1a1206) drop-shadow(0 -0.07em 0 #1a1206)
+    sepia(1) saturate(9) hue-rotate(-16deg) brightness(1.02);
+}
+
+/* -------------------------------------------------- projectiles, puffs -- */
+
+.anim-projectile {
+  position: absolute;
+  z-index: 20;
+  transform: translate(-50%, -50%);
+}
+
+/*
+ * The thrown object was half the size it should be.
+ *
+ * The reference rock measures 56 to 62px across on a 540 tall play area (f02,
+ * every frame from t=29.639 to 29.904), which is 3.3 of this stage's units.
+ * At 1.7em it read as a pip rather than as something thrown, which is most of
+ * why the throw had no weight. The white halo is the sprite's own on the
+ * extracted rock, so it is only added for the pack icons.
+ */
+.anim-projectile img {
+  width: 3.3em;
+  height: 3.3em;
+  object-fit: contain;
+  filter: drop-shadow(0 0 0.1em rgb(255 255 255 / 75%));
+}
+
+.anim-puff {
+  position: absolute;
+  z-index: 15;
+  width: 3.4em;
+  height: 3.4em;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff 0%, rgb(255 255 255 / 0%) 70%);
+}
+
+/* Checklist 7 and 8: a summon and a transform use the same cloud, and it is a
+   cloud rather than a glow, so the sprite swap happens behind something
+   opaque instead of fading through. */
+.anim-puff-cloud {
+  width: 4.4em;
+  height: 3.4em;
+  border-radius: 0;
+  background: url("#{$ripped}/fx/cloud-soft.png") 0 0 / 200% 200% no-repeat;
+  filter: drop-shadow(0 0 0.2em rgb(255 255 255 / 80%));
+}
+
+/*
+ * A stat gain landing. Same white bloom as mana, because that is what
+ * the reference does: f10 t=34.53 paints the Hippo out white as its knock-out
+ * reward arrives and lifts white sparks off it for the next quarter second.
+ */
+.anim-puff-buff {
+  width: 3.6em;
+  height: 3.6em;
+  background:
+    url("#{$ripped}/fx/sparkle.png") center / 46% 46% no-repeat,
+    url("#{$ripped}/fx/glow.png") center / contain no-repeat;
+}
+
+/* Checklist 5: a ranged arrival and a jump landing are a hard white puff. */
+.anim-puff-impact {
+  width: 2.6em;
+  height: 2.6em;
+  background: radial-gradient(circle, #fff 0 42%, rgb(255 255 255 / 55%) 62%, rgb(255 255 255 / 0%) 72%);
+}
+
+.anim-puff-mana {
+  width: 3em;
+  height: 3em;
+  background: radial-gradient(circle, #fff 0 36%, rgb(185 210 246 / 70%) 60%, rgb(185 210 246 / 0%) 74%);
+}
+
+/*
+ * The bloom that hangs between the two combatants at a contact frame.
+ *
+ * It is not the whole of the flash: the sprites themselves are painted out in
+ * white too (.anim-pet-whiteout). What the bloom has to do is close the gap
+ * between them, which on the reference contact frame is white right across
+ * (clips/f01-plain-trades/f_00882_0031156.jpg). Contact leaves the two pets
+ * 12% of the play area apart, and the bloom is sized and its solid core pushed
+ * out to cover that.
+ */
+.anim-flash {
+  position: absolute;
+  z-index: 18;
+  width: 11em;
+  height: 11em;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    #fff 0%,
+    #fff 30%,
+    rgb(255 255 255 / 70%) 48%,
+    rgb(255 250 220 / 35%) 62%,
+    rgb(255 255 255 / 0%) 78%
+  );
+}
+
+/* -------------------------------------------------------------- popups -- */
+
+.anim-popup {
+  position: absolute;
+  z-index: 22;
+  transform: translate(-50%, -100%);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.12rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/*
+ * The damage numeral, checklist 2: the game's own face, red, with a heavy
+ * black outline, at the size the reference draws it. On f01 t=37.39 the "4"
+ * stands 32px tall on a 540 play area, so about 2.4 of this stage's scale
+ * unit, and the outline it carries is black rather than the white one that
+ * used to be here.
+ */
+/*
+ * Measured rather than eyeballed.
+ *
+ * Masking pure red on f02's "8" frame by frame: the reference numeral covers
+ * 3943 px at its peak (t=29.976) and settles at a steady 765 px from t=30.16
+ * until it goes at 30.84. Ours covered 6224 and 1570, so the resting numeral
+ * was 43% oversize on the diagonal, the loudest difference on every comparison
+ * sheet.
+ */
+.anim-popup-damage {
+  color: #f00;
+  font-size: 2.5em;
+  line-height: 1;
+
+  @include keyline(0.05em);
+}
+
+.anim-popup-merged {
+  font-size: 2.9em;
+}
+
+/*
+ * A stat pill, checklist 15.
+ *
+ * The client sets a white plus and then the stat's own badge with the amount
+ * inside it in white, free over the pet, with the sprite's own halo and keyline
+ * doing all the separating (f10 t=34.59: `+ [3] + <3>` over the Hippo, no
+ * plate anywhere). Ours put a black numeral beside a small icon on a white
+ * plate, which read as a tooltip rather than as a reward.
+ */
+.anim-popup-stat {
+  display: flex;
+  align-items: center;
+  gap: 0.06em;
+  font-size: 1.5em;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+
+  @include keyline(0.05em, #0d0d0d);
+}
+
+.anim-popup-plus {
+  font-size: 0.78em;
+}
+
+.anim-popup-chip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5em;
+  height: 1.5em;
+  background: center / contain no-repeat;
+}
+
+/* Checklist 14: mana lands as a large blue numeral, not as a grey chip. */
+.anim-popup-mana {
+  color: #2f6fd0;
+  font-size: 2.4em;
+  line-height: 1;
+
+  @include keyline(0.05em);
+}
+
+.anim-popup-mana img {
+  width: 0.85em;
+  height: 0.85em;
+}
+
+.anim-popup-copy {
+  color: #fff;
+  font-size: 1.4em;
+  text-shadow: 0 0 3px #000;
+}
+
+/* ---------------------------------------------------------- end screen -- */
+
+.anim-outro {
+  position: absolute;
+  inset: 0;
+  z-index: 45;
+  /*
+   * How dark the end screen goes, fitted per band rather than picked.
+   *
+   * On the reference end screen, sampled clear of the trophy row so the halos
+   * do not lift the reading, the field's bands come out at sky 23.5, forest
+   * 7.7, lane 16.0 and grass 7.3 against a lit 200.3, 94.0, 160.0 and 79.1
+   * (out/outro_victory_end.jpg against out/f11-jump-african-wild-dog_board.jpg).
+   * A least squares fit through those four pairs gives a multiplier of 0.110 on
+   * red, 0.104 on green and 0.099 on blue with no offset, so the veil is plain
+   * black at 89.5% and the little warmth left over is the lane's own. The
+   * earlier blue grey veil at 85% left every band about 2.7 times too bright
+   * and put more blue in the result than red.
+   *
+   * Note for anyone re-checking this: the calculator's screen does not draw the
+   * trophy row or the heart row, so a whole frame mean is not comparable with
+   * the reference's. Compare band by band, clear of the rows.
+   */
+  background: rgb(0 0 0 / 89.5%);
+  color: #fff;
+}
+
+/*
+ * The end screen's face and caption.
+ *
+ * The reference end screen (outro t=22.46) carries a large round face over the
+ * caption: 284 css across on a 720 play area, so 11.8 of this stage's scale
+ * unit, its centre 0.41 of the play area down, with the caption directly under
+ * it at 0.667. The face is the client's own sprite, cut out; the trophy row and
+ * the heart row above and below it stay off, because those are a shop run's
+ * score and this is a calculator.
+ */
+/*
+ * The end screen's face and caption, placed independently.
+ *
+ * On the reference end screen the face's centre is 0.41 of the play area down
+ * and the caption's centre is 0.667; stacking them in one centred column put
+ * the face on top of the caption and the caption on top of the buttons. The
+ * face is `Standard--Happy` on a win and `Standard--Woopsy` on a loss, the
+ * client's own sprites, 284 css across on a 720 play area, so 11.8 of this
+ * stage's scale unit.
+ */
+.anim-outro-face {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.anim-outro-mask {
+  position: absolute;
+  left: 50%;
+  top: 41%;
+  width: 11.45em;
+  height: 11.45em;
+  transform: translate(-50%, -50%);
+  object-fit: contain;
+}
+
+/*
+ * Sized off the reference caption, which stands 33px tall and runs 179px wide
+ * on a 720 play area (out/outro_victory_end.jpg, scaled from its 40 by 217 at
+ * 960 by 600), with its centre 0.667 of the play area down.
+ */
+.anim-outro-caption {
+  position: absolute;
+  left: 50%;
+  top: 66.7%;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+  font-size: 1.9em;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.05em;
+  /* The client's caption goes straight from white to the veil: no keyline. */
+  text-shadow: none;
+}
+
+/* Down at the foot of the screen, clear of the board the caption sits over. */
+.anim-outro-actions {
+  position: absolute;
+  left: 50%;
+  bottom: 8%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 1.2em;
+}
+
+/* The two buttons wear the control bar's own tile, so the end screen reads as
+   part of the same client rather than as a dialog dropped on top of it. */
+.anim-outro-action {
+  width: 3.4em;
+  background: rgb(45 128 158 / 92%);
+}
+
+/* ------------------------------------------------------------ controls -- */
+
+/*
+ * The game's own bar, checklist 17: five tiles at the very top of the play
+ * area, no playback rate. Measured on f11 t=30.45, where each tile is 39 by 41
+ * of a 960 by 540 play area with 20px between them and the row's top edge 6px
+ * below the play area's, and the label rides inside the tile over the glyph.
+ */
+.anim-controls {
+  position: absolute;
+  z-index: 35;
+  top: 1.1%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: flex-start;
+  gap: 1.11em;
+  transition: opacity 120ms linear;
+}
+
+.anim-controls-gone {
+  pointer-events: none;
+}
+
+/*
+ * One tile per control, label over glyph.
+ *
+ * Measured on the reference at f11 t=3.00, at a 720 play area: each tile is
+ * 50.0 by 58.7 css (2.08 by 2.45 of this stage's scale unit) with a 4.3 css
+ * corner (0.18 unit), the pitch is 77.6 css so the gap is 1.15 units, and the
+ * row's top edge is 7 css below the play area's. The tile carries no keyline at
+ * all; the old 0.08em border was invented and is what made the bar read as a
+ * web toolbar rather than as part of the client.
+ *
+ * The fill is solved from the tile standing on plain sky: the client draws
+ * rgb(110 213 247) there and the tile comes out rgb(77 150 173), which is
+ * rgb(41 96 116) at 76 percent.
+ */
+.anim-ctl {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.08em;
+  width: 2.08em;
+  height: 2.45em;
+  padding: 0.16em 0.04em 0.1em;
+  border: none;
+  border-radius: 0.18em;
+  background: rgb(67 130 150 / 76%);
+  color: #fff;
+  font-family: inherit;
+}
+
+/*
+ * The client fits each label to its tile rather than setting them all the same:
+ * REWIND, PAUSE and AUTOPLAY come out about a 6px cap on a 960 wide frame while
+ * FAST and SKIP get about 9px. One size for all overhung the 37px REWIND tile
+ * by 5px on each side.
+ */
+.anim-ctl-label {
+  margin-top: -0.02em;
+  font-size: 0.86em;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* The long words are set down so they stay inside their tile. */
+.anim-ctl-label-long {
+  font-size: 0.36em;
+}
+
+.anim-ctl-label-mid {
+  font-size: 0.48em;
+}
+
+/* PAUSE is five letters where PLAY and SKIP are four. */
+.anim-ctl-label-five {
+  font-size: 0.59em;
+}
+
+/*
+ * The glyphs are the client's own sprites, white on full alpha, exactly as the
+ * build ships them; the client tints and plates them at runtime and so does
+ * this. Keying them out of a screenshot of the bar left a seam along every
+ * edge where the key met the tile.
+ */
+.anim-ctl-glyph {
+  width: 1.17em;
+  height: 1.17em;
+  /* The client hangs the glyph 22px of a 3x capture below the tile's centre,
+     so 7.3 css, so 0.3 of this stage's scale unit. */
+  margin-top: 0.3em;
+  object-fit: contain;
+}
+
+/* REWIND is the SKIP sprite turned round, which is how the client draws it. */
+.anim-ctl-glyph-mirror {
+  transform: scaleX(-1);
+}
+
+/*
+ * EXIT is ours, not the client's: its bar has no way out because a replay is
+ * inside a shop run. There is nothing to cut for it, so it is set as a cross in
+ * the game's own face at the weight the cut glyphs carry.
+ */
+.anim-ctl-cross {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1em;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/*
+ * Engaged is a dimmed *glyph*, checklist 16: the client leaves the tile at its
+ * own colour and prints the label and the icon in #ccc. Fading the whole tile
+ * lightened its face to #5bb2cf against the client's #4d96ad.
+ */
+.anim-ctl-engaged .anim-ctl-glyph,
+.anim-ctl-engaged .anim-ctl-label {
+  filter: brightness(0.8) saturate(0);
+  opacity: 0.8;
+}
+
+/* ------------------------------------------------------ tools, not game -- */
+
+.anim-tools {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 0.3rem 0.2rem;
+  opacity: 0.55;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+}
+
+.anim-tools:hover,
+.anim-tools:focus-within {
+  opacity: 1;
+}
+
+.anim-tool {
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: inherit;
+}
+
+/*
+ * The scrubber is ours, not the game's, so it stays available but stops
+ * competing with the bar above it: a thin dark rail in the field's own palette.
+ */
+.anim-scrub {
+  flex: 1 1 auto;
+  height: 0.55rem;
+  padding: 0;
+  background: transparent;
+  appearance: none;
+}
+
+.anim-scrub::-webkit-slider-runnable-track {
+  height: 0.22rem;
+  border-radius: 0.11rem;
+  background: rgb(43 50 64 / 45%);
+}
+
+.anim-scrub::-moz-range-track {
+  height: 0.22rem;
+  border-radius: 0.11rem;
+  background: rgb(43 50 64 / 45%);
+}
+
+.anim-scrub::-webkit-slider-thumb {
+  appearance: none;
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-top: -0.14rem;
+  border: none;
+  border-radius: 50%;
+  background: #38688a;
+}
+
+.anim-scrub::-moz-range-thumb {
+  width: 0.5rem;
+  height: 0.5rem;
+  border: none;
+  border-radius: 50%;
+  background: #38688a;
+}
+
+.anim-clock {
+  font-size: 0.65rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.anim-empty {
+  padding: 1rem;
+  text-align: center;
+  opacity: 0.7;
+}
+
+@keyframes anim-shatter {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(1.6) rotate(35deg);
+    opacity: 0;
+  }
+}
+
+@keyframes anim-pop {
+  0% {
+    transform: scale(0.2);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes anim-shard {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.6);
+  }
+
+  70% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--shard-x, 0)), calc(-50% + var(--shard-y, 0)))
+      scale(1) rotate(180deg);
+  }
+}

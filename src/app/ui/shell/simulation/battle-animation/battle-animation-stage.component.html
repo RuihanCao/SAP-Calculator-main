@@ -1,0 +1,339 @@
+<!--
+  `data-anim-time`, `data-anim-duration` and `data-anim-done` publish the
+  playback clock on the stage root. Anything driving the stage from outside it
+  reads the elapsed time from these rather than from a clock rendered in the
+  chrome, because the chrome is optional and the stage root is not.
+-->
+<div class="anim-stage" *ngIf="frame as view; else noEvents" [class.anim-stage-fullscreen]="fullscreen"
+  [attr.data-anim-time]="playback.timeMs" [attr.data-anim-duration]="timeline?.durationMs || 0"
+  [attr.data-anim-done]="animationComplete ? '1' : '0'">
+  <!--
+    The letterbox, checklist 18. The real client draws a 16:9 play area and
+    fills the rest of the viewport with black bars: every reference frame is a
+    960 by 600 recording whose content runs rows 30 to 569, so 960 by 540, an
+    aspect of 1.7745 against 16:9's 1.7778. Keeping that box is what keeps the
+    lane, the boards and the bar in the proportions they were measured in, at
+    any window size.
+  -->
+  <div class="anim-stage-box">
+    <!-- The field is the game's own battle background art, so the sky band, the
+         forest, the dirt lane the pets stand on and the grass below it are the
+         real asset rather than a drawn gradient. -->
+    <div class="anim-field" #field [style.font-size.px]="fieldFontPx"
+      [style.background-image]="fieldBackground">
+
+      <!--
+        The other player's avatar, standing at the field's right in every
+        reference battle frame. It is behind the lane, so the boards and
+        everything thrown across them paint over it.
+      -->
+      <img class="anim-mascot" [src]="mascotSprite" alt="" aria-hidden="true" />
+
+      <!-- the replay control bar, checklist 17. It rides with the play area: it
+           is up from the battle's first frame and goes when the battle ends,
+           and it never shows a playback rate. -->
+      <div class="anim-controls" [style.opacity]="view.controls"
+        [class.anim-controls-gone]="view.controls === 0">
+        <button type="button" class="anim-ctl" data-anim-control="rewind" (click)="onRewind()">
+          <span class="anim-ctl-label anim-ctl-label-mid">REWIND</span>
+          <img class="anim-ctl-glyph anim-ctl-glyph-mirror" [src]="glyph.rewind" alt="" aria-hidden="true" />
+        </button>
+        <button type="button" class="anim-ctl" data-anim-control="play" (click)="togglePlay()">
+          <span class="anim-ctl-label" [class.anim-ctl-label-five]="playing">{{ playing ? 'PAUSE' : 'PLAY' }}</span>
+          <img class="anim-ctl-glyph" [src]="playing ? glyph.pause : glyph.play" alt="" aria-hidden="true" />
+        </button>
+        <button type="button" class="anim-ctl" data-anim-control="autoplay"
+          [class.anim-ctl-engaged]="autoplay" (click)="toggleAutoplay()">
+          <span class="anim-ctl-label anim-ctl-label-long">AUTOPLAY</span>
+          <img class="anim-ctl-glyph" [src]="glyph.autoplay" alt="" aria-hidden="true" />
+        </button>
+        <button type="button" class="anim-ctl" data-anim-control="fast" [class.anim-ctl-engaged]="fast"
+          (click)="toggleFast()">
+          <span class="anim-ctl-label">FAST</span>
+          <img class="anim-ctl-glyph" [src]="glyph.fast" alt="" aria-hidden="true" />
+        </button>
+        <button type="button" class="anim-ctl" data-anim-control="skip" (click)="onSkip()">
+          <span class="anim-ctl-label">SKIP</span>
+          <img class="anim-ctl-glyph" [src]="glyph.skip" alt="" aria-hidden="true" />
+        </button>
+      </div>
+
+      <!-- trigger banner, checklist 0, 11 and 15 -->
+      <div class="anim-banner" *ngIf="view.banner as banner" [ngStyle]="bannerStyle()"
+        [class.anim-banner-toy]="banner.toy" [style.opacity]="banner.progress < 0.15 ? banner.progress / 0.15 : 1">
+        <div class="anim-banner-head">
+          <img class="anim-banner-portrait" *ngIf="petIcon(banner.name) as icon" [src]="icon" [alt]="banner.name" />
+          <span class="anim-banner-name">{{ banner.name }}</span>
+          <span class="anim-banner-level">{{ banner.level }}</span>
+        </div>
+        <div class="anim-banner-divider"><span class="anim-banner-pip"></span></div>
+        <div class="anim-banner-text">
+          <span class="anim-banner-trigger" *ngIf="banner.parsed.trigger as trigger">{{ trigger }} &#8594;</span>
+          <ng-container *ngFor="let segment of banner.parsed.body; trackBy: trackByIndex">
+            <span>{{ segment.text }}</span><span class="anim-banner-run"
+              *ngIf="segment.icon as icon">{{ segment.tail }}<img class="anim-banner-glyph"
+                [src]="payloadIcon(icon)" alt="" aria-hidden="true" /></span>
+          </ng-container>
+        </div>
+        <div class="anim-banner-note" *ngIf="banner.parsed.note as note">{{ note }}</div>
+        <div class="anim-banner-uses" *ngIf="banner.parsed.uses as uses">{{ uses }}</div>
+      </div>
+
+      <!-- trumpet counters, checklist 14 and 19 -->
+      <ng-container *ngFor="let side of sides">
+        <div class="anim-counter" *ngIf="view.trumpets[side].total > 0 || view.trumpets[side].flash !== 'none'"
+          [ngStyle]="counterStyle(side)"
+          [class.anim-counter-gain]="view.trumpets[side].flash === 'gain'"
+          [class.anim-counter-spend]="view.trumpets[side].flash === 'spend'">
+          <img class="anim-counter-icon" [src]="trumpetIcon" alt="" aria-hidden="true" />
+          <span class="anim-counter-total">{{ view.trumpets[side].total }}</span>
+          <img class="anim-counter-icon" [src]="trumpetIcon" alt="" aria-hidden="true" />
+        </div>
+      </ng-container>
+
+      <div class="anim-token" *ngFor="let token of view.trumpetTokens; trackBy: trackById"
+        [ngStyle]="tokenStyle(token.side, token.direction, token.toSlot, token.progress)">
+        <img [src]="trumpetIcon" alt="" aria-hidden="true" />
+      </div>
+
+      <!-- the boards -->
+      <div class="anim-pet" *ngFor="let pet of view.pets; trackBy: trackByPetId" [ngStyle]="petStyle(pet)"
+        [class.anim-pet-player]="pet.pet.side === 'player'"
+        [class.anim-pet-opponent]="pet.pet.side === 'opponent'"
+        [class.anim-pet-source]="pet.outline === 'source'"
+        [class.anim-pet-hurt]="pet.outline === 'hurt'"
+        [class.anim-pet-windup]="pet.outline === 'windup'"
+        [class.anim-pet-airborne]="pet.lift > 0"
+        [class.anim-pet-fainted]="pet.fainted"
+        [class.anim-pet-levelup]="pet.leveledUp && pet.xpBurst > 0">
+        <!--
+          The level plaque, checklist 18: a wooden two-lobed sign carrying a
+          small white "Lvl" and a tall yellow numeral, keylined in black and
+          haloed in white. Measured on f11 t=30.45, where it is 39 by 26 of a
+          960 by 540 play area, sitting 13px above the sprite.
+        -->
+        <!--
+          The level plaque is one sprite the client ships whole (LevelMap_0/1/2),
+          not a piece of wood with the wording set on top of it. Cutting the
+          wood out of a screenshot and typing the numeral beside it is what made
+          it read as crooked and stitched.
+        -->
+        <div class="anim-pet-level">
+          <img class="anim-pet-level-art" [src]="levelPlaque(pet.pet.level)"
+            [alt]="'Level ' + pet.pet.level" />
+          <span class="anim-pet-xpbar" *ngIf="view.board.xpInPlay">
+            <span class="anim-pet-xpfill" [style.width.%]="((pet.pet.exp || 0) % 5) * 20"></span>
+          </span>
+          <!-- xp lands as a gold burst on the plaque, checklist 14 -->
+          <span class="anim-pet-xpburst" *ngIf="pet.xpBurst > 0" [style.opacity]="1 - pet.xpBurst"
+            [style.transform]="'translate(-50%, -50%) scale(' + (0.4 + pet.xpBurst * 1.6) + ')'"></span>
+          <span class="anim-pet-xpring" *ngIf="pet.xpBurst > 0" [style.opacity]="1 - pet.xpBurst"
+            [style.transform]="'translate(-50%, -50%) scale(' + (0.3 + pet.xpBurst * 2.4) + ')'"></span>
+        </div>
+        <div class="anim-pet-art">
+          <img class="anim-pet-icon" *ngIf="petIcon(pet.pet.name) as icon" [src]="icon" [alt]="pet.pet.name"
+            [style.transform]="iconTransform(pet.pet.side)" />
+          <!--
+            The contact whiteout, checklist 1: at the frame a clash lands the
+            reference paints both combatants out in white along their own
+            silhouettes, so a second copy of the sprite is laid over the first
+            and knocked to flat white. It is the sprite's own alpha, so the
+            edge is as hard as the art's, and the red line the icon under it
+            carries still shows around it.
+          -->
+          <img class="anim-pet-whiteout" *ngIf="pet.impactFlash > 0 && petIcon(pet.pet.name) as icon" [src]="icon"
+            [style.opacity]="pet.impactFlash" [style.transform]="iconTransform(pet.pet.side)" alt=""
+            aria-hidden="true" />
+          <img class="anim-pet-equipment" *ngIf="equipmentIcon(pet.pet) as icon" [src]="icon"
+            [class.anim-pet-equipment-break]="pet.equipmentBreaking"
+            [class.anim-pet-equipment-gain]="pet.equipmentGaining" [alt]="pet.pet.equipment || ''" />
+          <!-- a consumed perk shatters into fragments around the pet, checklist 10 -->
+          <span class="anim-pet-shard" *ngFor="let shard of shardSlots; trackBy: trackByIndex"
+            [class.anim-pet-shard-on]="pet.equipmentBreaking" [attr.data-shard]="shard"
+            [style.background-image]="shardImage(pet.pet)" aria-hidden="true"></span>
+          <!--
+            A perk or a buff landing: the client's own perk particle thrown out
+            around the pet with its plus lifting over it, checklist 10 and 14.
+          -->
+          <ng-container *ngIf="pet.equipmentGaining">
+            <span class="anim-pet-buff" aria-hidden="true"></span>
+            <span class="anim-pet-buff anim-pet-buff-plus" aria-hidden="true"></span>
+          </ng-container>
+          <img class="anim-pet-fasticon" *ngIf="pet.fastIcon as payload" [src]="payloadIcon(payload)" alt=""
+            aria-hidden="true" />
+          <!--
+            Checklist 3. A lethal hit does not launch the body: it
+            leaves it standing in its own slot at full colour with a crossed
+            bandage over it and its real, possibly negative, health on the
+            badge, and only then does the corpse go. f02 t=30.02 to 30.84 (worm,
+            health 0), f06 t=29.95 to 30.72 (otter, health -1) and f10 t=34.00
+            onwards (peacock, health -4) all hold that pose for the best part of
+            a second. The art is the client's own `Bandage` sprite.
+          -->
+          <img class="anim-pet-bandage" *ngIf="pet.fainted" [src]="fx.bandage" alt="fainted" />
+        </div>
+        <!--
+          The stat badges, checklist 18. One white plate carries both: the
+          attack numeral sits inside a charcoal rock and the health numeral
+          inside a red heart, both keylined heavily in black, both numerals
+          white with a black outline. Measured on f11 t=30.45 at 32px tall on a
+          540 play area.
+        -->
+        <div class="anim-pet-stats">
+          <span class="anim-pet-stat anim-pet-attack">{{ pet.pet.attack }}</span>
+          <!-- mana sits between attack and health, checklist 14 -->
+          <span class="anim-pet-stat anim-pet-mana" *ngIf="pet.pet.mana as mana">{{ mana }}</span>
+          <span class="anim-pet-stat anim-pet-health">{{ pet.pet.health }}</span>
+        </div>
+      </div>
+
+      <!--
+        Corpses in flight and their star bursts, checklist 3. The reference
+        launches the whole card, plaque and badges and all, with the sprite
+        whitened out and the health badge already negative, and lays a chain of
+        fat clouds along the path behind it (f01 t=32.01, the health badge reads
+        -5 on clips/f01-plain-trades/f_00905_0032006.jpg).
+      -->
+      <ng-container *ngFor="let corpse of view.corpses; trackBy: trackByCorpse">
+        <!--
+          The slot the body left goes bright and blooms a cloud twice a trail
+          link's size before the trail reads as a trail at all (f02 t=30.88,
+          f06 t=30.82).
+        -->
+        <div class="anim-corpse-launch-flash" [ngStyle]="corpseLaunchFlashStyle(corpse)"
+          aria-hidden="true"></div>
+        <div class="anim-corpse-puff" *ngFor="let link of corpseTrail(corpse); trackBy: trackByIndexed"
+          [ngStyle]="link.style" aria-hidden="true"></div>
+        <div class="anim-corpse"
+          [ngStyle]="corpseStyle(corpse)"
+          [class.anim-pet-player]="corpse.side === 'player'"
+          [class.anim-pet-opponent]="corpse.side === 'opponent'">
+          <!--
+            The card turns with the body but its printing does not: on f02
+            t=31.78 the thrown cow is nose down while its plaque and its "3" and
+            "-2" badges are still the right way up. Ours rotated the whole card
+            and the digits read sideways.
+          -->
+          <div class="anim-pet-level" [style.transform]="corpseUprightTransform(corpse)">
+            <img class="anim-pet-level-art" [src]="levelPlaque(corpse.level)" alt="" aria-hidden="true" />
+          </div>
+          <div class="anim-corpse-art">
+            <img class="anim-pet-icon" *ngIf="petIcon(corpse.name) as icon" [src]="icon" [alt]="corpse.name"
+              [style.transform]="iconTransform(corpse.side)" />
+            <!-- the bandage rides the body out: f03 t=33.64, the airborne cow wears it -->
+            <img class="anim-pet-bandage anim-corpse-bandage" [src]="fx.bandage" alt="" aria-hidden="true" />
+          </div>
+          <div class="anim-pet-stats" [style.transform]="corpseUprightTransform(corpse)">
+            <span class="anim-pet-stat anim-pet-attack">{{ corpse.attack }}</span>
+            <span class="anim-pet-stat anim-pet-health">{{ corpse.health }}</span>
+          </div>
+        </div>
+      </ng-container>
+      <!--
+        The star spray a corpse leaves where it goes off screen.
+        Measured on f03: the trail is gone by t=34.01 and the stars run
+        t=33.93..34.28, so about 350ms, four to six of them, growing as they
+        spread. The art is the client's own `Star` sprite, tinted.
+      -->
+      <ng-container *ngFor="let burst of view.bursts; trackBy: trackById">
+        <img class="anim-burst" *ngFor="let star of burstStars; trackBy: trackByIndex"
+          [src]="fx.star" [ngStyle]="burstStarStyle(burst, star)" alt="" aria-hidden="true" />
+      </ng-container>
+
+      <!--
+        Projectiles, checklist 5, 6 and 15. A snipe throws the client's damage
+        rock and a buff throws its fist or its heart; both come out small and
+        grow, and both arc well over pet height (f02 t=29.50..29.91,
+        f10 t=34.19..34.53).
+      -->
+      <div class="anim-projectile" *ngFor="let projectile of view.projectiles; trackBy: trackById"
+        [ngStyle]="projectileStyle(projectile)">
+        <img [src]="projectileIcon(projectile)" alt="" aria-hidden="true" />
+      </div>
+
+      <!-- puffs: summon and transform clouds, ranged impact, jump landing, mana -->
+      <div class="anim-puff" *ngFor="let puff of view.puffs; trackBy: trackById"
+        [ngStyle]="slotPointStyle(puff.side, puff.slot)"
+        [class.anim-puff-cloud]="puff.kind === 'summon' || puff.kind === 'transform'"
+        [class.anim-puff-impact]="puff.kind === 'impact' || puff.kind === 'landing'"
+        [class.anim-puff-mana]="puff.kind === 'mana'"
+        [class.anim-puff-buff]="puff.kind === 'buff'"
+        [style.opacity]="puff.opacity"
+        [style.transform]="'translate(-50%, -50%) scale(' + (0.5 + puff.progress * 1.1) + ')'"></div>
+
+      <!-- the single contact flash, checklist 1 -->
+      <div class="anim-flash" *ngIf="view.flash" [ngStyle]="flashStyle()"></div>
+
+      <!-- popups, checklist 2, 15 and 19 -->
+      <div class="anim-popup" *ngFor="let popup of view.popups; trackBy: trackById" [ngStyle]="popupStyle(popup)"
+        [class.anim-popup-damage]="popup.kind === 'damage'"
+        [class.anim-popup-stat]="popup.kind === 'stat'"
+        [class.anim-popup-mana]="popup.kind === 'mana'"
+        [class.anim-popup-copy]="popup.kind === 'copy'"
+        [class.anim-popup-merged]="popup.merged">
+        <!--
+          A stat pill, checklist 15. The client sets a
+          white plus and then the stat's own badge with the amount inside it in
+          white, all free over the pet: no white plate, no black type
+          (f10 t=34.59, `+ [3] + <3>` over the Hippo). Ours put the numeral
+          beside the icon on a plate, which read as a tooltip.
+        -->
+        <ng-container *ngIf="popup.kind === 'stat'; else plainPopup">
+          <span class="anim-popup-plus">{{ (popup.amount || 0) < 0 ? '-' : '+' }}</span>
+          <span class="anim-popup-chip"
+            [style.background-image]="'url(' + statIcon(popup.statKind) + ')'">{{ popupMagnitude(popup) }}</span>
+        </ng-container>
+        <ng-template #plainPopup>
+          <span>{{ popup.text }}</span>
+        </ng-template>
+      </div>
+
+      <!--
+        End screen, checklist 18 and the app-integration override: the field dims
+        in place and carries the outcome, but the game's own trophy row and heart
+        row are a shop-run's score and this is a calculator, so the screen offers
+        the two things there are to do here instead, go back or leave.
+      -->
+      <div class="anim-outro" *ngIf="view.outro as outro" [style.opacity]="outro.dim">
+        <div class="anim-outro-face" [style.opacity]="outro.face"
+          [style.transform]="'scale(' + (0.5 + outro.face * 0.5) + ')'">
+          <img class="anim-outro-mask" *ngIf="outroFace(outro.winner) as face" [src]="face" alt=""
+            aria-hidden="true" />
+          <span class="anim-outro-caption">
+            {{ outro.winner === 'player' ? 'VICTORY' : outro.winner === 'draw' ? 'DRAW' : 'DEFEAT' }}
+          </span>
+        </div>
+        <div class="anim-outro-actions" [style.opacity]="outro.face">
+          <button type="button" class="anim-ctl anim-outro-action" data-anim-outro="rewind"
+            (click)="onRewind()">
+            <span class="anim-ctl-label anim-ctl-label-mid">REWIND</span>
+            <img class="anim-ctl-glyph anim-ctl-glyph-mirror" [src]="glyph.rewind" alt="" aria-hidden="true" />
+          </button>
+          <button type="button" class="anim-ctl anim-outro-action" data-anim-outro="exit"
+            *ngIf="fullscreen" (click)="onExit()">
+            <span class="anim-ctl-label">EXIT</span>
+            <span class="anim-ctl-glyph anim-ctl-cross" aria-hidden="true">&#10005;</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!--
+    Tools, not part of the game's own bar. The fullscreen presentation is the
+    game's screen and nothing else, so the scrubber is only offered when the
+    stage is embedded rather than given the whole viewport.
+  -->
+  <div class="anim-tools" *ngIf="!fullscreen">
+    <button type="button" class="anim-tool" (click)="onRestart()">RESTART</button>
+    <input class="form-range anim-scrub" type="range" [min]="0" [max]="timeline?.durationMs || 0" [step]="50"
+      [value]="playback.timeMs" (input)="onScrub($any($event.target).value)" aria-label="Animation position" />
+    <span class="anim-clock">{{ (playback.timeMs / 1000).toFixed(1) }}s / {{ ((timeline?.durationMs || 0) / 1000).toFixed(1) }}s</span>
+  </div>
+</div>
+
+<ng-template #noEvents>
+  <div class="anim-empty">
+    No animation events for this battle. Run a simulation with logs enabled.
+  </div>
+</ng-template>
