@@ -1,0 +1,9 @@
+{
+ "id": "f01-plain-trades",
+ "title": "Plain trades, one death per clash, push forward on both sides",
+ "covers": ["plain trades", "simultaneous clash", "hurt popup", "single faint", "push forward"],
+ "turn": 11,
+ "player": [{"pet":"Pig","attack":4,"health":10},{"pet":"Duck","attack":3,"health":8},{"pet":"Swan","attack":2,"health":9}],
+ "opponent": [{"pet":"Cow","attack":3,"health":4},{"pet":"Otter","attack":6,"health":9},{"pet":"Worm","attack":1,"health":9}],
+ "notes": "Every pet here has a shop-only ability (Sell/Buy/Start of turn), so nothing fires in battle. Pure attack/hurt/faint/push-forward baseline."
+}

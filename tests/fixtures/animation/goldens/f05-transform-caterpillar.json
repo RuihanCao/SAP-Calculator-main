@@ -1,0 +1,622 @@
+[
+  {
+    "type": "phase",
+    "group": null,
+    "phase": "before-battle",
+    "turn": null,
+    "seq": 0
+  },
+  {
+    "type": "phase",
+    "group": null,
+    "phase": "start-of-battle",
+    "turn": null,
+    "seq": 1
+  },
+  {
+    "type": "abilityTrigger",
+    "group": 0,
+    "actor": {
+      "kind": "pet",
+      "pet": {
+        "id": 1,
+        "name": "Caterpillar",
+        "side": "player",
+        "index": 0,
+        "level": 3,
+        "attack": 1,
+        "health": 1
+      }
+    },
+    "abilitySource": "pet",
+    "trigger": "StartBattle",
+    "triggers": [
+      "StartBattle"
+    ],
+    "abilityName": "CaterpillarAbility",
+    "level": 3,
+    "text": "Start of battle: Transform into a 1/1 Butterfly and copy stats of the strongest enemy.",
+    "triggeredBy": null,
+    "seq": 2
+  },
+  {
+    "type": "transform",
+    "group": 0,
+    "side": "player",
+    "from": {
+      "id": 1,
+      "name": "Caterpillar",
+      "side": "player",
+      "index": 0,
+      "level": 3,
+      "attack": 1,
+      "health": 1
+    },
+    "to": {
+      "id": 101,
+      "name": "Butterfly",
+      "side": "player",
+      "index": 0,
+      "level": 3,
+      "attack": 1,
+      "health": 1
+    },
+    "index": 0,
+    "seq": 3
+  },
+  {
+    "type": "abilityTrigger",
+    "group": 1,
+    "actor": {
+      "kind": "pet",
+      "pet": {
+        "id": 101,
+        "name": "Butterfly",
+        "side": "player",
+        "index": 0,
+        "level": 3,
+        "attack": 1,
+        "health": 1
+      }
+    },
+    "abilitySource": "pet",
+    "trigger": "ThisTransformed",
+    "triggers": [
+      "ThisTransformed"
+    ],
+    "abilityName": "ButterflyAbility",
+    "level": 3,
+    "text": "Transformed: Copy 100% attack and health from the strongest enemy.",
+    "triggeredBy": {
+      "id": 101,
+      "name": "Butterfly",
+      "side": "player",
+      "index": 0,
+      "level": 3,
+      "attack": 1,
+      "health": 1
+    },
+    "seq": 4
+  },
+  {
+    "type": "projectile",
+    "group": 1,
+    "source": {
+      "kind": "pet",
+      "pet": {
+        "id": 101,
+        "name": "Butterfly",
+        "side": "player",
+        "index": 0,
+        "level": 3,
+        "attack": 1,
+        "health": 1
+      }
+    },
+    "payload": "attack-glyph",
+    "targets": [
+      {
+        "id": 101,
+        "name": "Butterfly",
+        "side": "player",
+        "index": 0,
+        "level": 3,
+        "attack": 6,
+        "health": 10
+      }
+    ],
+    "seq": 5
+  },
+  {
+    "type": "statCopy",
+    "group": 1,
+    "source": {
+      "id": 12,
+      "name": "Cow",
+      "side": "opponent",
+      "index": 1,
+      "level": 1,
+      "attack": 6,
+      "health": 10
+    },
+    "target": {
+      "id": 101,
+      "name": "Butterfly",
+      "side": "player",
+      "index": 0,
+      "level": 3,
+      "attack": 6,
+      "health": 10
+    },
+    "attack": 6,
+    "health": 10,
+    "seq": 6
+  },
+  {
+    "type": "phase",
+    "group": null,
+    "phase": "after-start-of-battle",
+    "turn": null,
+    "seq": 7
+  },
+  {
+    "type": "phase",
+    "group": null,
+    "phase": "turn",
+    "turn": 1,
+    "seq": 8
+  },
+  {
+    "type": "clash",
+    "group": null,
+    "jump": false,
+    "hits": [
+      {
+        "source": {
+          "id": 101,
+          "name": "Butterfly",
+          "side": "player",
+          "index": 0,
+          "level": 3,
+          "attack": 6,
+          "health": 10
+        },
+        "target": {
+          "id": 11,
+          "name": "Otter",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 2,
+          "health": 2
+        },
+        "damage": 6,
+        "blocked": false
+      },
+      {
+        "source": {
+          "id": 11,
+          "name": "Otter",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 2,
+          "health": 2
+        },
+        "target": {
+          "id": 101,
+          "name": "Butterfly",
+          "side": "player",
+          "index": 0,
+          "level": 3,
+          "attack": 6,
+          "health": 8
+        },
+        "damage": 2,
+        "blocked": false
+      }
+    ],
+    "seq": 9
+  },
+  {
+    "type": "phase",
+    "group": null,
+    "phase": "turn",
+    "turn": 2,
+    "seq": 10
+  },
+  {
+    "type": "clash",
+    "group": null,
+    "jump": false,
+    "hits": [
+      {
+        "source": {
+          "id": 101,
+          "name": "Butterfly",
+          "side": "player",
+          "index": 0,
+          "level": 3,
+          "attack": 6,
+          "health": 8
+        },
+        "target": {
+          "id": 11,
+          "name": "Otter",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 2,
+          "health": -4
+        },
+        "damage": 6,
+        "blocked": false
+      },
+      {
+        "source": {
+          "id": 11,
+          "name": "Otter",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 2,
+          "health": -4
+        },
+        "target": {
+          "id": 101,
+          "name": "Butterfly",
+          "side": "player",
+          "index": 0,
+          "level": 3,
+          "attack": 6,
+          "health": 6
+        },
+        "damage": 2,
+        "blocked": false
+      }
+    ],
+    "seq": 11
+  },
+  {
+    "type": "faint",
+    "group": null,
+    "pet": {
+      "id": 11,
+      "name": "Otter",
+      "side": "opponent",
+      "index": 0,
+      "level": 1,
+      "attack": 2,
+      "health": -4
+    },
+    "killedBy": {
+      "id": 101,
+      "name": "Butterfly",
+      "side": "player",
+      "index": 0,
+      "level": 3,
+      "attack": 6,
+      "health": 6
+    },
+    "seq": 12
+  },
+  {
+    "type": "corpseLaunchGroup",
+    "group": null,
+    "pets": [
+      {
+        "id": 11,
+        "name": "Otter",
+        "side": "opponent",
+        "index": 0,
+        "level": 1,
+        "attack": 2,
+        "health": -4
+      }
+    ],
+    "seq": 13
+  },
+  {
+    "type": "phase",
+    "group": null,
+    "phase": "turn",
+    "turn": 3,
+    "seq": 14
+  },
+  {
+    "type": "pushForward",
+    "group": null,
+    "side": "opponent",
+    "moves": [
+      {
+        "pet": {
+          "id": 12,
+          "name": "Cow",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 6,
+          "health": 10
+        },
+        "from": 1,
+        "to": 0
+      }
+    ],
+    "seq": 15
+  },
+  {
+    "type": "clash",
+    "group": null,
+    "jump": false,
+    "hits": [
+      {
+        "source": {
+          "id": 101,
+          "name": "Butterfly",
+          "side": "player",
+          "index": 0,
+          "level": 3,
+          "attack": 6,
+          "health": 6
+        },
+        "target": {
+          "id": 12,
+          "name": "Cow",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 6,
+          "health": 4
+        },
+        "damage": 6,
+        "blocked": false
+      },
+      {
+        "source": {
+          "id": 12,
+          "name": "Cow",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 6,
+          "health": 4
+        },
+        "target": {
+          "id": 101,
+          "name": "Butterfly",
+          "side": "player",
+          "index": 0,
+          "level": 3,
+          "attack": 6,
+          "health": 0
+        },
+        "damage": 6,
+        "blocked": false
+      }
+    ],
+    "seq": 16
+  },
+  {
+    "type": "faint",
+    "group": null,
+    "pet": {
+      "id": 101,
+      "name": "Butterfly",
+      "side": "player",
+      "index": 0,
+      "level": 3,
+      "attack": 6,
+      "health": 0
+    },
+    "killedBy": {
+      "id": 12,
+      "name": "Cow",
+      "side": "opponent",
+      "index": 0,
+      "level": 1,
+      "attack": 6,
+      "health": 4
+    },
+    "seq": 17
+  },
+  {
+    "type": "corpseLaunchGroup",
+    "group": null,
+    "pets": [
+      {
+        "id": 101,
+        "name": "Butterfly",
+        "side": "player",
+        "index": 0,
+        "level": 3,
+        "attack": 6,
+        "health": 0
+      }
+    ],
+    "seq": 18
+  },
+  {
+    "type": "phase",
+    "group": null,
+    "phase": "turn",
+    "turn": 4,
+    "seq": 19
+  },
+  {
+    "type": "pushForward",
+    "group": null,
+    "side": "player",
+    "moves": [
+      {
+        "pet": {
+          "id": 2,
+          "name": "Pig",
+          "side": "player",
+          "index": 0,
+          "level": 1,
+          "attack": 3,
+          "health": 13
+        },
+        "from": 1,
+        "to": 0
+      }
+    ],
+    "seq": 20
+  },
+  {
+    "type": "clash",
+    "group": null,
+    "jump": false,
+    "hits": [
+      {
+        "source": {
+          "id": 2,
+          "name": "Pig",
+          "side": "player",
+          "index": 0,
+          "level": 1,
+          "attack": 3,
+          "health": 13
+        },
+        "target": {
+          "id": 12,
+          "name": "Cow",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 6,
+          "health": 1
+        },
+        "damage": 3,
+        "blocked": false
+      },
+      {
+        "source": {
+          "id": 12,
+          "name": "Cow",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 6,
+          "health": 1
+        },
+        "target": {
+          "id": 2,
+          "name": "Pig",
+          "side": "player",
+          "index": 0,
+          "level": 1,
+          "attack": 3,
+          "health": 7
+        },
+        "damage": 6,
+        "blocked": false
+      }
+    ],
+    "seq": 21
+  },
+  {
+    "type": "phase",
+    "group": null,
+    "phase": "turn",
+    "turn": 5,
+    "seq": 22
+  },
+  {
+    "type": "clash",
+    "group": null,
+    "jump": false,
+    "hits": [
+      {
+        "source": {
+          "id": 2,
+          "name": "Pig",
+          "side": "player",
+          "index": 0,
+          "level": 1,
+          "attack": 3,
+          "health": 7
+        },
+        "target": {
+          "id": 12,
+          "name": "Cow",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 6,
+          "health": -2
+        },
+        "damage": 3,
+        "blocked": false
+      },
+      {
+        "source": {
+          "id": 12,
+          "name": "Cow",
+          "side": "opponent",
+          "index": 0,
+          "level": 1,
+          "attack": 6,
+          "health": -2
+        },
+        "target": {
+          "id": 2,
+          "name": "Pig",
+          "side": "player",
+          "index": 0,
+          "level": 1,
+          "attack": 3,
+          "health": 1
+        },
+        "damage": 6,
+        "blocked": false
+      }
+    ],
+    "seq": 23
+  },
+  {
+    "type": "faint",
+    "group": null,
+    "pet": {
+      "id": 12,
+      "name": "Cow",
+      "side": "opponent",
+      "index": 0,
+      "level": 1,
+      "attack": 6,
+      "health": -2
+    },
+    "killedBy": {
+      "id": 2,
+      "name": "Pig",
+      "side": "player",
+      "index": 0,
+      "level": 1,
+      "attack": 3,
+      "health": 1
+    },
+    "seq": 24
+  },
+  {
+    "type": "corpseLaunchGroup",
+    "group": null,
+    "pets": [
+      {
+        "id": 12,
+        "name": "Cow",
+        "side": "opponent",
+        "index": 0,
+        "level": 1,
+        "attack": 6,
+        "health": -2
+      }
+    ],
+    "seq": 25
+  },
+  {
+    "type": "outcome",
+    "group": null,
+    "winner": "player",
+    "seq": 26
+  }
+]

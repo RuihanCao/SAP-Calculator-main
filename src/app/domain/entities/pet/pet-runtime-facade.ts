@@ -17,12 +17,17 @@ import type { Pet } from '../pet.class';
 import { PetTargetingRuntimeFacade } from './pet-targeting-runtime-facade';
 import { getRandomFloat } from 'app/runtime/random';
 
+import { AnimationHitKind } from 'app/domain/interfaces/animation-event.interface';
+import type { AnimationEventRecorder } from 'app/domain/animation/animation-event-recorder';
+
 interface AbilityLifecycle {
   reset(): void;
   initUses(): void;
 }
 
 export abstract class PetRuntimeFacade extends PetTargetingRuntimeFacade {
+  /** Set while a level-up owns the stat change, see `increaseExp`. */
+  private suppressStatAnimation = false;
   abstract mana: number;
   abstract suppressManaSnipeOnFaint: boolean;
   abstract exp?: number;
@@ -251,7 +256,14 @@ export abstract class PetRuntimeFacade extends PetTargetingRuntimeFacade {
     }
     const oldAttack = this.attack;
     this.attack = Math.min(Math.max(this.attack + amt, 1), max);
-    return this.attack - oldAttack;
+    const delta = this.attack - oldAttack;
+    this.logService.animation.recordStatChange({
+      kind: 'attack',
+      target: this.asPet(),
+      amount: delta,
+      silent: this.suppressStatAnimation,
+    });
+    return delta;
   }
 
   increaseHealth(amt: number): number {
@@ -267,8 +279,15 @@ export abstract class PetRuntimeFacade extends PetTargetingRuntimeFacade {
     }
     const oldHealth = this.health;
     this.health = Math.min(Math.max(this.health + amt, 1), max);
+    const delta = this.health - oldHealth;
+    this.logService.animation.recordStatChange({
+      kind: 'health',
+      target: this.asPet(),
+      amount: delta,
+      silent: this.suppressStatAnimation,
+    });
     this.abilityService.triggerFriendGainsHealthEvents(this as unknown as Pet);
-    return this.health - oldHealth;
+    return delta;
   }
 
   increaseSellValue(amt: number) {
@@ -315,12 +334,76 @@ export abstract class PetRuntimeFacade extends PetTargetingRuntimeFacade {
     this.logService.createLog(entry);
   }
 
+  // --- animation event instrumentation (no gameplay effect) ---
+
+  /** Structured animation event sink. Instrumentation only. */
+  get animation(): AnimationEventRecorder {
+    return this.logService.animation;
+  }
+
+  recordAnimationHit(target: Pet, damage: number, kind: AnimationHitKind): void {
+    this.logService.animation.recordHit({
+      kind,
+      sourcePet: this.asPet(),
+      target,
+      damage,
+    });
+  }
+
+  beginAnimationClash(jump = false): void {
+    this.logService.animation.beginClash(jump);
+  }
+
+  endAnimationClash(): void {
+    this.logService.animation.endClash();
+  }
+
+  /**
+   * Overwrites both stats from another pet in one beat. The real game draws
+   * this as one white `attack health` label rather than two pills, so it is its
+   * own event class (checklist 2).
+   */
+  copyStatsFrom(source: Pet): void {
+    this.health = source.health;
+    this.attack = source.attack;
+    this.logService.animation.recordStatCopy(
+      source,
+      this.asPet(),
+      this.attack,
+      this.health,
+    );
+  }
+
   increaseExp(amt: number) {
     const startingLevel = this.level;
-    this.increaseAttack(amt);
-    this.increaseHealth(amt);
+    // Experience is drawn as a level-up burst, not as two stat pills
+    // (checklist 14), so the stats it carries are not their own events. A
+    // target already at maximum experience gains no burst to hide them in, so
+    // there the stats are drawn as themselves.
+    const carriedByTheBurst = Math.min(this.exp + amt, 5) > this.exp;
+    this.suppressStatAnimation = carriedByTheBurst;
+    let attackDelta = 0;
+    let healthDelta = 0;
+    try {
+      attackDelta = this.increaseAttack(amt);
+      healthDelta = this.increaseHealth(amt);
+    } finally {
+      this.suppressStatAnimation = false;
+    }
+    const expBefore = this.exp;
     this.exp = Math.min(this.exp + amt, 5);
     const timesLevelled = this.level - startingLevel;
+    this.logService.animation.recordStatChange({
+      kind: 'exp',
+      target: this.asPet(),
+      amount: this.exp - expBefore,
+      levelFrom: startingLevel,
+      levelTo: this.level,
+      // The stats the burst swallowed, so the animation's board can still
+      // apply them; zero when they were drawn as their own pills instead.
+      levelAttack: carriedByTheBurst ? attackDelta : 0,
+      levelHealth: carriedByTheBurst ? healthDelta : 0,
+    });
     if (timesLevelled > 0) {
       this.baseSellValue += timesLevelled;
       this.sellValue += timesLevelled;
@@ -350,8 +433,14 @@ export abstract class PetRuntimeFacade extends PetTargetingRuntimeFacade {
   }
 
   increaseMana(amt: number) {
+    const before = this.mana;
     this.mana += amt;
     this.mana = Math.min(this.mana, 50);
+    this.logService.animation.recordStatChange({
+      kind: 'mana',
+      target: this.asPet(),
+      amount: this.mana - before,
+    });
     this.abilityService.triggerManaGainedEvents(this as unknown as Pet);
   }
 

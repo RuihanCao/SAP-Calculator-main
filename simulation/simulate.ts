@@ -1,4 +1,5 @@
 import { SimulationRunner } from '../src/app/gameplay/simulation-runner';
+import { AnimationEvent } from '../src/app/domain/interfaces/animation-event.interface';
 import {
   SimulationConfig,
   SimulationResult,
@@ -155,6 +156,45 @@ export function runHeadlessSimulation(
     delete result.battles;
   }
   return result;
+}
+
+export interface AnimationEventDumpBattle {
+  winner: 'player' | 'opponent' | 'draw';
+  events: AnimationEvent[];
+}
+
+export interface AnimationEventDump {
+  playerWins: number;
+  opponentWins: number;
+  draws: number;
+  battles: AnimationEventDumpBattle[];
+}
+
+/**
+ * Runs the config with logging on and returns only the structured animation
+ * event stream per battle. This is what `--dump-events` and the golden event
+ * tests consume.
+ */
+export function runAnimationEventDump(
+  config: SimulationConfig,
+  maxBattles = 1,
+): AnimationEventDump {
+  const logService = new LogService();
+  const runner = createSimulationRunner(logService);
+  const result = runner.run({
+    ...config,
+    logsEnabled: true,
+    maxLoggedBattles: Math.max(1, maxBattles),
+  });
+  return {
+    playerWins: result.playerWins ?? 0,
+    opponentWins: result.opponentWins ?? 0,
+    draws: result.draws ?? 0,
+    battles: (result.battles ?? []).map((battle) => ({
+      winner: battle.winner,
+      events: battle.events ?? [],
+    })),
+  };
 }
 
 export type ReplayPayloadJson =
@@ -444,6 +484,8 @@ export function generateReplayCalculatorLink(
 export * from '../src/app/integrations/injector.service';
 export * from '../src/app/gameplay/simulation-runner';
 export * from '../src/app/domain/interfaces/simulation-config.interface';
+export * from '../src/app/domain/interfaces/animation-event.interface';
+export * from '../src/app/domain/interfaces/battle.interface';
 export * from '../src/app/integrations/log.service';
 export * from '../src/app/runtime/state/game.service';
 export * from '../src/app/integrations/ability/ability.service';

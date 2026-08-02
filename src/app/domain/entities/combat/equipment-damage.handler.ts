@@ -69,6 +69,12 @@ export class EquipmentDamageHandler {
       manticoreMultipliers,
     });
 
+    logService.animation.recordHit({
+      kind: 'effect',
+      sourcePet: pet,
+      target: pet,
+      damage: finalDamage,
+    });
     logService.createLog({
       message,
       type: 'ability',

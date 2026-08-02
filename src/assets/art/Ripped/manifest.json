@@ -1,0 +1,169 @@
+{
+ "assets": {
+  "control/fast-forward.png": {
+   "rip_group": "02_control_bar",
+   "sha256_16": "10d9a3b1237579b6",
+   "unity_object": "FastForward",
+   "unity_type": "Sprite",
+   "used_for": "FAST"
+  },
+  "control/pause.png": {
+   "rip_group": "02_control_bar",
+   "sha256_16": "fa699d377f475791",
+   "unity_object": "Pause",
+   "unity_type": "Sprite",
+   "used_for": "PAUSE"
+  },
+  "control/play.png": {
+   "rip_group": "02_control_bar",
+   "sha256_16": "1d9b1dc5c1080efc",
+   "unity_object": "Play",
+   "unity_type": "Sprite",
+   "used_for": "PLAY"
+  },
+  "control/refresh.png": {
+   "rip_group": "02_control_bar",
+   "sha256_16": "b7d9b073f229fca3",
+   "unity_object": "Refresh",
+   "unity_type": "Sprite",
+   "used_for": "AUTOPLAY"
+  },
+  "control/skip.png": {
+   "rip_group": "02_control_bar",
+   "sha256_16": "8abd0a046bba6c78",
+   "unity_object": "Skip",
+   "unity_type": "Sprite",
+   "used_for": "SKIP, and mirrored, REWIND"
+  },
+  "fx/bandage.png": {
+   "rip_group": "04_buff_ailment",
+   "sha256_16": "16c04c180471f122",
+   "unity_object": "Bandage",
+   "unity_type": "Sprite",
+   "used_for": "the crossed bandage over a dead pet"
+  },
+  "fx/cloud-hard.png": {
+   "rip_group": "05_death_levelup_fx",
+   "sha256_16": "4dbe1f8dc3e9d155",
+   "unity_object": "cloud_2x2_hard",
+   "unity_type": "Texture2D",
+   "used_for": "death puff, 2x2 atlas"
+  },
+  "fx/cloud-soft.png": {
+   "rip_group": "05_death_levelup_fx",
+   "sha256_16": "9c71aeea89e3a92c",
+   "unity_object": "cloud_2x2_soft",
+   "unity_type": "Texture2D",
+   "used_for": "death puff, 2x2 atlas"
+  },
+  "fx/glow-rays.png": {
+   "rip_group": "05_death_levelup_fx",
+   "sha256_16": "69d4ae09591cafe3",
+   "unity_object": "glow6",
+   "unity_type": "Texture2D",
+   "used_for": "the level-up core"
+  },
+  "fx/glow.png": {
+   "rip_group": "05_death_levelup_fx",
+   "sha256_16": "d4aefa6e5abcae26",
+   "unity_object": "glow1",
+   "unity_type": "Texture2D",
+   "used_for": "the flash at a faint and at contact"
+  },
+  "fx/heart-fist.png": {
+   "rip_group": "03_mascot_faces",
+   "sha256_16": "f4c0ff1c2e1b8be8",
+   "unity_object": "HeartFist",
+   "unity_type": "Sprite",
+   "used_for": "an attack and health buff, thrown together"
+  },
+  "fx/particle-perk.png": {
+   "rip_group": "04_buff_ailment",
+   "sha256_16": "9e8a26fd769b30f8",
+   "unity_object": "ParticlePerk",
+   "unity_type": "Sprite",
+   "used_for": "a perk being applied"
+  },
+  "fx/plus.png": {
+   "rip_group": "04_buff_ailment",
+   "sha256_16": "ad7e1e1c7a2223ae",
+   "unity_object": "Plus",
+   "unity_type": "Sprite",
+   "used_for": "a stat buff landing"
+  },
+  "fx/ring.png": {
+   "rip_group": "05_death_levelup_fx",
+   "sha256_16": "d95059894b7b5f82",
+   "unity_object": "ring",
+   "unity_type": "Texture2D",
+   "used_for": "the level-up shockwave ring"
+  },
+  "fx/sparkle.png": {
+   "rip_group": "05_death_levelup_fx",
+   "sha256_16": "4c60ef5a80212e8b",
+   "unity_object": "sparkle",
+   "unity_type": "Texture2D",
+   "used_for": "level-up and buff sparkles"
+  },
+  "fx/sparkle2.png": {
+   "rip_group": "05_death_levelup_fx",
+   "sha256_16": "751a92878fe15951",
+   "unity_object": "sparkle2",
+   "unity_type": "Texture2D",
+   "used_for": "level-up and buff sparkles"
+  },
+  "fx/star.png": {
+   "rip_group": "01_lvl_plaque",
+   "sha256_16": "13f2f584d362125b",
+   "unity_object": "Star",
+   "unity_type": "Sprite",
+   "used_for": "the star a corpse bursts into"
+  },
+  "fx/stats.png": {
+   "rip_group": "04_buff_ailment",
+   "sha256_16": "431003e0f1a34569",
+   "unity_object": "Stats",
+   "unity_type": "Sprite",
+   "used_for": "a stat buff landing"
+  },
+  "level/lvl-1.png": {
+   "rip_group": "01_lvl_plaque",
+   "sha256_16": "bda0ab4980c7ee71",
+   "unity_object": "LevelMap_0",
+   "unity_type": "Sprite",
+   "used_for": "the whole Lvl 1 plaque"
+  },
+  "level/lvl-2.png": {
+   "rip_group": "01_lvl_plaque",
+   "sha256_16": "c09384b557c9808a",
+   "unity_object": "LevelMap_1",
+   "unity_type": "Sprite",
+   "used_for": "the whole Lvl 2 plaque"
+  },
+  "level/lvl-3.png": {
+   "rip_group": "01_lvl_plaque",
+   "sha256_16": "2ed2a77919e2bc96",
+   "unity_object": "LevelMap_2",
+   "unity_type": "Sprite",
+   "used_for": "the whole Lvl 3 plaque"
+  },
+  "mascot/happy.png": {
+   "rip_group": "03_mascot_faces",
+   "sha256_16": "20e4548265adf110",
+   "unity_object": "Standard--Happy",
+   "unity_type": "Sprite",
+   "used_for": "the VICTORY face"
+  },
+  "mascot/woopsy.png": {
+   "rip_group": "03_mascot_faces",
+   "sha256_16": "df71199b2310eccd",
+   "unity_object": "Standard--Woopsy",
+   "unity_type": "Sprite",
+   "used_for": "the DEFEAT face"
+  }
+ },
+ "build": "18047452",
+ "note": "Original Team Wood artwork, unpacked from the shipped WebGL build. Every file here is a byte-for-byte export of one named Unity object; nothing is a screenshot crop and nothing has been redrawn.",
+ "productVersion": "203",
+ "source": "html-classic.itch.zone/html/18047452/Production WebGL"
+}

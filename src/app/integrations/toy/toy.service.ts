@@ -26,6 +26,7 @@ import {
 } from 'app/domain/entities/combat/combat-snipe-utils';
 import { getRandomFloat } from 'app/runtime/random';
 import { coerceLogService } from 'app/runtime/log-service-fallback';
+import { resolveEventToy } from './toy-event-source';
 
 interface ToyJsonEntry {
   Name: string;
@@ -183,6 +184,13 @@ export class ToyService {
     if (puma) {
       message += ` (Puma)`;
     }
+    this.logService.animation.recordHit({
+      kind: 'snipe',
+      sourceToy: { name: toyName, level: parent?.toy?.level ?? 1 },
+      board: parent,
+      target: pet,
+      damage,
+    });
     this.logService.createLog({
       message: message,
       type: 'attack',
@@ -287,10 +295,33 @@ export class ToyService {
         ? 'tie-broken'
         : 'deterministic';
       this.logLocalStartOfBattleToyEvent(event, isRandomOrder, randomEventReason);
-      event.callback(this.gameService.gameApi);
+      this.runLocalToyEvent(event, () =>
+        event.callback(this.gameService.gameApi),
+      );
     }
 
     this.localStartOfBattleEvents = [];
+  }
+
+  /** Opens the toy's trigger banner around one activation, checklist 0. */
+  private runLocalToyEvent(event: AbilityEvent, run: () => void): void {
+    const toy = resolveEventToy(event);
+    if (!toy?.name) {
+      run();
+      return;
+    }
+    this.logService.animation.beginToyAbility({
+      toy,
+      board: event.player,
+      trigger: 'StartBattle',
+      triggeredBy: event.triggerPet ?? null,
+      level: toy.level ?? 1,
+    });
+    try {
+      run();
+    } finally {
+      this.logService.animation.endAbility();
+    }
   }
 
   private logLocalStartOfBattleToyEvent(

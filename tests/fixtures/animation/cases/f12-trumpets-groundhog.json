@@ -1,0 +1,41 @@
+{
+ "id": "f12-trumpets-groundhog",
+ "title": "Groundhog faint grants a trumpet",
+ "covers": [
+  "trumpets",
+  "faint trigger with no pet target"
+ ],
+ "turn": 11,
+ "playerPack": "Golden",
+ "opponentPack": "Turtle",
+ "player": [
+  {
+   "pet": "Groundhog",
+   "attack": 2,
+   "health": 3
+  },
+  {
+   "pet": "Duck",
+   "attack": 4,
+   "health": 20
+  },
+  {
+   "pet": "Pig",
+   "attack": 4,
+   "health": 16
+  }
+ ],
+ "opponent": [
+  {
+   "pet": "Cow",
+   "attack": 5,
+   "health": 10
+  },
+  {
+   "pet": "Otter",
+   "attack": 2,
+   "health": 8
+  }
+ ],
+ "notes": "The only fixture that produces a trumpets log. The Groundhog dies on the first clash and its faint pays a trumpet to the player, which has no pet target, so this is the one event class with no source-to-target motion. Two friends are kept alive to the end so the Golden pack's last-stand Golden Retriever never spawns and the clip stays a pure trumpets case."
+}

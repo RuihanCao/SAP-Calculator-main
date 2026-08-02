@@ -114,6 +114,22 @@
           <div class="d-flex align-items-center justify-content-between battle-view-header">
             <h3 class="pane-title">Fight Animation + Logs</h3>
             <div class="d-flex align-items-center gap-2">
+              <!-- One press is the whole entry: the animation takes the screen
+                   and plays itself from the battle's first frame, with the
+                   control bar already up. The biome beside it is the replay's
+                   own one unless a random draw is asked for. -->
+              <button class="btn btn-sm btn-primary" type="button" data-battle-animation="open"
+                [disabled]="!hasBattleAnimation" (click)="openBattleAnimation()">
+                Battle animation
+              </button>
+              <div class="form-check form-check-inline m-0 battle-animation-background-pick">
+                <input class="form-check-input" type="checkbox" id="battleAnimationRandomBackground"
+                  data-battle-animation="random-background" [checked]="randomBattleBackground"
+                  (change)="setRandomBattleBackground($any($event.target).checked)" />
+                <label class="form-check-label" for="battleAnimationRandomBackground">
+                  Random field
+                </label>
+              </div>
               <button class="btn btn-sm btn-secondary" (click)="app.toggleBattleAnalysis()">
                 {{ app.showBattleAnalysis ? 'Hide' : 'Show' }} Analysis
               </button>
@@ -618,3 +634,26 @@
         </div>
       </div>
     </div>
+
+<!--
+  The battle animation full screen. The stage is only ever shown this way: the
+  calculator's own pane keeps the original fight animation, and the button
+  above hands the whole viewport to the stage, which starts itself on the
+  battle's first frame with the control bar already up. EXIT on the end screen
+  brings the calculator back. It is deferred so the second renderer stays out
+  of the initial bundle and is pulled in as soon as the app is up.
+-->
+@defer (on immediate) {
+  <div class="battle-animation-fullscreen" *ngIf="battleAnimationFullscreen" role="dialog"
+    aria-label="Battle animation">
+    <app-battle-animation-stage
+      [events]="app.viewBattleEvents"
+      [logs]="app.viewBattleLogs"
+      [speed]="app.fightAnimationSpeed"
+      [autoPlay]="true"
+      [fullscreen]="true"
+      [randomBackground]="randomBattleBackground"
+      (exitRequested)="closeBattleAnimation()">
+    </app-battle-animation-stage>
+  </div>
+}

@@ -1,0 +1,31 @@
+{
+ "damage-rock": {
+  "centre": [
+   663,
+   269
+  ],
+  "method": "median-background alpha key and un-mix",
+  "note": "the build ships no such sprite; keyed out of the reference flight itself",
+  "pixels": [
+   61,
+   65
+  ],
+  "source_clip": "clips/f02-snipe-crocodile",
+  "source_frame": 29815
+ },
+ "plate-name": {
+  "capture_scale": 3.0,
+  "css_box": [
+   176,
+   255,
+   176,
+   74
+  ],
+  "opaque_cut": false,
+  "pixels": [
+   514,
+   215
+  ],
+  "source_still": "f11-jump-african-wild-dog/r_001_0001000.png"
+ }
+}

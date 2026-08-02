@@ -68,6 +68,16 @@ export abstract class PetEquipmentFacade extends PetAbilityFacade {
     if (equipment == null) {
       return;
     }
+    // A re-apply of the perk a pet already wears (transform keeps its perk) is
+    // not a gain and gets no banner.
+    if (this.equipment !== equipment) {
+      this.logService.animation.recordEquipment(
+        'gain',
+        this.asPet(),
+        equipment.name,
+        Boolean(equipment.equipmentClass?.startsWith('ailment')),
+      );
+    }
     this.equipment = equipment;
     this.setEquipmentMultiplier(pandorasBoxLevel);
     this.removeAbility(undefined, 'Equipment');
@@ -89,6 +99,12 @@ export abstract class PetEquipmentFacade extends PetAbilityFacade {
     if (perkOnly && wasAilment) {
       return;
     }
+    this.logService.animation.recordEquipment(
+      'break',
+      this.asPet(),
+      this.equipment.name,
+      wasAilment,
+    );
     this.lastLostEquipment = this.equipment;
     this.removeAbility(undefined, 'Equipment');
     this.equipment = null;

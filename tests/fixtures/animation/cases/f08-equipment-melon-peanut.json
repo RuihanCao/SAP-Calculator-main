@@ -1,0 +1,38 @@
+{
+ "id": "f08-equipment-melon-peanut",
+ "title": "Melon absorbs a big hit, Peanut knocks out on any damage",
+ "covers": [
+  "equipment",
+  "melon shield break",
+  "peanut instant knockout",
+  "equipment icon on pet"
+ ],
+ "turn": 11,
+ "player": [
+  {
+   "pet": "Pig",
+   "attack": 3,
+   "health": 6,
+   "perk": "Melon"
+  },
+  {
+   "pet": "Duck",
+   "attack": 4,
+   "health": 12,
+   "perk": "Peanut"
+  }
+ ],
+ "opponent": [
+  {
+   "pet": "Cow",
+   "attack": 8,
+   "health": 10
+  },
+  {
+   "pet": "Otter",
+   "attack": 3,
+   "health": 8
+  }
+ ],
+ "notes": "First clash shows the melon eating an 8 damage hit. Later the peanut pet one-shots whatever it touches."
+}
